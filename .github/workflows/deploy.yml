@@ -26,12 +26,12 @@ jobs:
         run: npm ci --ignore-scripts
 
       - name: Build Angular PWA (Production)
-        # 將 YOUR_REPO_NAME 替換為你的 GitHub Repository 名稱
         run: npx ng build --configuration production --base-href /TravelAPP/
         env:
-          # 若需在 CI 注入 API Keys，可透過 GitHub Secrets 傳入
-          # 並在 build 前替換 environment.prod.ts
           NODE_OPTIONS: --max_old_space_size=4096
+
+      - name: Copy index.html as 404.html (SPA fallback for GitHub Pages)
+        run: cp ./dist/travel-app/browser/index.html ./dist/travel-app/browser/404.html
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
@@ -39,8 +39,4 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./dist/travel-app/browser
           force_orphan: true
-          # SPA fallback：複製 index.html 為 404.html，避免深層路由刷新 404
           enable_jekyll: false
-
-      - name: Copy index.html as 404.html (SPA fallback)
-        run: cp ./dist/travel-app/browser/index.html ./dist/travel-app/browser/404.html
