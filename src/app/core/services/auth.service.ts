@@ -37,10 +37,16 @@ export class AuthService {
     });
   }
 
+  // 取得正確的 base URL（相容 GitHub Pages 子路徑，如 /TravelAPP/）
+  private getRedirectUrl(): string {
+    const base = document.querySelector('base')?.href ?? `${window.location.origin}/`;
+    return `${base}trips`;
+  }
+
   async signInWithGoogle(): Promise<void> {
     const { error } = await this.supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo: `${window.location.origin}/trips` },
+      options: { redirectTo: this.getRedirectUrl() },
     });
     if (error) console.error('[Auth] Google sign-in error', error);
   }
@@ -48,7 +54,7 @@ export class AuthService {
   async signInWithApple(): Promise<void> {
     const { error } = await this.supabase.auth.signInWithOAuth({
       provider: 'apple',
-      options: { redirectTo: `${window.location.origin}/trips` },
+      options: { redirectTo: this.getRedirectUrl() },
     });
     if (error) console.error('[Auth] Apple sign-in error', error);
   }
