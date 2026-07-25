@@ -1,0 +1,56 @@
+{
+  "app": {
+    "name": "旅遊記帳本",
+    "tagline": "離線優先・多人分帳・收據掃描"
+  },
+  "nav": {
+    "trips": "我的行程",
+    "itinerary": "景點行程",
+    "shopping": "購物清單",
+    "expenses": "記帳分帳",
+    "settings": "設定"
+  },
+  "auth": {
+    "signInGoogle": "以 Google 帳號登入",
+    "signInApple": "以 Apple 帳號登入",
+    "signOut": "登出"
+  },
+  "trips": {
+    "create": "新增行程",
+    "noTrips": "尚無行程，點擊右上角「＋」開始規劃吧！",
+    "deleteConfirm": "確定刪除此行程？相關購物清單與記帳也會一併刪除。",
+    "timezone": "時區",
+    "currency": "基礎貨幣"
+  },
+  "shopping": {
+    "total": "合計",
+    "bought": "已購買",
+    "addItem": "加入清單",
+    "uploadImage": "上傳圖片",
+    "itemName": "品項名稱",
+    "quantity": "數量",
+    "unitPrice": "單價",
+    "subtotal": "小計"
+  },
+  "expenses": {
+    "scan": "掃描收據",
+    "recognizing": "辨識中，請稍候...",
+    "applyOcr": "套用至表單",
+    "add": "記帳",
+    "settlement": "結算總覽",
+    "shouldReceive": "應收",
+    "shouldPay": "應付",
+    "rateOffline": "（離線快取）",
+    "splitEqual": "平均分攤",
+    "splitShares": "依比例",
+    "splitExact": "自訂金額"
+  },
+  "common": {
+    "save": "儲存",
+    "cancel": "取消",
+    "delete": "刪除",
+    "back": "返回",
+    "confirm": "確認",
+    "loading": "載入中..."
+  }
+}

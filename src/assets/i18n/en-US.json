@@ -1,0 +1,56 @@
+{
+  "app": {
+    "name": "Travel Ledger",
+    "tagline": "Offline-First · Split Bills · Receipt Scan"
+  },
+  "nav": {
+    "trips": "My Trips",
+    "itinerary": "Itinerary",
+    "shopping": "Shopping List",
+    "expenses": "Expenses",
+    "settings": "Settings"
+  },
+  "auth": {
+    "signInGoogle": "Sign in with Google",
+    "signInApple": "Sign in with Apple",
+    "signOut": "Sign Out"
+  },
+  "trips": {
+    "create": "New Trip",
+    "noTrips": "No trips yet. Tap ＋ to start planning!",
+    "deleteConfirm": "Delete this trip? All shopping items and expenses will also be deleted.",
+    "timezone": "Timezone",
+    "currency": "Base Currency"
+  },
+  "shopping": {
+    "total": "Total",
+    "bought": "Bought",
+    "addItem": "Add to List",
+    "uploadImage": "Upload Image",
+    "itemName": "Item Name",
+    "quantity": "Qty",
+    "unitPrice": "Unit Price",
+    "subtotal": "Subtotal"
+  },
+  "expenses": {
+    "scan": "Scan Receipt",
+    "recognizing": "Recognizing, please wait...",
+    "applyOcr": "Apply to Form",
+    "add": "Add Expense",
+    "settlement": "Settlement Summary",
+    "shouldReceive": "Receives",
+    "shouldPay": "Owes",
+    "rateOffline": "(Offline Cache)",
+    "splitEqual": "Split Equally",
+    "splitShares": "By Shares",
+    "splitExact": "Custom Amount"
+  },
+  "common": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "back": "Back",
+    "confirm": "Confirm",
+    "loading": "Loading..."
+  }
+}

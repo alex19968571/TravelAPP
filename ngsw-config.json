@@ -1,0 +1,57 @@
+{
+  "$schema": "./node_modules/@angular/service-worker/config/schema.json",
+  "index": "/index.html",
+  "assetGroups": [
+    {
+      "name": "app",
+      "installMode": "prefetch",
+      "resources": {
+        "files": [
+          "/favicon.ico",
+          "/index.csr.html",
+          "/index.html",
+          "/manifest.webmanifest",
+          "/*.css",
+          "/*.js"
+        ]
+      }
+    },
+    {
+      "name": "assets",
+      "installMode": "lazy",
+      "updateMode": "prefetch",
+      "resources": {
+        "files": [
+          "/**/*.(svg|cur|jpg|jpeg|png|apng|webp|avif|gif|otf|ttf|woff|woff2)",
+          "/assets/i18n/*.json"
+        ]
+      }
+    }
+  ],
+  "dataGroups": [
+    {
+      "name": "tesseract-wasm",
+      "urls": [
+        "https://cdn.jsdelivr.net/npm/tesseract.js@7/**",
+        "https://cdn.jsdelivr.net/npm/tesseract.js-core@6/**",
+        "https://tessdata.projectnaptha.com/**"
+      ],
+      "cacheConfig": {
+        "strategy": "freshness",
+        "maxSize": 50,
+        "maxAge": "7d",
+        "timeout": "10s"
+      }
+    },
+    {
+      "name": "frankfurter-rates",
+      "urls": ["https://api.frankfurter.app/**"],
+      "cacheConfig": {
+        "strategy": "freshness",
+        "maxSize": 10,
+        "maxAge": "1d",
+        "timeout": "5s"
+      }
+    }
+  ]
+}
