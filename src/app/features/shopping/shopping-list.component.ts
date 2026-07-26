@@ -47,15 +47,25 @@ import { ExchangeRateService } from '../../core/services/exchange-rate.service';
             <label>數量</label>
             <input formControlName="quantity" type="number" min="1" />
           </div>
+
+          <!-- 雙欄單價 -->
           <div class="form-row">
-            <label>單價（{{ destCurrency() }}）</label>
-            <div class="price-input-row">
-              <input formControlName="unit_price" type="number" min="0" step="any" />
-              @if (showConversion() && unitPrice() > 0) {
-                <span class="unit-converted">≈ {{ unitPrice() * convRate() | number:'1.0-0' }} {{ homeCurrency() }}</span>
+            <label>單價</label>
+            <div class="dual-price-row">
+              <div class="price-col">
+                <span class="currency-label">{{ destCurrency() }}</span>
+                <input formControlName="unit_price" type="number" min="0" step="any" />
+              </div>
+              @if (showConversion()) {
+                <button type="button" class="convert-btn" (click)="convertUnitPrice()" title="換算成 {{ homeCurrency() }}">⇄</button>
+                <div class="price-col">
+                  <span class="currency-label">{{ homeCurrency() }}</span>
+                  <input type="number" [value]="unitPriceHome() ?? ''" readonly class="readonly-input" placeholder="—" />
+                </div>
               }
             </div>
           </div>
+
           <div class="form-row span-2">
             <label>備註</label>
             <input formControlName="description" placeholder="選填" />
@@ -147,13 +157,42 @@ import { ExchangeRateService } from '../../core/services/exchange-rate.service';
       background: var(--input-bg); color: var(--text-primary);
     }
 
-    /* 單價輸入行 + 換算結果 */
-    .price-input-row { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
-    .price-input-row input { flex: 1; min-width: 80px; }
-    .unit-converted {
-      font-size: 0.8rem; color: #48bb78; font-weight: 600; white-space: nowrap;
-      background: #f0fff8; border: 1px solid #c6f6d5; border-radius: 6px;
-      padding: 0.2rem 0.5rem;
+    /* ── 雙欄單價 ── */
+    .dual-price-row {
+      display: flex;
+      align-items: flex-end;
+      gap: 0.5rem;
+    }
+    .price-col {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 0.2rem;
+      min-width: 0;
+    }
+    .currency-label {
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: var(--accent);
+      letter-spacing: 0.03em;
+    }
+    .convert-btn {
+      background: var(--accent-light);
+      color: var(--accent);
+      border: 1.5px solid var(--accent);
+      border-radius: 8px;
+      padding: 0.55rem 0.7rem;
+      cursor: pointer;
+      font-size: 1rem;
+      flex-shrink: 0;
+      line-height: 1;
+      transition: background 0.15s;
+    }
+    .convert-btn:hover { background: var(--accent); color: white; }
+    .readonly-input {
+      background: var(--bg) !important;
+      color: var(--text-secondary) !important;
+      cursor: not-allowed;
     }
 
     /* 小計 */
@@ -203,13 +242,14 @@ export class ShoppingListComponent implements OnInit {
   tripId!: string;
   items = signal<ShoppingItem[]>([]);
 
-  // 匯率：目的地幣 → 所在地幣
-  private _convRate = signal<number>(1);
+  private _convRate      = signal<number>(1);
+  private _unitPriceHome = signal<number | null>(null);
 
-  readonly destCurrency = computed(() => this.pref.country().currency);
-  readonly homeCurrency = computed(() => this.pref.homeCountry().currency);
+  readonly destCurrency  = computed(() => this.pref.country().currency);
+  readonly homeCurrency  = computed(() => this.pref.homeCountry().currency);
   readonly showConversion = computed(() => this.destCurrency() !== this.homeCurrency());
-  readonly convRate = this._convRate.asReadonly();
+  readonly convRate      = this._convRate.asReadonly();
+  readonly unitPriceHome = this._unitPriceHome.asReadonly();
 
   readonly quantity  = computed(() => Number(this.form.get('quantity')?.value ?? 1));
   readonly unitPrice = computed(() => Number(this.form.get('unit_price')?.value ?? 0));
@@ -239,6 +279,13 @@ export class ShoppingListComponent implements OnInit {
     this._convRate.set(rate);
   }
 
+  async convertUnitPrice(): Promise<void> {
+    const price = this.unitPrice();
+    if (price <= 0) { this._unitPriceHome.set(0); return; }
+    const rate = await this.rateService.getConversionRate(this.destCurrency(), this.homeCurrency());
+    this._unitPriceHome.set(Math.round(price * rate * 100) / 100);
+  }
+
   async loadItems(): Promise<void> {
     this.items.set(await this.shoppingService.getByTrip(this.tripId));
   }
@@ -254,6 +301,7 @@ export class ShoppingListComponent implements OnInit {
       is_bought: false,
     });
     this.form.reset({ quantity: 1, unit_price: 0 });
+    this._unitPriceHome.set(null);
     await this.loadItems();
   }
 

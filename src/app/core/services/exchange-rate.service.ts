@@ -2,7 +2,8 @@ import { Injectable } from '@angular/core';
 import { db } from '../db/local.db';
 import { ExchangeRate } from '../models';
 
-const FRANKFURTER_URL = 'https://api.frankfurter.app/latest';
+// open.er-api.com 支援 CORS，免費且穩定
+const RATE_API_URL = 'https://open.er-api.com/v6/latest/EUR';
 
 @Injectable({ providedIn: 'root' })
 export class ExchangeRateService {
@@ -14,12 +15,16 @@ export class ExchangeRateService {
     if (cached) return; // 今日已有快取，跳過
 
     try {
-      const res = await fetch(FRANKFURTER_URL);
+      const res = await fetch(RATE_API_URL);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
+      // open.er-api.com 回傳 base_code / time_last_update_utc
+      const dateStr = data.time_last_update_utc
+        ? new Date(data.time_last_update_utc).toISOString().split('T')[0]
+        : today;
       const record: ExchangeRate = {
-        base: data.base,
-        date: data.date,
+        base: data.base_code ?? 'EUR',
+        date: dateStr,
         rates: data.rates,
         fetched_at: new Date().toISOString(),
       };
