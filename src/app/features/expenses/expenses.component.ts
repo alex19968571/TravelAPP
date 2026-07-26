@@ -22,13 +22,6 @@ interface ShareRow { memberId: string; name: string; weight: number; }
         <h1>💰 記帳分帳</h1>
       </header>
 
-      @if (rateInfo()) {
-        <div class="rate-banner" [class.offline]="rateInfo()!.isOffline">
-          匯率資料：{{ rateInfo()!.date }}
-          @if (rateInfo()!.isOffline) { <span class="offline-tag">（離線快取）</span> }
-        </div>
-      }
-
       <!-- OCR 收據掃描 -->
       <div class="card ocr-card">
         <h3>📷 掃描收據</h3>
@@ -203,10 +196,6 @@ interface ShareRow { memberId: string; name: string; weight: number; }
     .page-header { display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem; }
     .back-btn { color: #667eea; text-decoration: none; font-weight: 500; }
     h1 { font-size: 1.6rem; font-weight: 700; color: #1a1a2e; margin: 0; }
-    .rate-banner { padding: 0.6rem 1rem; background: #f0f0ff; color: #667eea; border-radius: 10px;
-      margin-bottom: 1rem; font-size: 0.875rem; }
-    .rate-banner.offline { background: #fff8e1; color: #e6a817; }
-    .offline-tag { font-weight: 600; }
     .card { background: white; border-radius: 16px; padding: 1.5rem;
       box-shadow: 0 4px 20px rgba(0,0,0,0.08); margin-bottom: 1rem; }
     .ocr-card h3 { margin: 0 0 1rem; }
@@ -380,7 +369,6 @@ export class ExpensesComponent implements OnInit {
   expenses   = signal<Expense[]>([]);
   members    = signal<TripMember[]>([]);
   settlement = signal<{ memberId: string; amount: number }[]>([]);
-  rateInfo   = signal<{ date: string; isOffline: boolean } | null>(null);
   ocrResult  = signal<{ amount: number | null; date: string | null } | null>(null);
   ocrLoading = signal(false);
   submitting = signal(false);
@@ -409,7 +397,6 @@ export class ExpensesComponent implements OnInit {
     await Promise.all([
       this.loadExpenses(),
       this.loadMembers(),
-      this.loadRateInfo(),
     ]);
     this.exchangeRateService.refreshIfNeeded();
 
@@ -427,14 +414,6 @@ export class ExpensesComponent implements OnInit {
     this.members.set(members);
     if (members.length > 0) {
       this.form.patchValue({ payer_member_id: members[0].id });
-    }
-  }
-
-  private async loadRateInfo(): Promise<void> {
-    const date = await this.exchangeRateService.getLatestCacheDate();
-    if (date) {
-      const cached = await this.exchangeRateService.getRate(date, 'TWD');
-      this.rateInfo.set({ date, isOffline: cached.isOffline });
     }
   }
 

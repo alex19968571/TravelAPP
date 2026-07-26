@@ -279,11 +279,11 @@ export class ShoppingListComponent implements OnInit {
     this._convRate.set(rate);
   }
 
-  async convertUnitPrice(): Promise<void> {
-    const price = this.unitPrice();
+  convertUnitPrice(): void {
+    // 直接讀 form 值，computed signal 不追蹤 ReactiveForm 的變動
+    const price = Number(this.form.get('unit_price')?.value ?? 0);
     if (price <= 0) { this._unitPriceHome.set(0); return; }
-    const rate = await this.rateService.getConversionRate(this.destCurrency(), this.homeCurrency());
-    this._unitPriceHome.set(Math.round(price * rate * 100) / 100);
+    this._unitPriceHome.set(Math.round(price * this._convRate() * 100) / 100);
   }
 
   async loadItems(): Promise<void> {

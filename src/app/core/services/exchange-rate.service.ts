@@ -34,22 +34,25 @@ export class ExchangeRateService {
     }
   }
 
-  // 取得指定日期的匯率（fallback 至最近一筆）
-  async getRate(date: string, targetCurrency: string, baseCurrency = 'EUR'): Promise<{ rate: number; rateDate: string; isOffline: boolean }> {
+  // 取得指定日期的換算率：fromCurrency → TWD（fallback 至最近一筆快取）
+  async getRate(date: string, fromCurrency: string): Promise<{ rate: number; rateDate: string; isOffline: boolean }> {
     let record = await db.exchange_rates.get(date);
     let isOffline = false;
 
     if (!record) {
-      // 找最近一筆快取
       const all = await db.exchange_rates.orderBy('date').reverse().first();
       if (!all) return { rate: 1, rateDate: date, isOffline: true };
       record = all;
       isOffline = true;
     }
 
-    if (targetCurrency === baseCurrency) return { rate: 1, rateDate: record.date, isOffline };
-    const rate = record.rates[targetCurrency] ?? 1;
-    return { rate, rateDate: record.date, isOffline };
+    // API 以 EUR 為基準：rates[X] = EUR→X 的匯率
+    // fromCurrency→TWD = (EUR→TWD) / (EUR→fromCurrency)
+    const rates = record.rates as Record<string, number>;
+    if (fromCurrency === 'TWD') return { rate: 1, rateDate: record.date, isOffline };
+    const twdRate  = rates['TWD']          ?? 1;
+    const fromRate = fromCurrency === 'EUR' ? 1 : (rates[fromCurrency] ?? 1);
+    return { rate: twdRate / fromRate, rateDate: record.date, isOffline };
   }
 
   async getLatestCacheDate(): Promise<string | null> {
