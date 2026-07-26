@@ -2,7 +2,7 @@ import { Component, inject, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
-import { Expense, TripMember } from '../../core/models';
+import { Expense, ExpenseSplit, TripMember } from '../../core/models';
 import { ExpenseService } from '../../core/services/expense.service';
 import { ExchangeRateService } from '../../core/services/exchange-rate.service';
 import { OcrService } from '../../core/services/ocr.service';
@@ -69,6 +69,12 @@ interface ShareRow { memberId: string; name: string; weight: number; }
               <option value="USD">USD</option>
               <option value="EUR">EUR</option>
               <option value="THB">THB</option>
+              <option value="KRW">KRW</option>
+              <option value="HKD">HKD</option>
+              <option value="SGD">SGD</option>
+              <option value="MYR">MYR</option>
+              <option value="AUD">AUD</option>
+              <option value="GBP">GBP</option>
             </select>
           </div>
           <div class="form-row">
@@ -99,7 +105,7 @@ interface ShareRow { memberId: string; name: string; weight: number; }
           </div>
 
           <!-- 平均分攤預覽 -->
-          @if (form.get('split_type')?.value === 'EQUAL' && (form.get('amount')?.value ?? 0) > 0) {
+          @if (splitType() === 'EQUAL' && (form.get('amount')?.value ?? 0) > 0) {
             <div class="form-row span-2">
               <div class="per-person-box">
                 每人
@@ -114,43 +120,48 @@ interface ShareRow { memberId: string; name: string; weight: number; }
             </div>
           }
 
-          <!-- 依比例分帳表 -->
-          @if (form.get('split_type')?.value === 'SHARES' && shareRows().length > 0) {
+          <!-- 依比例分帳表：只有切換回 EQUAL 才隱藏 -->
+          @if (splitType() === 'SHARES') {
             <div class="form-row span-2">
-              <div class="shares-table">
-                @for (row of shareRows(); track $index; let i = $index) {
-                  <div class="share-row">
-                    <input class="share-name-input"
-                           [value]="row.name"
-                           (input)="updateShareRowName(i, $any($event.target).value)"
-                           placeholder="成員名稱" />
-                    <div class="share-weight-cell">
-                      <input type="number" min="0" max="100"
-                             [value]="row.weight"
-                             (input)="updateShareRowWeight(i, +$any($event.target).value)"
-                             class="weight-input" />
-                      <span class="pct-sign">%</span>
+              @if (shareRows().length === 0) {
+                <div class="shares-empty">請先選擇分帳方式或設定人數</div>
+              } @else {
+                <div class="shares-table">
+                  @for (row of shareRows(); track $index; let i = $index) {
+                    <div class="share-row">
+                      <input class="share-name-input"
+                             [value]="row.name"
+                             (input)="updateShareRowName(i, $any($event.target).value)"
+                             placeholder="成員名稱" />
+                      <div class="share-weight-cell">
+                        <input type="number" min="0" max="100"
+                               [value]="row.weight"
+                               (input)="updateShareRowWeight(i, +$any($event.target).value)"
+                               class="weight-input" />
+                        <span class="pct-sign">%</span>
+                      </div>
+                      @if ((form.get('amount')?.value ?? 0) > 0) {
+                        <span class="share-amount-cell">
+                          {{ (form.get('amount')?.value ?? 0) * row.weight / 100 | number:'1.0-2' }}
+                          {{ form.get('currency_code')?.value }}
+                        </span>
+                      }
                     </div>
-                    @if ((form.get('amount')?.value ?? 0) > 0) {
-                      <span class="share-amount-cell">
-                        {{ (form.get('amount')?.value ?? 0) * row.weight / 100 | number:'1.0-2' }}
-                        {{ form.get('currency_code')?.value }}
-                      </span>
+                  }
+                  <div class="weight-sum" [class.bad]="shareWeightSum() !== 100">
+                    合計 {{ shareWeightSum() }}%
+                    @if (shareWeightSum() !== 100) {
+                      <span class="weight-warn">（需為 100%）</span>
                     }
                   </div>
-                }
-                <div class="weight-sum" [class.bad]="shareWeightSum() !== 100">
-                  合計 {{ shareWeightSum() }}%
-                  @if (shareWeightSum() !== 100) {
-                    <span class="weight-warn">（需為 100%）</span>
-                  }
                 </div>
-              </div>
+              }
             </div>
           }
         </div>
 
-        <button type="submit" class="btn-primary" [disabled]="form.invalid || submitting() || (form.get('split_type')?.value === 'SHARES' && shareWeightSum() !== 100)">
+        <button type="submit" class="btn-primary"
+                [disabled]="form.invalid || submitting() || (splitType() === 'SHARES' && shareWeightSum() !== 100)">
           {{ submitting() ? '儲存中...' : '記帳' }}
         </button>
       </form>
@@ -158,7 +169,7 @@ interface ShareRow { memberId: string; name: string; weight: number; }
       <!-- 費用清單 -->
       <div class="expenses-list">
         @for (expense of expenses(); track expense.client_record_id) {
-          <div class="expense-card card">
+          <div class="expense-card card" (click)="toggleExpand(expense)">
             <div class="expense-header">
               <div>
                 <div class="expense-title">{{ expense.title }}</div>
@@ -168,23 +179,67 @@ interface ShareRow { memberId: string; name: string; weight: number; }
                   <span class="converted">≈ TWD {{ expense.converted_amount | number:'1.0-0' }}</span>
                 </div>
               </div>
-              <button class="remove-btn" (click)="deleteExpense(expense.client_record_id)">🗑</button>
+              <div class="expense-right">
+                <span class="expand-icon">{{ expandedExpenseId() === expense.client_record_id ? '▲' : '▼' }}</span>
+                <button class="remove-btn" (click)="$event.stopPropagation(); deleteExpense(expense.client_record_id)">🗑</button>
+              </div>
             </div>
+
+            <!-- 展開：各成員應付明細 -->
+            @if (expandedExpenseId() === expense.client_record_id) {
+              <div class="expense-splits" (click)="$event.stopPropagation()">
+                @if (expandedSplits().length === 0) {
+                  <div class="splits-empty">（無分帳資料）</div>
+                } @else {
+                  @for (split of expandedSplits(); track split.id) {
+                    <div class="split-detail" [class.is-payer]="split.member_id === expense.payer_member_id">
+                      <span class="split-name">
+                        {{ getMemberName(split.member_id) }}
+                        @if (split.member_id === expense.payer_member_id) {
+                          <span class="payer-badge">墊款</span>
+                        }
+                      </span>
+                      @if (expense.split_type === 'SHARES') {
+                        <span class="split-weight">{{ split.share_weight | number:'1.0-0' }}%</span>
+                      }
+                      <span class="split-amount">
+                        {{ split.owed_amount | number:'1.0-2' }} {{ expense.currency_code }}
+                      </span>
+                    </div>
+                  }
+                }
+              </div>
+            }
           </div>
         }
       </div>
 
-      <!-- 結算 -->
+      <!-- 結算總覽 -->
       @if (expenses().length > 0) {
         <div class="card settlement">
           <h3>結算總覽</h3>
-          @for (entry of settlement(); track entry.memberId) {
-            <div class="settlement-row" [class.positive]="entry.amount > 0" [class.negative]="entry.amount < 0">
-              <span>{{ getMemberName(entry.memberId) }}</span>
-              <span>
-                {{ entry.amount > 0 ? '應收' : '應付' }}
-                <strong>{{ (entry.amount | number:'1.0-0') }}</strong> 元
-              </span>
+
+          @if (receivable().length > 0) {
+            <div class="settle-group">
+              <div class="settle-group-title positive-title">應收</div>
+              @for (entry of receivable(); track entry.memberId) {
+                <div class="settlement-row positive">
+                  <span class="member-name">{{ getMemberName(entry.memberId) }}</span>
+                  <span class="settle-amount"><strong>{{ entry.amount | number:'1.0-0' }}</strong> 元</span>
+                </div>
+              }
+            </div>
+          }
+
+          @if (payable().length > 0) {
+            <div class="settle-group">
+              <div class="settle-group-title negative-title">應付</div>
+              @for (entry of payable(); track entry.memberId) {
+                <div class="settlement-row negative">
+                  <span class="member-name">{{ getMemberName(entry.memberId) }}</span>
+                  <span class="settle-amount"><strong>{{ absAmount(entry.amount) | number:'1.0-0' }}</strong> 元</span>
+                </div>
+              }
             </div>
           }
         </div>
@@ -229,141 +284,121 @@ interface ShareRow { memberId: string; name: string; weight: number; }
 
     /* 金額換算提示 */
     .amount-hint {
-      margin-top: 0.4rem;
-      font-size: 0.82rem;
-      color: #48bb78;
-      padding: 0.25rem 0.5rem;
-      background: #f0fff8;
-      border: 1px solid #c6f6d5;
-      border-radius: 6px;
-      display: inline-block;
+      margin-top: 0.4rem; font-size: 0.82rem; color: #48bb78;
+      padding: 0.25rem 0.5rem; background: #f0fff8; border: 1px solid #c6f6d5;
+      border-radius: 6px; display: inline-block;
     }
 
     /* 分帳方式列 */
-    .split-ctrl-row {
-      display: flex;
-      gap: 0.75rem;
-      align-items: center;
-    }
+    .split-ctrl-row { display: flex; gap: 0.75rem; align-items: center; }
     .split-ctrl-row select { flex: 1; }
-    .person-count-wrap {
-      display: flex;
-      align-items: center;
-      gap: 0.4rem;
-      flex-shrink: 0;
-    }
-    .person-label {
-      font-size: 0.85rem;
-      font-weight: 600;
-      color: #555;
-      white-space: nowrap;
-    }
-    .count-input {
-      width: 3.5rem !important;
-      padding: 0.625rem 0.5rem !important;
-      text-align: center;
-    }
+    .person-count-wrap { display: flex; align-items: center; gap: 0.4rem; flex-shrink: 0; }
+    .person-label { font-size: 0.85rem; font-weight: 600; color: #555; white-space: nowrap; }
+    .count-input { width: 3.5rem !important; padding: 0.625rem 0.5rem !important; text-align: center; }
 
     /* 平均分攤預覽 */
     .per-person-box {
-      display: flex;
-      align-items: center;
-      gap: 0.4rem;
-      padding: 0.625rem 1rem;
-      background: #f0f0ff;
-      border-radius: 10px;
-      font-size: 0.9rem;
-      color: #555;
-      flex-wrap: wrap;
+      display: flex; align-items: center; gap: 0.4rem;
+      padding: 0.625rem 1rem; background: #f0f0ff; border-radius: 10px;
+      font-size: 0.9rem; color: #555; flex-wrap: wrap;
     }
     .per-person-box strong { color: #667eea; font-size: 1.05rem; }
-    .per-person-conv {
-      font-size: 0.78rem;
-      color: #48bb78;
-      margin-left: 0.25rem;
-    }
+    .per-person-conv { font-size: 0.78rem; color: #48bb78; margin-left: 0.25rem; }
 
     /* 依比例分帳表 */
-    .shares-table {
-      border: 1.5px solid #eee;
-      border-radius: 10px;
-      overflow: hidden;
-    }
+    .shares-empty { color: #999; font-size: 0.9rem; }
+    .shares-table { border: 1.5px solid #eee; border-radius: 10px; overflow: hidden; }
     .share-row {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      padding: 0.5rem 0.75rem;
-      border-bottom: 1px solid #f0f0f0;
+      display: flex; align-items: center; gap: 0.5rem;
+      padding: 0.5rem 0.75rem; border-bottom: 1px solid #f0f0f0;
     }
     .share-row:last-of-type { border-bottom: none; }
     .share-name-input {
-      flex: 1;
-      padding: 0.4rem 0.625rem !important;
-      border: 1.5px solid #ddd !important;
-      border-radius: 8px !important;
-      font-size: 0.9rem !important;
-      width: auto !important;
+      flex: 1; padding: 0.4rem 0.625rem !important; border: 1.5px solid #ddd !important;
+      border-radius: 8px !important; font-size: 0.9rem !important; width: auto !important;
     }
-    .share-weight-cell {
-      display: flex;
-      align-items: center;
-      gap: 0.2rem;
-      flex-shrink: 0;
-    }
+    .share-weight-cell { display: flex; align-items: center; gap: 0.2rem; flex-shrink: 0; }
     .weight-input {
-      width: 3.5rem !important;
-      padding: 0.4rem 0.375rem !important;
-      border: 1.5px solid #ddd !important;
-      border-radius: 8px !important;
-      font-size: 0.9rem !important;
-      text-align: center;
+      width: 3.5rem !important; padding: 0.4rem 0.375rem !important;
+      border: 1.5px solid #ddd !important; border-radius: 8px !important;
+      font-size: 0.9rem !important; text-align: center;
     }
     .pct-sign { font-size: 0.85rem; color: #888; }
     .share-amount-cell {
-      min-width: 5rem;
-      text-align: right;
-      font-size: 0.85rem;
-      font-weight: 600;
-      color: #667eea;
-      flex-shrink: 0;
+      min-width: 5rem; text-align: right; font-size: 0.85rem;
+      font-weight: 600; color: #667eea; flex-shrink: 0;
     }
-    .weight-sum {
-      padding: 0.4rem 0.75rem;
-      font-size: 0.82rem;
-      font-weight: 600;
-      color: #48bb78;
-      background: #f8fff8;
-    }
+    .weight-sum { padding: 0.4rem 0.75rem; font-size: 0.82rem; font-weight: 600; color: #48bb78; background: #f8fff8; }
     .weight-sum.bad { color: #e53e3e; background: #fff5f5; }
     .weight-warn { font-weight: 400; }
 
     .btn-primary { background: #667eea; color: white; border: none; border-radius: 10px;
       padding: 0.625rem 1.5rem; font-weight: 600; cursor: pointer; }
     .btn-primary:disabled { opacity: 0.5; }
+
+    /* ── 費用清單 ── */
     .expenses-list { display: flex; flex-direction: column; gap: 0.75rem; }
-    .expense-card.card { padding: 1rem 1.25rem; }
+    .expense-card.card { padding: 1rem 1.25rem; cursor: pointer; transition: box-shadow 0.15s; }
+    .expense-card.card:hover { box-shadow: 0 6px 24px rgba(0,0,0,0.12); }
     .expense-header { display: flex; justify-content: space-between; align-items: flex-start; }
     .expense-title { font-weight: 600; font-size: 1rem; margin-bottom: 0.25rem; }
     .expense-meta { font-size: 0.875rem; color: #666; }
     .converted { color: #667eea; font-weight: 500; margin-left: 0.5rem; }
+    .expense-right { display: flex; align-items: center; gap: 0.75rem; flex-shrink: 0; }
+    .expand-icon { font-size: 0.7rem; color: #999; }
     .remove-btn { background: none; border: none; cursor: pointer; font-size: 1rem; color: #e53e3e; }
+
+    /* 展開：分帳明細 */
+    .expense-splits {
+      margin-top: 0.75rem; padding-top: 0.75rem;
+      border-top: 1px solid #f0f0f0;
+    }
+    .splits-empty { color: #999; font-size: 0.85rem; padding: 0.25rem 0; }
+    .split-detail {
+      display: flex; align-items: center; gap: 0.5rem;
+      padding: 0.375rem 0; font-size: 0.875rem; color: #555;
+      border-bottom: 1px solid #f8f8f8;
+    }
+    .split-detail:last-child { border-bottom: none; }
+    .split-detail.is-payer { background: #fafafe; border-radius: 6px; padding: 0.375rem 0.5rem; }
+    .split-name { flex: 1; font-weight: 500; display: flex; align-items: center; gap: 0.4rem; }
+    .payer-badge {
+      font-size: 0.7rem; font-weight: 700; color: #667eea;
+      background: #e8ebff; border-radius: 4px; padding: 0.1rem 0.375rem;
+    }
+    .split-weight { color: #667eea; font-weight: 600; min-width: 3rem; text-align: right; font-size: 0.8rem; }
+    .split-amount { font-weight: 600; color: #1a1a2e; min-width: 6rem; text-align: right; }
+
+    /* ── 結算 ── */
     .settlement h3 { margin: 0 0 1rem; }
-    .settlement-row { display: flex; justify-content: space-between; padding: 0.625rem 0;
-      border-bottom: 1px solid #f0f0f0; font-size: 0.95rem; }
-    .settlement-row:last-child { border-bottom: none; }
-    .settlement-row.positive strong { color: #48bb78; }
-    .settlement-row.negative strong { color: #e53e3e; }
+    .settle-group { margin-bottom: 0.75rem; }
+    .settle-group:last-child { margin-bottom: 0; }
+    .settle-group-title {
+      font-size: 0.78rem; font-weight: 700; letter-spacing: 0.04em;
+      padding: 0.25rem 0.625rem; border-radius: 6px; display: inline-block; margin-bottom: 0.5rem;
+    }
+    .positive-title { background: #f0fff8; color: #2d8a56; }
+    .negative-title { background: #fff5f5; color: #c53030; }
+    .settlement-row {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 0.5rem 0.625rem; border-radius: 8px; font-size: 0.95rem; margin-bottom: 0.25rem;
+    }
+    .settlement-row.positive { background: #f8fffc; }
+    .settlement-row.negative { background: #fff8f8; }
+    .member-name { color: #333; }
+    .settle-amount { }
+    .settlement-row.positive strong { color: #2d8a56; font-size: 1rem; }
+    .settlement-row.negative strong { color: #c53030; font-size: 1rem; }
   `]
 })
 export class ExpensesComponent implements OnInit {
-  private route             = inject(ActivatedRoute);
-  private expenseService    = inject(ExpenseService);
+  private route               = inject(ActivatedRoute);
+  private expenseService      = inject(ExpenseService);
   private exchangeRateService = inject(ExchangeRateService);
-  private ocrService        = inject(OcrService);
-  private tripService       = inject(TripService);
-  private fb                = inject(FormBuilder);
-  private pref              = inject(PreferenceService);
+  private ocrService          = inject(OcrService);
+  private tripService         = inject(TripService);
+  private fb                  = inject(FormBuilder);
+  private pref                = inject(PreferenceService);
 
   tripId!: string;
   expenses   = signal<Expense[]>([]);
@@ -373,31 +408,37 @@ export class ExpensesComponent implements OnInit {
   ocrLoading = signal(false);
   submitting = signal(false);
 
+  // 結算分組
+  readonly receivable = computed(() => this.settlement().filter(e => e.amount > 0));
+  readonly payable    = computed(() => this.settlement().filter(e => e.amount < 0));
+
+  // 分帳相關
   personCount = signal<number>(2);
   splitType   = signal<'EQUAL' | 'SHARES'>('EQUAL');
   shareRows   = signal<ShareRow[]>([]);
-
   readonly shareWeightSum = computed(() => this.shareRows().reduce((s, r) => s + r.weight, 0));
   readonly homeCurrency   = computed(() => this.pref.homeCountry().currency);
 
+  // 金額換算
   private _amountConverted = signal<number | null>(null);
   readonly amountConverted = this._amountConverted.asReadonly();
 
+  // 展開費用明細
+  expandedExpenseId = signal<string | null>(null);
+  expandedSplits    = signal<ExpenseSplit[]>([]);
+
   form = this.fb.group({
-    title:            ['', [Validators.required, Validators.maxLength(100)]],
-    amount:           [null as number | null, [Validators.required, Validators.min(0.01)]],
-    currency_code:    ['TWD', Validators.required],
-    expense_date:     [new Date().toISOString().split('T')[0], Validators.required],
-    payer_member_id:  ['', Validators.required],
-    split_type:       ['EQUAL' as 'EQUAL' | 'SHARES'],
+    title:           ['', [Validators.required, Validators.maxLength(100)]],
+    amount:          [null as number | null, [Validators.required, Validators.min(0.01)]],
+    currency_code:   [this.pref.country().currency, Validators.required],
+    expense_date:    [new Date().toISOString().split('T')[0], Validators.required],
+    payer_member_id: ['', Validators.required],
+    split_type:      ['EQUAL' as 'EQUAL' | 'SHARES'],
   });
 
   async ngOnInit(): Promise<void> {
     this.tripId = this.route.snapshot.paramMap.get('id')!;
-    await Promise.all([
-      this.loadExpenses(),
-      this.loadMembers(),
-    ]);
+    await Promise.all([this.loadExpenses(), this.loadMembers()]);
     this.exchangeRateService.refreshIfNeeded();
 
     this.form.get('amount')!.valueChanges.subscribe(() => this.calcAmountConversion());
@@ -424,9 +465,9 @@ export class ExpensesComponent implements OnInit {
   }
 
   private async calcAmountConversion(): Promise<void> {
-    const amount = this.form.get('amount')?.value as number | null;
+    const amount   = this.form.get('amount')?.value as number | null;
     const currency = this.form.get('currency_code')?.value as string;
-    const home = this.homeCurrency();
+    const home     = this.homeCurrency();
     if (!amount || amount <= 0 || !currency || currency === home) {
       this._amountConverted.set(null);
       return;
@@ -435,6 +476,25 @@ export class ExpensesComponent implements OnInit {
     this._amountConverted.set(Math.round(amount * rate * 100) / 100);
   }
 
+  // ── 展開費用明細 ────────────────────────────────
+  async toggleExpand(expense: Expense): Promise<void> {
+    if (this.expandedExpenseId() === expense.client_record_id) {
+      this.expandedExpenseId.set(null);
+      this.expandedSplits.set([]);
+      return;
+    }
+    this.expandedExpenseId.set(expense.client_record_id);
+    const splits = await this.expenseService.getSplits(expense.client_record_id);
+    // 墊款人排第一
+    const sorted = [...splits].sort((a, b) => {
+      if (a.member_id === expense.payer_member_id) return -1;
+      if (b.member_id === expense.payer_member_id) return 1;
+      return 0;
+    });
+    this.expandedSplits.set(sorted);
+  }
+
+  // ── 分帳方式 ────────────────────────────────────
   onSplitTypeChange(): void {
     const value = this.form.get('split_type')?.value as 'EQUAL' | 'SHARES';
     this.splitType.set(value);
@@ -449,9 +509,9 @@ export class ExpensesComponent implements OnInit {
   }
 
   private initShareRows(): void {
-    const count = this.personCount();
+    const count   = this.personCount();
     const members = this.members();
-    const eq = Math.floor(100 / count);
+    const eq  = Math.floor(100 / count);
     const rem = 100 - eq * count;
     this.shareRows.set(Array.from({ length: count }, (_, i) => ({
       memberId: members[i]?.id ?? '',
@@ -461,7 +521,7 @@ export class ExpensesComponent implements OnInit {
   }
 
   private resizeShareRows(count: number): void {
-    const members = this.members();
+    const members  = this.members();
     const existing = this.shareRows();
     let rows = existing.slice(0, count);
     while (rows.length < count) {
@@ -481,6 +541,7 @@ export class ExpensesComponent implements OnInit {
     this.shareRows.update(rows => rows.map((r, i) => i === index ? { ...r, weight: Math.max(0, weight) } : r));
   }
 
+  // ── OCR ─────────────────────────────────────────
   async scanReceipt(event: Event): Promise<void> {
     const file = (event.target as HTMLInputElement).files?.[0];
     if (!file) return;
@@ -497,10 +558,11 @@ export class ExpensesComponent implements OnInit {
     const result = this.ocrResult();
     if (!result) return;
     if (result.amount !== null) this.form.patchValue({ amount: result.amount });
-    if (result.date !== null) this.form.patchValue({ expense_date: result.date });
+    if (result.date   !== null) this.form.patchValue({ expense_date: result.date });
     this.ocrResult.set(null);
   }
 
+  // ── 新增費用 ─────────────────────────────────────
   async addExpense(): Promise<void> {
     if (this.form.invalid || this.submitting()) return;
     if (this.splitType() === 'SHARES' && this.shareWeightSum() !== 100) return;
@@ -508,7 +570,7 @@ export class ExpensesComponent implements OnInit {
     try {
       const { title, amount, currency_code, expense_date, payer_member_id, split_type } = this.form.value;
       const dateStr = expense_date!;
-      const { rate, rateDate, isOffline } = await this.exchangeRateService.getRate(dateStr, currency_code!);
+      const { rate } = await this.exchangeRateService.getRate(dateStr, currency_code!);
 
       const shareWeights = split_type === 'SHARES'
         ? this.shareRows().map(r => ({ memberId: r.memberId, weight: r.weight }))
@@ -528,10 +590,10 @@ export class ExpensesComponent implements OnInit {
       });
 
       this.form.reset({
-        currency_code: 'TWD',
-        expense_date: new Date().toISOString().split('T')[0],
+        currency_code:   this.pref.country().currency,
+        expense_date:    new Date().toISOString().split('T')[0],
         payer_member_id: this.members()[0]?.id ?? '',
-        split_type: 'EQUAL',
+        split_type:      'EQUAL',
       });
       this._amountConverted.set(null);
       this.splitType.set('EQUAL');
@@ -542,12 +604,19 @@ export class ExpensesComponent implements OnInit {
     }
   }
 
+  // ── 工具方法 ─────────────────────────────────────
   getMemberName(memberId: string): string {
     return this.members().find(m => m.id === memberId)?.display_name ?? memberId;
   }
 
+  absAmount(amount: number): number { return Math.abs(amount); }
+
   async deleteExpense(id: string): Promise<void> {
     if (!confirm('確定刪除此筆記帳？')) return;
+    if (this.expandedExpenseId() === id) {
+      this.expandedExpenseId.set(null);
+      this.expandedSplits.set([]);
+    }
     await this.expenseService.delete(id);
     await this.loadExpenses();
   }
