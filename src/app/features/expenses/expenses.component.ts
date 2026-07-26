@@ -8,6 +8,7 @@ import { ExchangeRateService } from '../../core/services/exchange-rate.service';
 import { OcrService } from '../../core/services/ocr.service';
 import { TripService } from '../../core/services/trip.service';
 import { PreferenceService } from '../../core/services/preference.service';
+import { generateId } from '../../core/utils/uuid.util';
 
 interface ShareRow { memberId: string; name: string; weight: number; }
 
@@ -144,6 +145,9 @@ interface ShareRow { memberId: string; name: string; weight: number; }
                         <span class="share-amount-cell">
                           {{ (form.get('amount')?.value ?? 0) * row.weight / 100 | number:'1.0-2' }}
                           {{ form.get('currency_code')?.value }}
+                          @if (amountConverted() !== null) {
+                            <span class="share-conv">≈ {{ amountConverted()! * row.weight / 100 | number:'1.0-0' }} {{ homeCurrency() }}</span>
+                          }
                         </span>
                       }
                     </div>
@@ -325,8 +329,12 @@ interface ShareRow { memberId: string; name: string; weight: number; }
     }
     .pct-sign { font-size: 0.85rem; color: #888; }
     .share-amount-cell {
-      min-width: 5rem; text-align: right; font-size: 0.85rem;
+      text-align: right; font-size: 0.85rem;
       font-weight: 600; color: #667eea; flex-shrink: 0;
+    }
+    .share-conv {
+      display: block; font-size: 0.72rem; font-weight: 400;
+      color: #48bb78; margin-top: 0.1rem;
     }
     .weight-sum { padding: 0.4rem 0.75rem; font-size: 0.82rem; font-weight: 600; color: #48bb78; background: #f8fff8; }
     .weight-sum.bad { color: #e53e3e; background: #fff5f5; }
@@ -514,7 +522,7 @@ export class ExpensesComponent implements OnInit {
     const eq  = Math.floor(100 / count);
     const rem = 100 - eq * count;
     this.shareRows.set(Array.from({ length: count }, (_, i) => ({
-      memberId: members[i]?.id ?? '',
+      memberId: members[i]?.id ?? generateId(), // 虛擬成員也給唯一 ID，避免 settlement 合算
       name:     members[i]?.display_name ?? `成員 ${i + 1}`,
       weight:   i === count - 1 ? eq + rem : eq,
     })));
@@ -526,11 +534,36 @@ export class ExpensesComponent implements OnInit {
     let rows = existing.slice(0, count);
     while (rows.length < count) {
       const i = rows.length;
-      rows.push({ memberId: members[i]?.id ?? '', name: members[i]?.display_name ?? `成員 ${i + 1}`, weight: 0 });
+      rows.push({
+        memberId: members[i]?.id ?? generateId(),
+        name: members[i]?.display_name ?? `成員 ${i + 1}`,
+        weight: 0,
+      });
     }
     const sumExcLast = rows.slice(0, -1).reduce((s, r) => s + r.weight, 0);
     rows = [...rows.slice(0, -1), { ...rows[rows.length - 1], weight: Math.max(0, 100 - sumExcLast) }];
     this.shareRows.set(rows);
+  }
+
+  // 提交前：把不在 trip_members 裡的虛擬成員自動寫入，確保名稱與 ID 永久保存
+  private async ensureShareRowMembers(): Promise<void> {
+    const existingIds = new Set(this.members().map(m => m.id));
+    const rows = this.shareRows();
+    const updated = [...rows];
+    let created = false;
+
+    for (let i = 0; i < updated.length; i++) {
+      if (!existingIds.has(updated[i].memberId)) {
+        const newMember = await this.tripService.addMember(this.tripId, updated[i].name);
+        updated[i] = { ...updated[i], memberId: newMember.id };
+        created = true;
+      }
+    }
+
+    if (created) {
+      this.shareRows.set(updated);
+      await this.loadMembers(); // 重新載入，使 getMemberName 可以解析新成員
+    }
   }
 
   updateShareRowName(index: number, name: string): void {
@@ -568,6 +601,11 @@ export class ExpensesComponent implements OnInit {
     if (this.splitType() === 'SHARES' && this.shareWeightSum() !== 100) return;
     this.submitting.set(true);
     try {
+      // 提交前確保虛擬成員已寫入 trip_members（避免 memberId 為空或找不到名稱）
+      if (this.splitType() === 'SHARES') {
+        await this.ensureShareRowMembers();
+      }
+
       const { title, amount, currency_code, expense_date, payer_member_id, split_type } = this.form.value;
       const dateStr = expense_date!;
       const { rate } = await this.exchangeRateService.getRate(dateStr, currency_code!);
