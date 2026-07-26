@@ -11,6 +11,8 @@ import { PreferenceService } from '../../core/services/preference.service';
 import { generateId } from '../../core/utils/uuid.util';
 
 interface ShareRow { memberId: string; name: string; weight: number; }
+interface OriginalAmount { currency: string; amount: number; }
+interface GrossEntry { memberId: string; convertedTotal: number; originals: OriginalAmount[]; }
 
 @Component({
   selector: 'app-expenses',
@@ -223,25 +225,35 @@ interface ShareRow { memberId: string; name: string; weight: number; }
         <div class="card settlement">
           <h3>結算總覽</h3>
 
-          @if (receivable().length > 0) {
+          @if (grossReceivable().length > 0) {
             <div class="settle-group">
               <div class="settle-group-title positive-title">應收</div>
-              @for (entry of receivable(); track entry.memberId) {
+              @for (entry of grossReceivable(); track entry.memberId) {
                 <div class="settlement-row positive">
                   <span class="member-name">{{ getMemberName(entry.memberId) }}</span>
-                  <span class="settle-amount"><strong>{{ entry.amount | number:'1.0-0' }}</strong> 元</span>
+                  <span class="settle-amounts">
+                    @for (orig of entry.originals; track orig.currency) {
+                      <span class="settle-orig">+{{ orig.amount | number:'1.0-0' }} {{ orig.currency }}</span>
+                    }
+                    <span class="settle-converted">+{{ entry.convertedTotal | number:'1.0-0' }} {{ homeCurrency() }}</span>
+                  </span>
                 </div>
               }
             </div>
           }
 
-          @if (payable().length > 0) {
+          @if (grossPayable().length > 0) {
             <div class="settle-group">
               <div class="settle-group-title negative-title">應付</div>
-              @for (entry of payable(); track entry.memberId) {
+              @for (entry of grossPayable(); track entry.memberId) {
                 <div class="settlement-row negative">
                   <span class="member-name">{{ getMemberName(entry.memberId) }}</span>
-                  <span class="settle-amount"><strong>{{ absAmount(entry.amount) | number:'1.0-0' }}</strong> 元</span>
+                  <span class="settle-amounts">
+                    @for (orig of entry.originals; track orig.currency) {
+                      <span class="settle-orig">-{{ orig.amount | number:'1.0-0' }} {{ orig.currency }}</span>
+                    }
+                    <span class="settle-converted">-{{ entry.convertedTotal | number:'1.0-0' }} {{ homeCurrency() }}</span>
+                  </span>
                 </div>
               }
             </div>
@@ -390,13 +402,21 @@ interface ShareRow { memberId: string; name: string; weight: number; }
     .settlement-row {
       display: flex; justify-content: space-between; align-items: center;
       padding: 0.5rem 0.625rem; border-radius: 8px; font-size: 0.95rem; margin-bottom: 0.25rem;
+      flex-wrap: wrap; gap: 0.25rem;
     }
     .settlement-row.positive { background: #f8fffc; }
     .settlement-row.negative { background: #fff8f8; }
-    .member-name { color: #333; }
-    .settle-amount { }
-    .settlement-row.positive strong { color: #2d8a56; font-size: 1rem; }
-    .settlement-row.negative strong { color: #c53030; font-size: 1rem; }
+    .member-name { color: #333; flex: 1; min-width: 6rem; }
+    .settle-amounts { display: flex; flex-wrap: wrap; gap: 0.375rem; align-items: center; justify-content: flex-end; }
+    .settle-orig { font-size: 0.82rem; font-weight: 600; color: #555; }
+    .settlement-row.positive .settle-orig { color: #2d8a56; }
+    .settlement-row.negative .settle-orig { color: #c53030; }
+    .settle-converted {
+      font-size: 0.78rem; font-weight: 500;
+      padding: 0.1rem 0.4rem; border-radius: 5px;
+    }
+    .settlement-row.positive .settle-converted { background: #e6fff2; color: #276749; }
+    .settlement-row.negative .settle-converted { background: #fff0f0; color: #9b2c2c; }
   `]
 })
 export class ExpensesComponent implements OnInit {
@@ -411,14 +431,13 @@ export class ExpensesComponent implements OnInit {
   tripId!: string;
   expenses   = signal<Expense[]>([]);
   members    = signal<TripMember[]>([]);
-  settlement = signal<{ memberId: string; amount: number }[]>([]);
+  grossSettlement = signal<{ receivable: GrossEntry[]; payable: GrossEntry[] }>({ receivable: [], payable: [] });
   ocrResult  = signal<{ amount: number | null; date: string | null } | null>(null);
   ocrLoading = signal(false);
   submitting = signal(false);
 
-  // 結算分組
-  readonly receivable = computed(() => this.settlement().filter(e => e.amount > 0));
-  readonly payable    = computed(() => this.settlement().filter(e => e.amount < 0));
+  readonly grossReceivable = computed(() => this.grossSettlement().receivable.filter(e => e.convertedTotal > 0.001));
+  readonly grossPayable    = computed(() => this.grossSettlement().payable.filter(e => e.convertedTotal > 0.001));
 
   // 分帳相關
   personCount = signal<number>(2);
@@ -455,7 +474,7 @@ export class ExpensesComponent implements OnInit {
 
   private async loadExpenses(): Promise<void> {
     this.expenses.set(await this.expenseService.getByTrip(this.tripId));
-    await this.loadSettlement();
+    await this.computeGrossSettlement();
   }
 
   private async loadMembers(): Promise<void> {
@@ -466,10 +485,51 @@ export class ExpensesComponent implements OnInit {
     }
   }
 
-  private async loadSettlement(): Promise<void> {
-    const balanceMap = await this.expenseService.calcSettlement(this.tripId);
-    const entries = [...balanceMap.entries()].map(([memberId, amount]) => ({ memberId, amount }));
-    this.settlement.set(entries.filter(e => Math.abs(e.amount) > 0.001));
+  private async computeGrossSettlement(): Promise<void> {
+    const expenses = this.expenses();
+    // recvMap: payer_member_id → { converted: total receivable, originals: per-currency amounts }
+    const recvMap = new Map<string, { converted: number; originals: Map<string, number> }>();
+    // payMap: member_id → { converted: total payable, originals: per-currency amounts }
+    const payMap  = new Map<string, { converted: number; originals: Map<string, number> }>();
+
+    const add = (
+      map: Map<string, { converted: number; originals: Map<string, number> }>,
+      memberId: string, conv: number, currency: string, orig: number,
+    ) => {
+      if (!map.has(memberId)) map.set(memberId, { converted: 0, originals: new Map() });
+      const entry = map.get(memberId)!;
+      entry.converted += conv;
+      entry.originals.set(currency, (entry.originals.get(currency) ?? 0) + orig);
+    };
+
+    for (const expense of expenses) {
+      const splits = await this.expenseService.getSplits(expense.client_record_id);
+      const payerSplit = splits.find(s => s.member_id === expense.payer_member_id);
+      // Payer's receivable = total - payer's own share
+      const recvConv = expense.converted_amount - (payerSplit?.converted_owed_amount ?? 0);
+      const recvOrig = expense.amount           - (payerSplit?.owed_amount           ?? 0);
+      if (recvConv > 0.001) {
+        add(recvMap, expense.payer_member_id, recvConv, expense.currency_code, recvOrig);
+      }
+      // Each split member's payable = their owed amount
+      for (const split of splits) {
+        if (split.converted_owed_amount > 0.001) {
+          add(payMap, split.member_id, split.converted_owed_amount, expense.currency_code, split.owed_amount);
+        }
+      }
+    }
+
+    const toEntries = (map: Map<string, { converted: number; originals: Map<string, number> }>): GrossEntry[] =>
+      [...map.entries()].map(([memberId, v]) => ({
+        memberId,
+        convertedTotal: Math.round(v.converted * 100) / 100,
+        originals: [...v.originals.entries()].map(([currency, amount]) => ({
+          currency,
+          amount: Math.round(amount * 100) / 100,
+        })),
+      }));
+
+    this.grossSettlement.set({ receivable: toEntries(recvMap), payable: toEntries(payMap) });
   }
 
   private async calcAmountConversion(): Promise<void> {
@@ -644,10 +704,9 @@ export class ExpensesComponent implements OnInit {
 
   // ── 工具方法 ─────────────────────────────────────
   getMemberName(memberId: string): string {
+    if (!memberId) return '（未命名）';
     return this.members().find(m => m.id === memberId)?.display_name ?? memberId;
   }
-
-  absAmount(amount: number): number { return Math.abs(amount); }
 
   async deleteExpense(id: string): Promise<void> {
     if (!confirm('確定刪除此筆記帳？')) return;
