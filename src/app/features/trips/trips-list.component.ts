@@ -16,20 +16,19 @@ import { PreferenceService, COUNTRIES, Country } from '../../core/services/prefe
   template: `
     <div class="page-container">
       <header class="page-header">
-
-        <!-- 最左：選定國家的當地時間 -->
-        <div class="header-clock">{{ pref.clockDisplay() }}</div>
-
         <h1 class="header-title">我的行程</h1>
 
         <div class="header-actions">
+          <!-- 當地時間（＋ 左側） -->
+          <div class="header-clock">{{ pref.clockDisplay() }}</div>
+
           <button class="btn-icon" (click)="showForm.set(!showForm())">＋</button>
           <a routerLink="/settings" class="btn-icon">⚙️</a>
 
-          <!-- 國家選單（登出鍵左側） -->
+          <!-- 目的地國家選單（登出左側） -->
           <div class="country-picker" [class.open]="showCountry()">
             <button class="country-trigger" (click)="toggleCountry($event)">
-              <span class="flag">{{ pref.country().flag }}</span>
+              <span class="fi fi-{{ pref.countryCode().toLowerCase() }}"></span>
               <span class="cname">{{ pref.country().nativeName }}</span>
               <span class="caret" [class.flipped]="showCountry()">▾</span>
             </button>
@@ -38,8 +37,9 @@ import { PreferenceService, COUNTRIES, Country } from '../../core/services/prefe
                 <button class="country-option"
                         [class.selected]="c.code === pref.countryCode()"
                         (click)="selectCountry(c)">
-                  <span class="flag">{{ c.flag }}</span>
+                  <span class="fi fi-{{ c.code.toLowerCase() }}"></span>
                   <span>{{ c.nativeName }}</span>
+                  <span class="currency-badge">{{ c.currency }}</span>
                 </button>
               }
             </div>
@@ -140,34 +140,32 @@ import { PreferenceService, COUNTRIES, Country } from '../../core/services/prefe
 
     /* ── Header ── */
     .page-header {
-      display: flex; align-items: center; gap: 0.75rem;
-      margin-bottom: 1.5rem; flex-wrap: wrap;
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 1.5rem; flex-wrap: wrap; gap: 0.5rem;
     }
+    .header-title {
+      font-size: 1.6rem; font-weight: 700; color: var(--text-primary); margin: 0;
+    }
+    .header-actions { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+
     .header-clock {
       font-size: 0.8rem; font-weight: 600; font-variant-numeric: tabular-nums;
       color: var(--accent); background: var(--accent-light);
-      padding: 0.35rem 0.75rem; border-radius: 8px; white-space: nowrap;
-      letter-spacing: 0.02em; flex-shrink: 0;
+      padding: 0.35rem 0.7rem; border-radius: 8px; white-space: nowrap;
+      letter-spacing: 0.02em;
     }
-    .header-title {
-      flex: 1; font-size: 1.6rem; font-weight: 700;
-      color: var(--text-primary); margin: 0; min-width: 80px;
-    }
-    .header-actions { display: flex; align-items: center; gap: 0.5rem; }
 
     .btn-icon {
       background: var(--accent); color: white; border: none;
       border-radius: 10px; padding: 0.5rem 0.875rem;
       cursor: pointer; font-size: 0.95rem; text-decoration: none;
-      display: inline-flex; align-items: center;
-      transition: opacity 0.15s;
+      display: inline-flex; align-items: center; transition: opacity 0.15s;
     }
     .btn-icon:hover { opacity: 0.85; }
     .btn-logout { background: #e53e3e; }
 
     /* ── 國家選單 ── */
     .country-picker { position: relative; }
-
     .country-trigger {
       display: flex; align-items: center; gap: 0.4rem;
       background: var(--surface); color: var(--text-primary);
@@ -176,11 +174,14 @@ import { PreferenceService, COUNTRIES, Country } from '../../core/services/prefe
       font-size: 0.875rem; white-space: nowrap;
       transition: border-color 0.2s;
     }
-    .country-trigger:hover { border-color: var(--accent); }
+    .country-trigger:hover,
     .country-picker.open .country-trigger { border-color: var(--accent); }
-
-    .flag { font-size: 1.1rem; line-height: 1; }
-    .cname { font-weight: 500; max-width: 80px; overflow: hidden; text-overflow: ellipsis; }
+    .fi { width: 1.3em; flex-shrink: 0; border-radius: 2px; }
+    .cname { font-weight: 500; max-width: 72px; overflow: hidden; text-overflow: ellipsis; }
+    .currency-badge {
+      font-size: 0.7rem; padding: 0.1rem 0.4rem; border-radius: 5px;
+      background: var(--accent-light); color: var(--accent); font-weight: 700;
+    }
     .caret { font-size: 0.7rem; color: var(--text-secondary); transition: transform 0.2s; }
     .caret.flipped { transform: rotate(180deg); }
 
@@ -188,22 +189,15 @@ import { PreferenceService, COUNTRIES, Country } from '../../core/services/prefe
       position: absolute; top: calc(100% + 6px); right: 0;
       background: var(--surface); border: 1.5px solid var(--border);
       border-radius: 12px; box-shadow: 0 8px 32px var(--shadow);
-      min-width: 180px; max-height: 300px; overflow-y: auto;
-      z-index: 100; display: none;
-      /* 自訂捲軸 */
-      scrollbar-width: thin;
+      min-width: 190px; max-height: 300px; overflow-y: auto;
+      z-index: 100; display: none; scrollbar-width: thin;
     }
-    .country-dropdown::-webkit-scrollbar { width: 4px; }
-    .country-dropdown::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
-
     .country-picker.open .country-dropdown { display: block; }
-
     .country-option {
-      display: flex; align-items: center; gap: 0.625rem;
+      display: flex; align-items: center; gap: 0.6rem;
       width: 100%; padding: 0.625rem 1rem; border: none;
       background: transparent; cursor: pointer; text-align: left;
-      color: var(--text-primary); font-size: 0.9rem;
-      transition: background 0.15s;
+      color: var(--text-primary); font-size: 0.875rem; transition: background 0.15s;
     }
     .country-option:hover    { background: var(--accent-light); }
     .country-option.selected { background: var(--accent-light); color: var(--accent); font-weight: 600; }
@@ -216,15 +210,14 @@ import { PreferenceService, COUNTRIES, Country } from '../../core/services/prefe
       box-shadow: 0 4px 20px var(--shadow); margin-bottom: 1rem;
     }
     .trip-form h3 { margin: 0 0 1rem; color: var(--text-primary); }
-
     .form-row { margin-bottom: 1rem; }
     .form-row label { display: block; font-weight: 500; margin-bottom: 0.35rem; color: var(--text-secondary); }
     .form-row input, .form-row select {
-      width: 100%; padding: 0.625rem 0.875rem;
-      border: 1.5px solid var(--border); border-radius: 10px;
-      font-size: 0.95rem; box-sizing: border-box;
-      background: var(--input-bg); color: var(--text-primary);
+      width: 100%; padding: 0.625rem 0.875rem 0.625rem 0.875rem;
+      border: 1.5px solid var(--border); border-radius: 10px; font-size: 0.95rem;
+      box-sizing: border-box; background: var(--input-bg); color: var(--text-primary);
     }
+    .form-row select { padding-right: 2.5rem; }
     .form-actions { display: flex; gap: 0.75rem; justify-content: flex-end; }
     .btn-primary {
       background: var(--accent); color: white; border: none;
@@ -235,16 +228,13 @@ import { PreferenceService, COUNTRIES, Country } from '../../core/services/prefe
       background: var(--accent-light); color: var(--text-secondary);
       border: none; border-radius: 10px; padding: 0.625rem 1.5rem; cursor: pointer;
     }
-
     .empty-state { text-align: center; padding: 4rem 2rem; color: var(--text-secondary); font-size: 1.1rem; }
     .empty-state p:first-child { font-size: 3rem; }
-
     .trips-grid { display: grid; gap: 1rem; }
-    .trip-card.card { padding: 1.25rem 1.5rem; cursor: default; }
+    .trip-card.card { padding: 1.25rem 1.5rem; }
     .trip-info { cursor: pointer; margin-bottom: 1rem; }
     .trip-info h3 { font-size: 1.2rem; font-weight: 600; margin: 0 0 0.5rem; color: var(--text-primary); }
     .trip-meta { display: flex; gap: 1rem; color: var(--text-secondary); font-size: 0.9rem; }
-
     .trip-nav { display: flex; gap: 0.5rem; flex-wrap: wrap; }
     .nav-btn {
       padding: 0.4rem 1rem; border-radius: 8px; border: none; cursor: pointer;
@@ -253,11 +243,8 @@ import { PreferenceService, COUNTRIES, Country } from '../../core/services/prefe
     }
     .nav-btn.danger { background: #fff0f0; color: #e53e3e; }
 
-    /* ── RWD（手機） ── */
     @media (max-width: 600px) {
-      .page-header { gap: 0.5rem; }
-      .header-clock { font-size: 0.7rem; padding: 0.3rem 0.6rem; }
-      .header-title { font-size: 1.2rem; }
+      .header-clock { font-size: 0.7rem; padding: 0.3rem 0.55rem; }
       .cname { display: none; }
     }
   `]
@@ -282,18 +269,12 @@ export class TripsListComponent implements OnInit {
   @HostListener('document:click', ['$event'])
   onDocumentClick(e: MouseEvent): void {
     const picker = document.querySelector('.country-picker');
-    if (picker && !picker.contains(e.target as Node)) {
-      this.showCountry.set(false);
-    }
+    if (picker && !picker.contains(e.target as Node)) this.showCountry.set(false);
   }
 
-  async ngOnInit(): Promise<void> {
-    await this.loadTrips();
-  }
+  async ngOnInit(): Promise<void> { await this.loadTrips(); }
 
-  async loadTrips(): Promise<void> {
-    this.trips.set(await this.tripService.getAll());
-  }
+  async loadTrips(): Promise<void> { this.trips.set(await this.tripService.getAll()); }
 
   toggleCountry(e: MouseEvent): void {
     e.stopPropagation();
@@ -302,24 +283,15 @@ export class TripsListComponent implements OnInit {
 
   selectCountry(c: Country): void {
     this.pref.setCountry(c.code);
-    // 同步更新新行程表單預設值
-    this.form.patchValue({
-      target_timezone: c.timezone,
-      base_currency:   c.currency,
-    });
+    this.form.patchValue({ target_timezone: c.timezone, base_currency: c.currency });
     this.showCountry.set(false);
   }
 
   async createTrip(): Promise<void> {
     if (this.form.invalid) return;
     const { title, target_timezone, base_currency } = this.form.value;
-    await this.tripService.create({
-      title: title!, target_timezone: target_timezone!, base_currency: base_currency!,
-    });
-    this.form.reset({
-      target_timezone: this.pref.country().timezone,
-      base_currency:   this.pref.country().currency,
-    });
+    await this.tripService.create({ title: title!, target_timezone: target_timezone!, base_currency: base_currency! });
+    this.form.reset({ target_timezone: this.pref.country().timezone, base_currency: this.pref.country().currency });
     this.showForm.set(false);
     await this.loadTrips();
   }

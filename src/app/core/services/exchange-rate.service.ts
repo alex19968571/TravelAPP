@@ -51,4 +51,18 @@ export class ExchangeRateService {
     const record = await db.exchange_rates.orderBy('date').reverse().first();
     return record?.date ?? null;
   }
+
+  /**
+   * 取得換算乘數：destAmount * rate = homeAmount
+   * Frankfurter 以 EUR 為 base（EUR→X 的匯率）
+   */
+  async getConversionRate(fromCurrency: string, toCurrency: string): Promise<number> {
+    if (fromCurrency === toCurrency) return 1;
+    const record = await db.exchange_rates.orderBy('date').reverse().first();
+    if (!record) return 1;
+    const rates = record.rates as Record<string, number>;
+    const fromRate = fromCurrency === 'EUR' ? 1 : (rates[fromCurrency] ?? 1);
+    const toRate   = toCurrency   === 'EUR' ? 1 : (rates[toCurrency]   ?? 1);
+    return toRate / fromRate;
+  }
 }

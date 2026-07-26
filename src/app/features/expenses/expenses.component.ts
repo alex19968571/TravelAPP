@@ -158,6 +158,7 @@ import { TripService } from '../../core/services/trip.service';
     .form-row label { display: block; font-weight: 500; margin-bottom: 0.35rem; color: #555; font-size: 0.9rem; }
     .form-row input, .form-row select { width: 100%; padding: 0.625rem 0.875rem; border: 1.5px solid #ddd;
       border-radius: 10px; font-size: 0.95rem; box-sizing: border-box; }
+    .form-row select { padding-right: 2.5rem; }
     .btn-primary { background: #667eea; color: white; border: none; border-radius: 10px;
       padding: 0.625rem 1.5rem; font-weight: 600; cursor: pointer; }
     .btn-primary:disabled { opacity: 0.5; }
