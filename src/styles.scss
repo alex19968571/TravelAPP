@@ -1,25 +1,98 @@
-*, *::before, *::after {
-  box-sizing: border-box;
+/* ── 設計系統 CSS 變數 ── */
+:root {
+  --accent:          #667eea;
+  --accent-light:    #f0f0ff;
+  --font-size-base:  16px;
+
+  /* 淺色主題（預設） */
+  --bg:              #f5f6fa;
+  --surface:         #ffffff;
+  --text-primary:    #1a1a2e;
+  --text-secondary:  #666666;
+  --border:          #dddddd;
+  --shadow:          rgba(0, 0, 0, 0.08);
+  --input-bg:        #ffffff;
+  --header-bg:       #ffffff;
 }
+
+[data-theme='dark'] {
+  --bg:              #0e0e1a;
+  --surface:         #1a1a2e;
+  --text-primary:    #e8e8f0;
+  --text-secondary:  #9090aa;
+  --border:          #2e2e4a;
+  --shadow:          rgba(0, 0, 0, 0.5);
+  --input-bg:        #12121e;
+  --header-bg:       #1a1a2e;
+}
+
+/* ── Reset ── */
+*, *::before, *::after { box-sizing: border-box; }
 
 html, body {
   margin: 0;
   padding: 0;
+  font-size: var(--font-size-base);
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans TC',
     'PingFang TC', Helvetica, Arial, sans-serif;
-  background: #f5f6fa;
-  color: #1a1a2e;
+  background: var(--bg);
+  color: var(--text-primary);
   -webkit-font-smoothing: antialiased;
+  transition: background 0.25s ease, color 0.25s ease;
 }
 
-input, select, textarea, button {
-  font-family: inherit;
-}
-
+input, select, textarea, button { font-family: inherit; }
 a { color: inherit; }
 
-/* PWA safe area padding (iOS notch) */
+/* PWA safe-area (iOS notch) */
 body {
   padding-top: env(safe-area-inset-top);
   padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* ── 暗色主題：全域卡片、標題、輸入框覆蓋 ── */
+[data-theme='dark'] .card {
+  background: var(--surface) !important;
+  box-shadow: 0 4px 20px var(--shadow) !important;
+  color: var(--text-primary) !important;
+}
+
+[data-theme='dark'] h1,
+[data-theme='dark'] h2,
+[data-theme='dark'] h3 {
+  color: var(--text-primary) !important;
+}
+
+[data-theme='dark'] p,
+[data-theme='dark'] .subtitle,
+[data-theme='dark'] .trip-meta,
+[data-theme='dark'] .member-name {
+  color: var(--text-secondary) !important;
+}
+
+[data-theme='dark'] input,
+[data-theme='dark'] select,
+[data-theme='dark'] textarea {
+  background: var(--input-bg) !important;
+  color: var(--text-primary) !important;
+  border-color: var(--border) !important;
+}
+
+[data-theme='dark'] .back-btn {
+  color: var(--accent) !important;
+}
+
+[data-theme='dark'] .page-container {
+  background: var(--bg);
+}
+
+/* 讓 accent 色 class 跟著 CSS variable 走 */
+[data-theme='dark'] .nav-btn {
+  background: var(--accent-light) !important;
+  color: var(--accent) !important;
+}
+
+[data-theme='dark'] .badge {
+  background: var(--accent-light) !important;
+  color: var(--accent) !important;
 }
