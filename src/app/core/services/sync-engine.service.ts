@@ -46,7 +46,7 @@ export class SyncEngineService implements OnDestroy {
         { data: expenses },
         { data: splits },
       ] = await Promise.all([
-        this.supabase.from('trips').select('*').or(`owner_id.eq.${userId}`),
+        this.supabase.from('trips').select('*').eq('owner_id', userId),
         this.supabase.from('trip_members').select('*').eq('user_id', userId),
         this.supabase.from('itinerary_items').select('*'),
         this.supabase.from('shopping_list').select('*'),
