@@ -1,4 +1,4 @@
-import { Component, inject, signal, HostListener } from '@angular/core';
+import { Component, inject, signal, HostListener, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { TranslocoModule } from '@jsverse/transloco';
@@ -92,11 +92,33 @@ import {
               }
             </button>
           }
+          <!-- 自訂顏色 -->
+          <button
+            class="color-swatch custom-swatch"
+            [class.selected]="pref.colorId() === 'custom'"
+            [style.background]="pref.colorId() === 'custom' ? pref.customColorHex() : 'conic-gradient(red,yellow,lime,cyan,blue,magenta,red)'"
+            title="自訂顏色"
+            (click)="customColorInput.click()"
+          >
+            @if (pref.colorId() === 'custom') {
+              <span class="check">✓</span>
+            } @else {
+              <span class="custom-icon">✎</span>
+            }
+          </button>
+          <input
+            #customColorInput
+            type="color"
+            hidden
+            [value]="pref.customColorHex()"
+            (input)="onCustomColor($event)"
+          />
         </div>
         <div class="color-labels">
           @for (c of colors; track c.id) {
             <span class="color-label" [class.active]="pref.colorId() === c.id">{{ c.label }}</span>
           }
+          <span class="color-label" [class.active]="pref.colorId() === 'custom'">自訂</span>
         </div>
       </div>
 
@@ -365,7 +387,11 @@ import {
         color: white;
         font-size: 1.1rem;
         font-weight: 700;
+        text-shadow: 0 1px 2px rgba(0,0,0,0.5);
       }
+      .custom-swatch { border: 3px solid var(--border); }
+      .custom-swatch.selected { border-color: white; box-shadow: 0 0 0 3px var(--accent); }
+      .custom-icon { font-size: 1rem; color: white; text-shadow: 0 1px 2px rgba(0,0,0,0.6); }
       .color-labels {
         display: flex;
         gap: 0.75rem;
@@ -424,6 +450,8 @@ import {
   ],
 })
 export class SettingsComponent {
+  @ViewChild('customColorInput') customColorInputRef!: ElementRef<HTMLInputElement>;
+
   pref = inject(PreferenceService);
   colors = COLOR_OPTIONS;
   countries = COUNTRIES;
@@ -443,5 +471,9 @@ export class SettingsComponent {
   selectCountry(c: Country): void {
     this.pref.setCountry(c.code);
     this.showCountry.set(false);
+  }
+
+  onCustomColor(e: Event): void {
+    this.pref.setCustomColor((e.target as HTMLInputElement).value);
   }
 }

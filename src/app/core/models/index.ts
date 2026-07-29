@@ -30,6 +30,8 @@ export interface TripMember {
   role: 'OWNER' | 'EDITOR' | 'VIEWER';
 }
 
+export type TransportMode = 'walk' | 'drive' | 'bike' | 'transit' | 'flight' | 'custom';
+
 export interface ItineraryItem {
   id: string;
   trip_id: string;
@@ -41,6 +43,10 @@ export interface ItineraryItem {
   image_url?: string | null;
   notes?: string | null;
   encoded_polyline?: string;
+  /** 到下一個景點的交通方式 */
+  next_transport_mode?: TransportMode | null;
+  /** 到下一個景點的所需分鐘數 */
+  next_transport_minutes?: number | null;
   updated_at_utc: string;
 }
 

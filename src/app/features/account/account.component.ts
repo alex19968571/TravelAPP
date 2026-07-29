@@ -49,15 +49,15 @@ import { PreferenceService, COUNTRIES, Country } from '../../core/services/prefe
           <span class="chevron">›</span>
         </button>
 
-        <div class="row-item country-row" (click)="$event.stopPropagation()">
+        <div class="row-item country-row" (click)="toggleHomeCountry($event)">
           <span class="row-label">📍 {{ 'account.homeCountry' | transloco }}</span>
           <div class="country-picker-inline" [class.open]="showHomeCountry()">
-            <button class="country-trigger" (click)="toggleHomeCountry($event)">
+            <div class="country-trigger">
               <span class="fi fi-{{ pref.homeCountry().code.toLowerCase() }}"></span>
               <span class="cname">{{ pref.homeCountry().nativeName }}</span>
               <span class="caret" [class.flipped]="showHomeCountry()">▾</span>
-            </button>
-            <div class="country-dropdown">
+            </div>
+            <div class="country-dropdown" (click)="$event.stopPropagation()">
               @for (c of countries; track c.code) {
                 <button
                   class="country-option"
@@ -217,10 +217,7 @@ import { PreferenceService, COUNTRIES, Country } from '../../core/services/prefe
       }
 
       .country-row {
-        cursor: default;
-      }
-      .country-row:hover {
-        background: transparent;
+        cursor: pointer;
       }
       .row-label {
         flex-shrink: 0;
@@ -228,7 +225,6 @@ import { PreferenceService, COUNTRIES, Country } from '../../core/services/prefe
       .country-picker-inline {
         position: relative;
         flex: 1;
-        max-width: 200px;
       }
       .country-trigger {
         display: flex;
@@ -240,11 +236,10 @@ import { PreferenceService, COUNTRIES, Country } from '../../core/services/prefe
         border: 1.5px solid var(--border);
         border-radius: 10px;
         padding: 0.4rem 0.6rem;
-        cursor: pointer;
         font-size: 0.85rem;
         white-space: nowrap;
+        pointer-events: none;
       }
-      .country-trigger:hover,
       .country-picker-inline.open .country-trigger {
         border-color: var(--accent);
       }
@@ -279,11 +274,11 @@ import { PreferenceService, COUNTRIES, Country } from '../../core/services/prefe
         position: absolute;
         top: calc(100% + 6px);
         right: 0;
+        left: 0;
         background: var(--surface);
         border: 1.5px solid var(--border);
         border-radius: 12px;
         box-shadow: 0 8px 32px var(--shadow);
-        min-width: 190px;
         max-height: 240px;
         overflow-y: auto;
         z-index: 100;

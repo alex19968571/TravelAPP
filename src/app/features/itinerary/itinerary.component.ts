@@ -659,6 +659,10 @@ export class ItineraryComponent implements OnInit, AfterViewInit {
   chooseDate(d: DateTab): void {
     this.selectedDate.set(d);
     this.showDatePicker.set(false);
+    // 選完日期後自動進入順序選擇
+    const count = this.items().filter(i => i.day_number === d.dayNumber).length;
+    this.selectedPosition.set(count);  // 預設放到最後
+    this.showPositionPicker.set(true);
   }
 
   async confirmAdd(): Promise<void> {
@@ -694,6 +698,14 @@ export class ItineraryComponent implements OnInit, AfterViewInit {
   }
 
   positionLabel(p: number): string {
-    return this.transloco.translate('itinerary.positionN', { n: p + 1 });
+    const d = this.selectedDate();
+    if (!d) return `第 ${p + 1} 個位置`;
+    const dayItems = this.items()
+      .filter(i => i.day_number === d.dayNumber)
+      .sort((a, b) => a.order_index - b.order_index);
+    if (dayItems.length === 0) return '第 1 個位置（唯一）';
+    if (p === 0) return `排在最前面（${dayItems[0].place_name} 之前）`;
+    if (p === dayItems.length) return `排在最後面（${dayItems[p - 1].place_name} 之後）`;
+    return `排在 ${dayItems[p - 1].place_name} 之後`;
   }
 }

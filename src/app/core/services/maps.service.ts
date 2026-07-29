@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { setOptions, importLibrary } from '@googlemaps/js-api-loader';
 import { environment } from '../../../environments/environment';
-import { ItineraryItem } from '../models';
+import { ItineraryItem, TransportMode } from '../models';
 
 @Injectable({ providedIn: 'root' })
 export class MapsService {
@@ -128,6 +128,36 @@ export class MapsService {
       return result.routes[0]?.overview_polyline ?? null;
     } catch (err) {
       console.error('[Maps] getRoute error', err);
+      return null;
+    }
+  }
+
+  /** 估算兩點間的行程時間（分鐘），支援步行/開車/大眾運輸；失敗回傳 null */
+  async estimateDuration(
+    from: { lat: number; lng: number },
+    to: { lat: number; lng: number },
+    mode: TransportMode,
+  ): Promise<number | null> {
+    const modeMap: Partial<Record<TransportMode, google.maps.TravelMode>> = {
+      walk:    google.maps.TravelMode.WALKING,
+      drive:   google.maps.TravelMode.DRIVING,
+      bike:    google.maps.TravelMode.BICYCLING,
+      transit: google.maps.TravelMode.TRANSIT,
+    };
+    const travelMode = modeMap[mode];
+    if (!travelMode) return null;
+    try {
+      await this.ensureLoaded();
+      const svc = new google.maps.DirectionsService();
+      const result = await svc.route({
+        origin: from,
+        destination: to,
+        travelMode,
+      });
+      const durationSec = result.routes[0]?.legs[0]?.duration?.value ?? null;
+      return durationSec !== null ? Math.round(durationSec / 60) : null;
+    } catch (err) {
+      console.warn('[Maps] estimateDuration failed', err);
       return null;
     }
   }

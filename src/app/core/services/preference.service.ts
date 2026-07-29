@@ -173,6 +173,13 @@ export const COUNTRIES: Country[] = [
   },
 ];
 
+function hexToRgba(hex: string, alpha: number): string {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  return `rgba(${r},${g},${b},${alpha})`;
+}
+
 export type Theme = 'light' | 'dark';
 export type FontSize = 'sm' | 'md' | 'lg' | 'xl';
 
@@ -222,6 +229,7 @@ export class PreferenceService {
 
   readonly theme = signal<Theme>(load('pref_theme', 'light'));
   readonly colorId = signal<string>(load('pref_color', 'purple'));
+  readonly customColorHex = signal<string>(load('pref_custom_color', '#667eea'));
   readonly fontSize = signal<FontSize>(load('pref_fontSize', 'md'));
   readonly countryCode = signal<string>(load('pref_country', 'TW'));
   /** 當前所在國家（設定頁切換，影響 UI 語系與換算目標幣別） */
@@ -262,12 +270,22 @@ export class PreferenceService {
   constructor() {
     effect(() => {
       const root = document.documentElement;
-      const col = this.color();
+      const id = this.colorId();
       const theme = this.theme();
       const fs = this.fontSize();
+      let accent: string;
+      let accentLight: string;
+      if (id === 'custom') {
+        accent = this.customColorHex();
+        accentLight = hexToRgba(accent, theme === 'dark' ? 0.3 : 0.12);
+      } else {
+        const col = COLOR_OPTIONS.find((c) => c.id === id) ?? COLOR_OPTIONS[0];
+        accent = col.accent;
+        accentLight = theme === 'dark' ? col.accentDark : col.accentLight;
+      }
       root.setAttribute('data-theme', theme);
-      root.style.setProperty('--accent', col.accent);
-      root.style.setProperty('--accent-light', theme === 'dark' ? col.accentDark : col.accentLight);
+      root.style.setProperty('--accent', accent);
+      root.style.setProperty('--accent-light', accentLight);
       root.style.setProperty('--font-size-base', FONT_SIZE_MAP[fs]);
     });
 
@@ -288,6 +306,12 @@ export class PreferenceService {
   setColor(id: string): void {
     this.colorId.set(id);
     localStorage.setItem('pref_color', id);
+  }
+  setCustomColor(hex: string): void {
+    this.customColorHex.set(hex);
+    localStorage.setItem('pref_custom_color', hex);
+    this.colorId.set('custom');
+    localStorage.setItem('pref_color', 'custom');
   }
   setFontSize(s: FontSize): void {
     this.fontSize.set(s);

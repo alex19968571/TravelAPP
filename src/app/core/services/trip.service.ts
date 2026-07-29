@@ -171,7 +171,7 @@ export class TripService {
 
   async updateItineraryItem(
     id: string,
-    changes: Partial<Pick<ItineraryItem, 'place_name' | 'image_url' | 'notes'>>,
+    changes: Partial<Pick<ItineraryItem, 'place_name' | 'image_url' | 'notes' | 'day_number' | 'next_transport_mode' | 'next_transport_minutes'>>,
   ): Promise<void> {
     const now = new Date().toISOString();
     await db.itinerary_items.update(id, { ...changes, updated_at_utc: now });
@@ -195,7 +195,7 @@ export class TripService {
     return data.publicUrl;
   }
 
-  /** 在指定日期的第 position（0-based）個位置插入景點，自動往後遞補其餘景點順序 */
+  /** 在指定日期的第 position（0-based）個位置插入景點，並重新正規化所有 order_index */
   async addItineraryItemAtPosition(
     data: Omit<ItineraryItem, 'id' | 'updated_at_utc' | 'order_index'>,
     position: number,
@@ -204,22 +204,34 @@ export class TripService {
       .filter(i => i.day_number === data.day_number)
       .sort((a, b) => a.order_index - b.order_index);
     const pos = Math.max(0, Math.min(position, dayItems.length));
+    const now = new Date().toISOString();
 
-    for (let i = dayItems.length - 1; i >= pos; i--) {
-      const it = dayItems[i];
-      const nextIndex = it.order_index + 1;
-      await db.itinerary_items.update(it.id, { order_index: nextIndex });
-      await this.sync.enqueue('UPDATE', 'itinerary_items', { id: it.id, order_index: nextIndex });
-    }
-
-    const item: ItineraryItem = {
+    // 先建立新項目物件（暫不指定 order_index）
+    const newItem: ItineraryItem = {
       id: generateId(),
-      updated_at_utc: new Date().toISOString(),
+      updated_at_utc: now,
       order_index: pos,
       ...data,
     };
-    await db.itinerary_items.add(item);
-    await this.sync.enqueue('CREATE', 'itinerary_items', item as unknown as Record<string, unknown>);
-    return item;
+
+    // 插入到記憶體陣列的目標位置，再正規化所有 order_index
+    const merged = [
+      ...dayItems.slice(0, pos),
+      newItem,
+      ...dayItems.slice(pos),
+    ];
+    for (let i = 0; i < merged.length; i++) {
+      const it = merged[i];
+      if (it.id === newItem.id) {
+        newItem.order_index = i;
+      } else if (it.order_index !== i) {
+        await db.itinerary_items.update(it.id, { order_index: i, updated_at_utc: now });
+        await this.sync.enqueue('UPDATE', 'itinerary_items', { id: it.id, order_index: i, updated_at_utc: now });
+      }
+    }
+
+    await db.itinerary_items.add(newItem);
+    await this.sync.enqueue('CREATE', 'itinerary_items', newItem as unknown as Record<string, unknown>);
+    return newItem;
   }
 }
