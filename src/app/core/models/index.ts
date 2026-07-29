@@ -3,6 +3,7 @@ export interface UserProfile {
   email: string;
   default_timezone: string;
   default_currency: string;
+  avatar_url?: string | null;
   created_at_utc: string;
 }
 
@@ -13,6 +14,8 @@ export interface Trip {
   base_currency: string;
   owner_id: string;
   row_version: number;
+  start_date_utc?: string | null;
+  end_date_utc?: string | null;
   created_at_utc: string;
   updated_at_utc: string;
 }

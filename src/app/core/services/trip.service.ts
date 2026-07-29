@@ -19,7 +19,12 @@ export class TripService {
     return db.trips.get(id);
   }
 
-  async create(data: Pick<Trip, 'title' | 'target_timezone' | 'base_currency'>): Promise<Trip> {
+  async create(
+    data: Pick<
+      Trip,
+      'title' | 'target_timezone' | 'base_currency' | 'start_date_utc' | 'end_date_utc'
+    >,
+  ): Promise<Trip> {
     const userId = this.auth.user()?.id ?? '';
     const now = new Date().toISOString();
     const trip: Trip = {
@@ -47,7 +52,10 @@ export class TripService {
     return trip;
   }
 
-  async update(id: string, changes: Partial<Pick<Trip, 'title' | 'target_timezone' | 'base_currency'>>): Promise<void> {
+  async update(
+    id: string,
+    changes: Partial<Pick<Trip, 'title' | 'target_timezone' | 'base_currency'>>,
+  ): Promise<void> {
     const now = new Date().toISOString();
     await db.trips.update(id, { ...changes, updated_at_utc: now });
     await this.sync.enqueue('UPDATE', 'trips', { id, ...changes, updated_at_utc: now });
@@ -87,14 +95,20 @@ export class TripService {
     return items.sort((a, b) => a.day_number - b.day_number || a.order_index - b.order_index);
   }
 
-  async addItineraryItem(data: Omit<ItineraryItem, 'id' | 'updated_at_utc'>): Promise<ItineraryItem> {
+  async addItineraryItem(
+    data: Omit<ItineraryItem, 'id' | 'updated_at_utc'>,
+  ): Promise<ItineraryItem> {
     const item: ItineraryItem = {
       id: generateId(),
       updated_at_utc: new Date().toISOString(),
       ...data,
     };
     await db.itinerary_items.add(item);
-    await this.sync.enqueue('CREATE', 'itinerary_items', item as unknown as Record<string, unknown>);
+    await this.sync.enqueue(
+      'CREATE',
+      'itinerary_items',
+      item as unknown as Record<string, unknown>,
+    );
     return item;
   }
 
@@ -103,16 +117,23 @@ export class TripService {
     for (const [i, item] of items.entries()) {
       await db.itinerary_items.update(item.id, { order_index: i, updated_at_utc: now });
       await this.sync.enqueue('UPDATE', 'itinerary_items', {
-        id: item.id, order_index: i, updated_at_utc: now,
+        id: item.id,
+        order_index: i,
+        updated_at_utc: now,
       });
     }
   }
 
   async updatePolyline(itemId: string, encodedPolyline: string): Promise<void> {
     const now = new Date().toISOString();
-    await db.itinerary_items.update(itemId, { encoded_polyline: encodedPolyline, updated_at_utc: now });
+    await db.itinerary_items.update(itemId, {
+      encoded_polyline: encodedPolyline,
+      updated_at_utc: now,
+    });
     await this.sync.enqueue('UPDATE', 'itinerary_items', {
-      id: itemId, encoded_polyline: encodedPolyline, updated_at_utc: now,
+      id: itemId,
+      encoded_polyline: encodedPolyline,
+      updated_at_utc: now,
     });
   }
 

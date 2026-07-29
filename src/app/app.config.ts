@@ -26,7 +26,7 @@ export const appConfig: ApplicationConfig = {
     }),
     provideTransloco({
       config: {
-        availableLangs: ['zh-TW', 'en-US'],
+        availableLangs: ['zh-TW', 'zh-CN', 'ja-JP', 'en-US'],
         defaultLang: 'zh-TW',
         reRenderOnLangChange: true,
         prodMode: !isDevMode(),
