@@ -2,7 +2,6 @@ import { Component, inject, signal, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { TranslocoModule } from '@jsverse/transloco';
-import { AuthService } from '../../core/services/auth.service';
 import {
   PreferenceService,
   COLOR_OPTIONS,
@@ -137,12 +136,6 @@ import {
           </button>
         </div>
         <p class="font-preview">{{ 'settings.previewText' | transloco }}</p>
-      </div>
-
-      <!-- 帳號 -->
-      <div class="card">
-        <h3>{{ 'settings.account' | transloco }}</h3>
-        <p class="account-email">{{ auth.user()?.email }}</p>
       </div>
     </div>
   `,
@@ -453,7 +446,6 @@ import {
   ],
 })
 export class SettingsComponent {
-  auth = inject(AuthService);
   pref = inject(PreferenceService);
   colors = COLOR_OPTIONS;
   countries = COUNTRIES;
