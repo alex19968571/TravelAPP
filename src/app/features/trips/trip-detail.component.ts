@@ -1,7 +1,6 @@
 import { Component, inject, OnInit, signal, computed, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterModule } from '@angular/router';
-import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { TranslocoModule } from '@jsverse/transloco';
 import { Trip, ItineraryItem } from '../../core/models';
 import { TripService } from '../../core/services/trip.service';
@@ -11,7 +10,7 @@ interface DateTab { date: Date | null; dayNumber: number; }
 @Component({
   selector: 'app-trip-detail',
   standalone: true,
-  imports: [CommonModule, RouterModule, ReactiveFormsModule, TranslocoModule],
+  imports: [CommonModule, RouterModule, TranslocoModule],
   template: `
     <div class="page-container">
       <header class="page-header">
@@ -43,6 +42,9 @@ interface DateTab { date: Date | null; dayNumber: number; }
               @for (item of itemsForSelectedDay(); track item.id; let i = $index) {
                 <div class="itinerary-item">
                   <span class="order-badge">{{ i + 1 }}</span>
+                  @if (item.image_url) {
+                    <img [src]="item.image_url" class="item-thumb" alt="" />
+                  }
                   <div class="item-info">
                     <strong>{{ item.place_name }}</strong>
                     <span class="coords">{{ item.latitude.toFixed(4) }}, {{ item.longitude.toFixed(4) }}</span>
@@ -52,15 +54,9 @@ interface DateTab { date: Date | null; dayNumber: number; }
               }
             </div>
           }
-          <form [formGroup]="addItemForm" (ngSubmit)="addItem(t.id)" class="add-item-form">
-            <input formControlName="place_name" [placeholder]="'itinerary.spotNamePlaceholder' | transloco" />
-            <input formControlName="latitude" type="number" step="any" [placeholder]="'itinerary.latitude' | transloco" />
-            <input formControlName="longitude" type="number" step="any" [placeholder]="'itinerary.longitude' | transloco" />
-            <button type="submit" class="btn-primary" [disabled]="addItemForm.invalid">{{ 'itinerary.submit' | transloco }}</button>
-          </form>
         </div>
 
-        <a class="fab" [routerLink]="['/trips', t.id, 'itinerary']" [attr.aria-label]="'tripDetail.openMap' | transloco">＋</a>
+        <a class="fab" [routerLink]="['/trips', t.id, 'itinerary']" [queryParams]="{ day: dateTabs()[selectedDayIndex()]?.dayNumber ?? 1 }" [attr.aria-label]="'tripDetail.openMap' | transloco">＋</a>
       }
     </div>
   `,
@@ -103,29 +99,17 @@ interface DateTab { date: Date | null; dayNumber: number; }
       box-shadow: 0 4px 20px var(--shadow); }
 
     .empty-day { color: var(--text-secondary); font-size: 0.9rem; text-align: center; padding: 1rem 0; }
-    .item-list { display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 1rem; }
+    .item-list { display: flex; flex-direction: column; gap: 0.5rem; }
     .itinerary-item { display: flex; align-items: center; gap: 0.875rem; padding: 0.75rem;
       background: var(--accent-light); border-radius: 10px; }
     .order-badge { width: 28px; height: 28px; border-radius: 50%; background: var(--accent); color: white;
       display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: 600; flex-shrink: 0; }
-    .item-info { flex: 1; color: var(--text-primary); }
+    .item-thumb { width: 40px; height: 40px; border-radius: 8px; object-fit: cover; flex-shrink: 0; }
+    .item-info { flex: 1; color: var(--text-primary); min-width: 0; }
     .item-info strong { display: block; font-size: 0.95rem; }
     .coords { font-size: 0.8rem; color: var(--text-secondary); }
     .remove-btn { background: none; border: none; color: #e53e3e; cursor: pointer;
-      font-size: 1.2rem; padding: 0 0.25rem; }
-    .add-item-form { display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: 0.5rem; }
-    .add-item-form input {
-      padding: 0.55rem 0.75rem; border: 1.5px solid var(--border); border-radius: 10px;
-      font-size: 0.875rem; box-sizing: border-box; background: var(--input-bg); color: var(--text-primary);
-      min-width: 0;
-    }
-    @media (max-width: 600px) { .add-item-form { grid-template-columns: 1fr 1fr; } }
-
-    .btn-primary {
-      background: var(--accent); color: white; border: none; border-radius: 10px;
-      padding: 0.625rem 1.5rem; font-weight: 600; cursor: pointer;
-    }
-    .btn-primary:disabled { opacity: 0.5; }
+      font-size: 1.2rem; padding: 0 0.25rem; flex-shrink: 0; }
 
     /* 浮動新增按鈕（導向地圖頁） */
     .fab {
@@ -142,7 +126,6 @@ export class TripDetailComponent implements OnInit {
 
   private route = inject(ActivatedRoute);
   private tripService = inject(TripService);
-  private fb = inject(FormBuilder);
 
   trip = signal<Trip | undefined>(undefined);
   items = signal<ItineraryItem[]>([]);
@@ -175,12 +158,6 @@ export class TripDetailComponent implements OnInit {
     return this.items().filter(i => i.day_number === dn).sort((a, b) => a.order_index - b.order_index);
   });
 
-  addItemForm = this.fb.group({
-    place_name: ['', [Validators.required, Validators.maxLength(200)]],
-    latitude: [null as number | null, Validators.required],
-    longitude: [null as number | null, Validators.required],
-  });
-
   formatTabDate(tab: DateTab): string {
     if (!tab.date) return `${tab.dayNumber}`;
     return `${tab.date.getMonth() + 1}/${tab.date.getDate()}`;
@@ -194,23 +171,6 @@ export class TripDetailComponent implements OnInit {
     const id = this.route.snapshot.paramMap.get('id')!;
     this.trip.set(await this.tripService.getById(id));
     this.items.set(await this.tripService.getItinerary(id));
-  }
-
-  async addItem(tripId: string): Promise<void> {
-    if (this.addItemForm.invalid) return;
-    const { place_name, latitude, longitude } = this.addItemForm.value;
-    const dayNumber = this.dateTabs()[this.selectedDayIndex()]?.dayNumber ?? 1;
-    const existing = this.items().filter(i => i.day_number === dayNumber);
-    await this.tripService.addItineraryItem({
-      trip_id: tripId,
-      day_number: dayNumber,
-      order_index: existing.length,
-      place_name: place_name!,
-      latitude: latitude!,
-      longitude: longitude!,
-    });
-    this.addItemForm.reset();
-    this.items.set(await this.tripService.getItinerary(tripId));
   }
 
   async removeItem(itemId: string): Promise<void> {

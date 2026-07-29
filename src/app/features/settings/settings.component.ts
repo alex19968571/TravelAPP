@@ -15,9 +15,7 @@ import {
   imports: [CommonModule, RouterModule, TranslocoModule],
   template: `
     <div class="page-container">
-      <header class="page-header">
-        <h1>⚙️ {{ 'settings.title' | transloco }}</h1>
-      </header>
+      <h1 class="page-title">{{ 'settings.title' | transloco }}</h1>
 
       <!-- 目的地國家 -->
       <div class="card">
@@ -148,31 +146,11 @@ import {
         background: var(--bg);
         min-height: 100vh;
       }
-      .page-header {
-        display: flex;
-        align-items: center;
-        gap: 1rem;
-        margin-bottom: 1.5rem;
-      }
-      .back-btn {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        width: 36px;
-        height: 36px;
-        border-radius: 50%;
-        color: var(--accent);
-        text-decoration: none;
-        font-size: 1.3rem;
-        font-weight: 600;
-        background: var(--accent-light);
-        flex-shrink: 0;
-      }
-      h1 {
-        font-size: 1.8rem;
+      .page-title {
+        font-size: 1.6rem;
         font-weight: 700;
         color: var(--text-primary);
-        margin: 0;
+        margin: 0 0 1rem;
       }
       .card {
         background: var(--surface);

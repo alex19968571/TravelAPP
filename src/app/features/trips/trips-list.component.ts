@@ -1,4 +1,12 @@
-import { Component, inject, OnInit, signal, HostListener, ViewChild, ElementRef } from '@angular/core';
+import {
+  Component,
+  inject,
+  OnInit,
+  signal,
+  HostListener,
+  ViewChild,
+  ElementRef,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
 import { ReactiveFormsModule, FormsModule, FormBuilder, Validators } from '@angular/forms';
@@ -27,13 +35,20 @@ const TIMEZONE_OPTIONS = [
 ];
 
 const CURRENCY_OPTIONS = [
-  { value: 'TWD', label: 'TWD 台幣' }, { value: 'JPY', label: 'JPY 日圓' },
-  { value: 'KRW', label: 'KRW 韓圓' }, { value: 'CNY', label: 'CNY 人民幣' },
-  { value: 'THB', label: 'THB 泰銖' }, { value: 'VND', label: 'VND 越南盾' },
-  { value: 'SGD', label: 'SGD 新幣' }, { value: 'MYR', label: 'MYR 馬幣' },
-  { value: 'IDR', label: 'IDR 盾' }, { value: 'AUD', label: 'AUD 澳幣' },
-  { value: 'GBP', label: 'GBP 英鎊' }, { value: 'EUR', label: 'EUR 歐元' },
-  { value: 'USD', label: 'USD 美元' }, { value: 'CAD', label: 'CAD 加元' },
+  { value: 'TWD', label: 'TWD 台幣' },
+  { value: 'JPY', label: 'JPY 日圓' },
+  { value: 'KRW', label: 'KRW 韓圓' },
+  { value: 'CNY', label: 'CNY 人民幣' },
+  { value: 'THB', label: 'THB 泰銖' },
+  { value: 'VND', label: 'VND 越南盾' },
+  { value: 'SGD', label: 'SGD 新幣' },
+  { value: 'MYR', label: 'MYR 馬幣' },
+  { value: 'IDR', label: 'IDR 盾' },
+  { value: 'AUD', label: 'AUD 澳幣' },
+  { value: 'GBP', label: 'GBP 英鎊' },
+  { value: 'EUR', label: 'EUR 歐元' },
+  { value: 'USD', label: 'USD 美元' },
+  { value: 'CAD', label: 'CAD 加元' },
   { value: 'CHF', label: 'CHF 瑞郎' },
 ];
 
@@ -108,7 +123,9 @@ const CURRENCY_OPTIONS = [
             <label>{{ 'trips.timezone' | transloco }}</label>
             <div class="select-wrap">
               <select formControlName="target_timezone">
-                @for (o of timezoneOptions; track o.value) { <option [value]="o.value">{{ o.label }}</option> }
+                @for (o of timezoneOptions; track o.value) {
+                  <option [value]="o.value">{{ o.label }}</option>
+                }
               </select>
               <span class="select-caret">▾</span>
             </div>
@@ -117,7 +134,9 @@ const CURRENCY_OPTIONS = [
             <label>{{ 'trips.currency' | transloco }}</label>
             <div class="select-wrap">
               <select formControlName="base_currency">
-                @for (o of currencyOptions; track o.value) { <option [value]="o.value">{{ o.label }}</option> }
+                @for (o of currencyOptions; track o.value) {
+                  <option [value]="o.value">{{ o.label }}</option>
+                }
               </select>
               <span class="select-caret">▾</span>
             </div>
@@ -143,13 +162,23 @@ const CURRENCY_OPTIONS = [
       <div class="trips-grid">
         @for (trip of trips(); track trip.id) {
           <div class="trip-card-wrap">
-            <button class="swipe-delete" (click)="confirmDeleteTrip(trip)">{{ 'trips.delete' | transloco }}</button>
-            <div class="trip-card card" [class.swiped]="swipedTripId() === trip.id"
-                 (touchstart)="onTouchStart($event)"
-                 (touchmove)="onTouchMove($event)"
-                 (touchend)="onTouchEnd($event, trip)"
-                 (click)="onCardClick(trip)">
-              <button class="info-btn desktop-only" (click)="openEditTrip(trip); $event.stopPropagation()">ⓘ</button>
+            <button class="swipe-delete" (click)="confirmDeleteTrip(trip)">
+              {{ 'trips.delete' | transloco }}
+            </button>
+            <div
+              class="trip-card card"
+              [class.swiped]="swipedTripId() === trip.id"
+              (touchstart)="onTouchStart($event)"
+              (touchmove)="onTouchMove($event)"
+              (touchend)="onTouchEnd($event, trip)"
+              (click)="onCardClick(trip)"
+            >
+              <button
+                class="info-btn desktop-only"
+                (click)="openEditTrip(trip); $event.stopPropagation()"
+              >
+                ⓘ
+              </button>
               <div class="trip-info">
                 <h3>{{ trip.title }}</h3>
                 @if (formatDateRange(trip); as range) {
@@ -161,10 +190,30 @@ const CURRENCY_OPTIONS = [
                 </div>
               </div>
               <div class="trip-nav desktop-only">
-                <a [routerLink]="['/trips', trip.id]" class="nav-btn" (click)="$event.stopPropagation()">{{ 'trips.itinerary' | transloco }}</a>
-                <a [routerLink]="['/trips', trip.id, 'shopping']" class="nav-btn" (click)="$event.stopPropagation()">{{ 'trips.shopping' | transloco }}</a>
-                <a [routerLink]="['/trips', trip.id, 'expenses']" class="nav-btn" (click)="$event.stopPropagation()">{{ 'trips.expenses' | transloco }}</a>
-                <a [routerLink]="['/trips', trip.id, 'members']" class="nav-btn" (click)="$event.stopPropagation()">{{ 'tripDetail.members' | transloco }}</a>
+                <a
+                  [routerLink]="['/trips', trip.id]"
+                  class="nav-btn"
+                  (click)="$event.stopPropagation()"
+                  >{{ 'trips.itinerary' | transloco }}</a
+                >
+                <a
+                  [routerLink]="['/trips', trip.id, 'shopping']"
+                  class="nav-btn"
+                  (click)="$event.stopPropagation()"
+                  >{{ 'trips.shopping' | transloco }}</a
+                >
+                <a
+                  [routerLink]="['/trips', trip.id, 'expenses']"
+                  class="nav-btn"
+                  (click)="$event.stopPropagation()"
+                  >{{ 'trips.expenses' | transloco }}</a
+                >
+                <a
+                  [routerLink]="['/trips', trip.id, 'members']"
+                  class="nav-btn"
+                  (click)="$event.stopPropagation()"
+                  >{{ 'tripDetail.members' | transloco }}</a
+                >
               </div>
             </div>
           </div>
@@ -174,11 +223,21 @@ const CURRENCY_OPTIONS = [
       @if (actionMenuTrip(); as amt) {
         <div class="modal-backdrop" (click)="actionMenuTrip.set(null)">
           <div class="modal-card action-sheet" (click)="$event.stopPropagation()">
-            <button class="action-item" (click)="openEditTrip(amt); actionMenuTrip.set(null)">✏️ {{ 'trips.edit' | transloco }}</button>
-            <button class="action-item" (click)="goTo(['/trips', amt.id])">🗺️ {{ 'trips.itinerary' | transloco }}</button>
-            <button class="action-item" (click)="goTo(['/trips', amt.id, 'shopping'])">🛍️ {{ 'trips.shopping' | transloco }}</button>
-            <button class="action-item" (click)="goTo(['/trips', amt.id, 'expenses'])">💰 {{ 'trips.expenses' | transloco }}</button>
-            <button class="action-item" (click)="goTo(['/trips', amt.id, 'members'])">👥 {{ 'tripDetail.members' | transloco }}</button>
+            <button class="action-item" (click)="openEditTrip(amt); actionMenuTrip.set(null)">
+              ✏️ {{ 'trips.edit' | transloco }}
+            </button>
+            <button class="action-item" (click)="goTo(['/trips', amt.id])">
+              🗺️ {{ 'trips.itinerary' | transloco }}
+            </button>
+            <button class="action-item" (click)="goTo(['/trips', amt.id, 'shopping'])">
+              🛍️ {{ 'trips.shopping' | transloco }}
+            </button>
+            <button class="action-item" (click)="goTo(['/trips', amt.id, 'expenses'])">
+              💰 {{ 'trips.expenses' | transloco }}
+            </button>
+            <button class="action-item" (click)="goTo(['/trips', amt.id, 'members'])">
+              👥 {{ 'tripDetail.members' | transloco }}
+            </button>
           </div>
         </div>
       }
@@ -209,7 +268,9 @@ const CURRENCY_OPTIONS = [
                 <label>{{ 'trips.timezone' | transloco }}</label>
                 <div class="select-wrap">
                   <select formControlName="target_timezone">
-                    @for (o of timezoneOptions; track o.value) { <option [value]="o.value">{{ o.label }}</option> }
+                    @for (o of timezoneOptions; track o.value) {
+                      <option [value]="o.value">{{ o.label }}</option>
+                    }
                   </select>
                   <span class="select-caret">▾</span>
                 </div>
@@ -218,14 +279,20 @@ const CURRENCY_OPTIONS = [
                 <label>{{ 'trips.currency' | transloco }}</label>
                 <div class="select-wrap">
                   <select formControlName="base_currency">
-                    @for (o of currencyOptions; track o.value) { <option [value]="o.value">{{ o.label }}</option> }
+                    @for (o of currencyOptions; track o.value) {
+                      <option [value]="o.value">{{ o.label }}</option>
+                    }
                   </select>
                   <span class="select-caret">▾</span>
                 </div>
               </div>
               <div class="form-actions">
-                <button type="button" class="btn-secondary" (click)="closeEditTrip()">{{ 'trips.cancel' | transloco }}</button>
-                <button type="submit" class="btn-primary" [disabled]="editForm.invalid">{{ 'common.save' | transloco }}</button>
+                <button type="button" class="btn-secondary" (click)="closeEditTrip()">
+                  {{ 'trips.cancel' | transloco }}
+                </button>
+                <button type="submit" class="btn-primary" [disabled]="editForm.invalid">
+                  {{ 'common.save' | transloco }}
+                </button>
               </div>
             </form>
           </div>
@@ -233,149 +300,377 @@ const CURRENCY_OPTIONS = [
       }
     </div>
   `,
-  styles: [`
-    .page-container {
-      max-width: 900px; margin: 0 auto; padding: 1.5rem;
-      background: var(--bg); min-height: 100vh;
-    }
-    .page-title { font-size: 1.6rem; font-weight: 700; color: var(--text-primary); margin: 0 0 1rem; }
+  styles: [
+    `
+      .page-container {
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 1.5rem;
+        background: var(--bg);
+        min-height: 100vh;
+      }
+      .page-title {
+        font-size: 1.6rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin: 0 0 1rem;
+      }
 
-    .btn-icon {
-      background: var(--accent); color: white; border: none;
-      border-radius: 10px; padding: 0.5rem 0.875rem;
-      cursor: pointer; font-size: 0.95rem; text-decoration: none;
-      display: inline-flex; align-items: center; transition: opacity 0.15s;
-    }
-    .btn-icon:hover { opacity: 0.85; }
+      .btn-icon {
+        background: var(--accent);
+        color: white;
+        border: none;
+        border-radius: 10px;
+        padding: 0.5rem 0.875rem;
+        cursor: pointer;
+        font-size: 0.95rem;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        transition: opacity 0.15s;
+      }
+      .btn-icon:hover {
+        opacity: 0.85;
+      }
 
-    /* ── 行程列表工具列（+ 選單） ── */
-    .list-toolbar { display: flex; justify-content: flex-end; margin-bottom: 0.75rem; }
-    .add-menu { position: relative; }
-    .add-dropdown {
-      position: absolute; top: calc(100% + 6px); right: 0;
-      background: var(--surface); border: 1.5px solid var(--border);
-      border-radius: 12px; box-shadow: 0 8px 32px var(--shadow);
-      min-width: 200px; z-index: 100; display: none; padding: 0.4rem;
-    }
-    .add-menu.open .add-dropdown { display: block; }
-    .add-option {
-      display: flex; align-items: center; gap: 0.5rem;
-      width: 100%; padding: 0.625rem 0.75rem; border: none;
-      background: transparent; cursor: pointer; text-align: left;
-      color: var(--text-primary); font-size: 0.875rem; border-radius: 8px;
-    }
-    .add-option:hover { background: var(--accent-light); }
-    .join-error { color: #e53e3e; font-size: 0.85rem; margin: -0.5rem 0 1rem; }
+      /* ── 行程列表工具列（+ 選單） ── */
+      .list-toolbar {
+        display: flex;
+        justify-content: flex-end;
+        margin-bottom: 0.75rem;
+      }
+      .add-menu {
+        position: relative;
+      }
+      .add-dropdown {
+        position: absolute;
+        top: calc(100% + 6px);
+        right: 0;
+        background: var(--surface);
+        border: 1.5px solid var(--border);
+        border-radius: 12px;
+        box-shadow: 0 8px 32px var(--shadow);
+        min-width: 200px;
+        z-index: 100;
+        display: none;
+        padding: 0.4rem;
+      }
+      .add-menu.open .add-dropdown {
+        display: block;
+      }
+      .add-option {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        width: 100%;
+        padding: 0.625rem 0.75rem;
+        border: none;
+        background: transparent;
+        cursor: pointer;
+        text-align: left;
+        color: var(--text-primary);
+        font-size: 0.875rem;
+        border-radius: 8px;
+      }
+      .add-option:hover {
+        background: var(--accent-light);
+      }
+      .join-error {
+        color: #e53e3e;
+        font-size: 0.85rem;
+        margin: -0.5rem 0 1rem;
+      }
 
-    /* ── Cards ── */
-    .card {
-      background: var(--surface); border-radius: 16px; padding: 1.5rem;
-      box-shadow: 0 4px 20px var(--shadow); margin-bottom: 1rem;
-    }
-    .trip-form h3 { margin: 0 0 1rem; color: var(--text-primary); }
-    .form-row { margin-bottom: 1rem; }
-    .form-row-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
-    .form-row label { display: block; font-weight: 500; margin-bottom: 0.35rem; color: var(--text-secondary); }
-    .form-row input {
-      width: 100%; padding: 0.625rem 0.875rem; border: 1.5px solid var(--border);
-      border-radius: 10px; font-size: 0.95rem; box-sizing: border-box;
-      background: var(--input-bg); color: var(--text-primary);
-    }
+      /* ── Cards ── */
+      .card {
+        background: var(--surface);
+        border-radius: 16px;
+        padding: 1.5rem;
+        box-shadow: 0 4px 20px var(--shadow);
+        margin-bottom: 1rem;
+      }
+      .trip-form h3 {
+        margin: 0 0 1rem;
+        color: var(--text-primary);
+      }
+      .form-row {
+        margin-bottom: 1rem;
+      }
+      .form-row-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+      }
+      .form-row label {
+        display: block;
+        font-weight: 500;
+        margin-bottom: 0.35rem;
+        color: var(--text-secondary);
+      }
+      .form-row input {
+        width: 100%;
+        padding: 0.625rem 0.875rem;
+        border: 1.5px solid var(--border);
+        border-radius: 10px;
+        font-size: 0.95rem;
+        box-sizing: border-box;
+        background: var(--input-bg);
+        color: var(--text-primary);
+      }
 
-    /* ── 下拉選單：套用與國家選單一致的箭頭圖示 ── */
-    .select-wrap { position: relative; }
-    .select-wrap select {
-      width: 100%; padding: 0.625rem 2.25rem 0.625rem 0.875rem;
-      border: 1.5px solid var(--border); border-radius: 10px; font-size: 0.95rem;
-      box-sizing: border-box; background: var(--input-bg); color: var(--text-primary);
-      appearance: none; -webkit-appearance: none;
-    }
-    .select-wrap .select-caret {
-      position: absolute; right: 0.875rem; top: 50%; transform: translateY(-50%);
-      font-size: 0.7rem; color: var(--text-secondary); pointer-events: none;
-    }
+      /* ── 下拉選單：套用與國家選單一致的箭頭圖示 ── */
+      .select-wrap {
+        position: relative;
+      }
+      .select-wrap select {
+        width: 100%;
+        padding: 0.625rem 2.25rem 0.625rem 0.875rem;
+        border: 1.5px solid var(--border);
+        border-radius: 10px;
+        font-size: 0.95rem;
+        box-sizing: border-box;
+        background: var(--input-bg);
+        color: var(--text-primary);
+        appearance: none;
+        -webkit-appearance: none;
+      }
+      .select-wrap .select-caret {
+        position: absolute;
+        right: 0.875rem;
+        top: 50%;
+        transform: translateY(-50%);
+        font-size: 0.7rem;
+        color: var(--text-secondary);
+        pointer-events: none;
+      }
 
-    .form-actions { display: flex; gap: 0.75rem; justify-content: flex-end; }
-    .btn-primary {
-      background: var(--accent); color: white; border: none;
-      border-radius: 10px; padding: 0.625rem 1.5rem; font-weight: 600; cursor: pointer;
-    }
-    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
-    .btn-secondary {
-      background: var(--accent-light); color: var(--text-secondary);
-      border: none; border-radius: 10px; padding: 0.625rem 1.5rem; cursor: pointer;
-    }
-    .empty-state { text-align: center; padding: 4rem 2rem; color: var(--text-secondary); font-size: 1.1rem; }
-    .empty-state p:first-child { font-size: 3rem; }
-    .trips-grid { display: grid; gap: 1rem; }
+      .form-actions {
+        display: flex;
+        gap: 0.75rem;
+        justify-content: flex-end;
+      }
+      .btn-primary {
+        background: var(--accent);
+        color: white;
+        border: none;
+        border-radius: 10px;
+        padding: 0.625rem 1.5rem;
+        font-weight: 600;
+        cursor: pointer;
+      }
+      .btn-primary:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+      .btn-secondary {
+        background: var(--accent-light);
+        color: var(--text-secondary);
+        border: none;
+        border-radius: 10px;
+        padding: 0.625rem 1.5rem;
+        cursor: pointer;
+      }
+      .empty-state {
+        text-align: center;
+        padding: 4rem 2rem;
+        color: var(--text-secondary);
+        font-size: 1.1rem;
+      }
+      .empty-state p:first-child {
+        font-size: 3rem;
+      }
+      .trips-grid {
+        display: grid;
+        gap: 1rem;
+      }
 
-    /* ── 行程卡片 + 左滑刪除 ── */
-    .trip-card-wrap { position: relative; overflow: hidden; border-radius: 16px; }
-    .swipe-delete {
-      position: absolute; top: 0; right: 0; bottom: 0; width: 88px;
-      background: #e53e3e; color: white; border: none; font-size: 0.9rem; font-weight: 600;
-      cursor: pointer; display: none;
-    }
-    .trip-card.card {
-      padding: 1.25rem 1.5rem; margin-bottom: 0; position: relative;
-      display: flex; align-items: center; gap: 1rem; transition: transform 0.2s ease;
-    }
-    .trip-info { flex: 1; cursor: pointer; min-width: 0; }
-    .trip-info h3 { font-size: 1.2rem; font-weight: 600; margin: 0 0 0.4rem; color: var(--text-primary); padding-right: 1.5rem; }
-    .trip-dates { color: var(--accent); font-size: 0.85rem; font-weight: 600; margin-bottom: 0.3rem; }
-    .trip-meta { display: flex; gap: 1rem; color: var(--text-secondary); font-size: 0.9rem; }
-    .info-btn {
-      position: absolute; top: 0.6rem; right: 0.6rem; z-index: 5;
-      width: 24px; height: 24px; border-radius: 50%;
-      background: var(--accent-light); color: var(--accent); border: none;
-      font-size: 0.9rem; line-height: 1; cursor: pointer;
-    }
-    .trip-nav { display: flex; gap: 0.5rem; flex-wrap: wrap; flex-shrink: 0; }
-    .nav-btn {
-      padding: 0.4rem 1rem; border-radius: 8px; border: none; cursor: pointer;
-      background: var(--accent-light); color: var(--accent);
-      font-weight: 500; text-decoration: none; font-size: 0.875rem; display: inline-block;
-    }
+      /* ── 行程卡片 + 左滑刪除 ── */
+      .trip-card-wrap {
+        position: relative;
+        overflow: hidden;
+        border-radius: 16px;
+      }
+      .swipe-delete {
+        position: absolute;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        width: 88px;
+        background: #e53e3e;
+        color: white;
+        border: none;
+        font-size: 0.9rem;
+        font-weight: 600;
+        cursor: pointer;
+        display: none;
+      }
+      .trip-card.card {
+        padding: 1.25rem 1.5rem;
+        margin-bottom: 0;
+        position: relative;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        transition: transform 0.2s ease;
+      }
+      .trip-info {
+        flex: 1;
+        cursor: pointer;
+        min-width: 0;
+      }
+      .trip-info h3 {
+        font-size: 1.2rem;
+        font-weight: 600;
+        margin: 0 0 0.4rem;
+        color: var(--text-primary);
+        padding-right: 1.5rem;
+      }
+      .trip-dates {
+        color: var(--accent);
+        font-size: 0.85rem;
+        font-weight: 600;
+        margin-bottom: 0.3rem;
+      }
+      .trip-meta {
+        display: flex;
+        gap: 1rem;
+        color: var(--text-secondary);
+        font-size: 0.9rem;
+      }
+      .info-btn {
+        position: absolute;
+        top: 0.6rem;
+        right: 0.6rem;
+        z-index: 5;
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        background: transparent;
+        color: var(--text-secondary);
+        opacity: 0.55;
+        border: none;
+        font-size: 0.72rem;
+        line-height: 1;
+        cursor: pointer;
+        padding: 0;
+      }
+      .info-btn:hover {
+        opacity: 0.9;
+      }
+      .trip-nav {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+        flex-shrink: 0;
+      }
+      .nav-btn {
+        padding: 0.4rem 1rem;
+        border-radius: 8px;
+        border: none;
+        cursor: pointer;
+        background: var(--accent-light);
+        color: var(--accent);
+        font-weight: 500;
+        text-decoration: none;
+        font-size: 0.875rem;
+        display: inline-block;
+      }
 
-    @media (hover: none) and (pointer: coarse) {
-      .desktop-only { display: none !important; }
-      .swipe-delete { display: flex; align-items: center; justify-content: center; }
-      .trip-card.swiped { transform: translateX(-88px); }
-    }
+      @media (hover: none) and (pointer: coarse) {
+        .desktop-only {
+          display: none !important;
+        }
+        .swipe-delete {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+        .trip-card.swiped {
+          transform: translateX(-88px);
+        }
+      }
 
-    /* ── 彈窗 ── */
-    .modal-backdrop {
-      position: fixed; inset: 0; background: rgba(0, 0, 0, 0.45);
-      display: flex; align-items: center; justify-content: center;
-      z-index: 200; padding: 1rem;
-    }
-    .modal-card {
-      background: var(--surface); border-radius: 16px; padding: 1.5rem;
-      max-width: 380px; width: 100%; box-shadow: 0 12px 40px var(--shadow);
-    }
-    .modal-card h3 { margin: 0; color: var(--text-primary); }
-    .modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
-    .trash-btn {
-      background: #fff0f0; color: #e53e3e; border: none; border-radius: 8px;
-      width: 34px; height: 34px; font-size: 1rem; cursor: pointer;
-    }
-    .action-sheet { display: flex; flex-direction: column; gap: 0.3rem; padding: 0.75rem; }
-    .action-item {
-      display: flex; align-items: center; gap: 0.6rem; width: 100%;
-      padding: 0.75rem 1rem; border: none; background: transparent; cursor: pointer;
-      text-align: left; color: var(--text-primary); font-size: 0.95rem; border-radius: 10px;
-    }
-    .action-item:hover { background: var(--accent-light); }
+      /* ── 彈窗 ── */
+      .modal-backdrop {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.45);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 200;
+        padding: 1rem;
+      }
+      .modal-card {
+        background: var(--surface);
+        border-radius: 16px;
+        padding: 1.5rem;
+        max-width: 380px;
+        width: 100%;
+        box-shadow: 0 12px 40px var(--shadow);
+      }
+      .modal-card h3 {
+        margin: 0;
+        color: var(--text-primary);
+      }
+      .modal-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 1rem;
+      }
+      .trash-btn {
+        background: #fff0f0;
+        color: #e53e3e;
+        border: none;
+        border-radius: 8px;
+        width: 34px;
+        height: 34px;
+        font-size: 1rem;
+        cursor: pointer;
+      }
+      .action-sheet {
+        display: flex;
+        flex-direction: column;
+        gap: 0.3rem;
+        padding: 0.75rem;
+      }
+      .action-item {
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+        width: 100%;
+        padding: 0.75rem 1rem;
+        border: none;
+        background: transparent;
+        cursor: pointer;
+        text-align: left;
+        color: var(--text-primary);
+        font-size: 0.95rem;
+        border-radius: 10px;
+      }
+      .action-item:hover {
+        background: var(--accent-light);
+      }
 
-    /* 編輯視窗：容器較窄，日期欄位固定單欄，避免 datetime-local 原生控件把版面撐壞 */
-    .edit-modal { max-width: 420px; }
-    .edit-modal .form-row-grid { grid-template-columns: 1fr; }
+      /* 編輯視窗：容器較窄，日期欄位固定單欄，避免 datetime-local 原生控件把版面撐壞 */
+      .edit-modal {
+        max-width: 420px;
+      }
+      .edit-modal .form-row-grid {
+        grid-template-columns: 1fr;
+      }
 
-    @media (max-width: 600px) {
-      .form-row-grid { grid-template-columns: 1fr; }
-      .trip-card.card { flex-wrap: wrap; }
-    }
-  `]
+      @media (max-width: 600px) {
+        .form-row-grid {
+          grid-template-columns: 1fr;
+        }
+        .trip-card.card {
+          flex-wrap: wrap;
+        }
+      }
+    `,
+  ],
 })
 export class TripsListComponent implements OnInit {
   @ViewChild('avatarInput') avatarInputRef?: ElementRef<HTMLInputElement>;
@@ -388,8 +683,9 @@ export class TripsListComponent implements OnInit {
   timezoneOptions = TIMEZONE_OPTIONS;
   currencyOptions = CURRENCY_OPTIONS;
 
-  isTouch = typeof window !== 'undefined'
-    && window.matchMedia('(hover: none) and (pointer: coarse)').matches;
+  isTouch =
+    typeof window !== 'undefined' &&
+    window.matchMedia('(hover: none) and (pointer: coarse)').matches;
 
   trips = signal<Trip[]>([]);
   showForm = signal(false);
@@ -474,18 +770,20 @@ export class TripsListComponent implements OnInit {
 
   async createTrip(): Promise<void> {
     if (this.form.invalid) return;
-    const { title, target_timezone, base_currency, start_date_local, end_date_local } = this.form.value;
+    const { title, target_timezone, base_currency, start_date_local, end_date_local } =
+      this.form.value;
     await this.tripService.create({
       title: title!,
       target_timezone: target_timezone!,
       base_currency: base_currency!,
       start_date_utc: start_date_local ? new Date(start_date_local).toISOString() : undefined,
-      end_date_utc:   end_date_local   ? new Date(end_date_local).toISOString()   : undefined,
+      end_date_utc: end_date_local ? new Date(end_date_local).toISOString() : undefined,
     });
     this.form.reset({
       target_timezone: this.pref.country().timezone,
       base_currency: this.pref.country().currency,
-      start_date_local: '', end_date_local: '',
+      start_date_local: '',
+      end_date_local: '',
     });
     this.showForm.set(false);
     await this.loadTrips();
@@ -567,13 +865,14 @@ export class TripsListComponent implements OnInit {
 
   async saveEditTrip(id: string): Promise<void> {
     if (this.editForm.invalid) return;
-    const { title, target_timezone, base_currency, start_date_local, end_date_local } = this.editForm.value;
+    const { title, target_timezone, base_currency, start_date_local, end_date_local } =
+      this.editForm.value;
     await this.tripService.update(id, {
       title: title!,
       target_timezone: target_timezone!,
       base_currency: base_currency!,
       start_date_utc: start_date_local ? new Date(start_date_local).toISOString() : null,
-      end_date_utc:   end_date_local   ? new Date(end_date_local).toISOString()   : null,
+      end_date_utc: end_date_local ? new Date(end_date_local).toISOString() : null,
     });
     this.editingTrip.set(null);
     await this.loadTrips();

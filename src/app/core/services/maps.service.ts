@@ -12,7 +12,34 @@ export class MapsService {
     setOptions({ key: environment.googleMapsApiKey });
     await importLibrary('maps');
     await importLibrary('routes');
+    await importLibrary('geocoding');
     this.initialized = true;
+  }
+
+  /** 依地址／地點名稱查詢座標；輸入若已是「緯度,經度」格式則直接解析，不呼叫 API */
+  async searchPlace(query: string): Promise<{ name: string; lat: number; lng: number } | null> {
+    const latLngMatch = query.trim().match(/^(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)$/);
+    if (latLngMatch) {
+      const lat = parseFloat(latLngMatch[1]);
+      const lng = parseFloat(latLngMatch[2]);
+      return { name: `${lat.toFixed(5)}, ${lng.toFixed(5)}`, lat, lng };
+    }
+
+    await this.ensureLoaded();
+    const geocoder = new google.maps.Geocoder();
+    try {
+      const result = await geocoder.geocode({ address: query });
+      const first = result.results[0];
+      if (!first) return null;
+      return {
+        name: first.formatted_address,
+        lat: first.geometry.location.lat(),
+        lng: first.geometry.location.lng(),
+      };
+    } catch (err) {
+      console.error('[Maps] searchPlace error', err);
+      return null;
+    }
   }
 
   async initMap(element: HTMLElement, center: google.maps.LatLngLiteral): Promise<google.maps.Map> {

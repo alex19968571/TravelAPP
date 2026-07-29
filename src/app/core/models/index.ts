@@ -38,6 +38,7 @@ export interface ItineraryItem {
   place_name: string;
   latitude: number;
   longitude: number;
+  image_url?: string | null;
   encoded_polyline?: string;
   updated_at_utc: string;
 }

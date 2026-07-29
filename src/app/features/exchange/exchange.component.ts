@@ -1,4 +1,6 @@
-import { Component, inject, OnInit, signal, computed, HostListener } from '@angular/core';
+import {
+  Component, inject, OnInit, AfterViewInit, signal, computed, HostListener, ViewChild, ElementRef,
+} from '@angular/core';
 import { CommonModule, DecimalPipe } from '@angular/common';
 import { TranslocoModule } from '@jsverse/transloco';
 import { PreferenceService, COUNTRIES, Country } from '../../core/services/preference.service';
@@ -17,6 +19,7 @@ const KEYPAD_ROWS: string[][] = [
   imports: [CommonModule, DecimalPipe, TranslocoModule],
   template: `
     <div class="page-container">
+      <div class="scale-wrap" #scaleWrap>
       <h1>{{ 'exchange.title' | transloco }}</h1>
 
       <!-- 上方：左右兩塊國家/金額 + 中間轉換按鈕 -->
@@ -90,6 +93,7 @@ const KEYPAD_ROWS: string[][] = [
         }
         <button class="keypad-clear" (click)="clear()">{{ 'exchange.clear' | transloco }}</button>
       </div>
+      </div>
     </div>
   `,
   styles: [
@@ -100,6 +104,18 @@ const KEYPAD_ROWS: string[][] = [
         padding: 1.5rem;
         background: var(--bg);
         min-height: 100vh;
+      }
+      .scale-wrap { width: 100%; }
+      @media (hover: hover) and (pointer: fine) {
+        .page-container {
+          height: calc(100dvh - 112px);
+          min-height: 0;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          overflow: hidden;
+        }
+        .scale-wrap { transform-origin: center center; }
       }
       h1 {
         font-size: 1.6rem;
@@ -294,7 +310,9 @@ const KEYPAD_ROWS: string[][] = [
     `,
   ],
 })
-export class ExchangeComponent implements OnInit {
+export class ExchangeComponent implements OnInit, AfterViewInit {
+  @ViewChild('scaleWrap') scaleWrap?: ElementRef<HTMLElement>;
+
   private pref = inject(PreferenceService);
   private rateService = inject(ExchangeRateService);
 
@@ -314,6 +332,24 @@ export class ExchangeComponent implements OnInit {
   async ngOnInit(): Promise<void> {
     await this.rateService.refreshIfNeeded();
     await this.refreshRate();
+  }
+
+  ngAfterViewInit(): void {
+    setTimeout(() => this.applyScale());
+  }
+
+  @HostListener('window:resize')
+  applyScale(): void {
+    const el = this.scaleWrap?.nativeElement;
+    if (!el || !el.parentElement) return;
+    el.style.transform = 'none';
+    const contentH = el.scrollHeight;
+    const contentW = el.scrollWidth;
+    const availH = el.parentElement.clientHeight;
+    const availW = el.parentElement.clientWidth;
+    if (!contentH || !contentW) return;
+    const scale = Math.min(1, availH / contentH, availW / contentW);
+    el.style.transform = scale < 1 ? `scale(${scale})` : 'none';
   }
 
   private async refreshRate(): Promise<void> {

@@ -3,6 +3,7 @@ import {
   inject,
   computed,
   signal,
+  AfterViewInit,
   HostListener,
   ViewChild,
   ElementRef,
@@ -24,6 +25,7 @@ import { PreferenceService, COUNTRIES, Country } from '../../core/services/prefe
   imports: [CommonModule, TranslocoModule],
   template: `
     <div class="page-container">
+      <div class="scale-wrap" #scaleWrap>
       <h1>{{ 'account.account' | transloco }}</h1>
 
       <div class="avatar-hero">
@@ -75,6 +77,7 @@ import { PreferenceService, COUNTRIES, Country } from '../../core/services/prefe
           <span>→ {{ 'auth.signOut' | transloco }}</span>
         </button>
       </div>
+      </div>
 
       @if (showAvatarPicker()) {
         <div class="modal-backdrop" (click)="showAvatarPicker.set(false)">
@@ -111,6 +114,18 @@ import { PreferenceService, COUNTRIES, Country } from '../../core/services/prefe
         padding: 1.5rem;
         background: var(--bg);
         min-height: 100vh;
+      }
+      .scale-wrap { width: 100%; }
+      @media (hover: hover) and (pointer: fine) {
+        .page-container {
+          height: calc(100dvh - 112px);
+          min-height: 0;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          overflow: hidden;
+        }
+        .scale-wrap { transform-origin: center center; }
       }
       h1 {
         font-size: 1.6rem;
@@ -364,8 +379,9 @@ import { PreferenceService, COUNTRIES, Country } from '../../core/services/prefe
     `,
   ],
 })
-export class AccountComponent {
+export class AccountComponent implements AfterViewInit {
   @ViewChild('avatarInput') avatarInputRef!: ElementRef<HTMLInputElement>;
+  @ViewChild('scaleWrap') scaleWrap?: ElementRef<HTMLElement>;
 
   auth = inject(AuthService);
   profile = inject(UserProfileService);
@@ -377,6 +393,24 @@ export class AccountComponent {
 
   showHomeCountry = signal(false);
   showAvatarPicker = signal(false);
+
+  ngAfterViewInit(): void {
+    setTimeout(() => this.applyScale());
+  }
+
+  @HostListener('window:resize')
+  applyScale(): void {
+    const el = this.scaleWrap?.nativeElement;
+    if (!el || !el.parentElement) return;
+    el.style.transform = 'none';
+    const contentH = el.scrollHeight;
+    const contentW = el.scrollWidth;
+    const availH = el.parentElement.clientHeight;
+    const availW = el.parentElement.clientWidth;
+    if (!contentH || !contentW) return;
+    const scale = Math.min(1, availH / contentH, availW / contentW);
+    el.style.transform = scale < 1 ? `scale(${scale})` : 'none';
+  }
 
   @HostListener('document:click', ['$event'])
   onDocumentClick(e: MouseEvent): void {

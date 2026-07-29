@@ -12,6 +12,10 @@ import { PreferenceService } from '../services/preference.service';
   template: `
     <div class="shell">
       <div class="top-bar">
+        <div class="logo">
+          <span class="logo-icon">🧳</span>
+          <span class="logo-text">Tt</span>
+        </div>
         <div class="clock">{{ pref.clockDisplay() }}</div>
       </div>
 
@@ -63,12 +67,15 @@ import { PreferenceService } from '../services/preference.service';
         top: 0;
         z-index: 50;
         display: flex;
-        justify-content: flex-end;
+        justify-content: space-between;
         align-items: center;
         padding: 0.5rem 1rem;
         background: var(--header-bg);
         border-bottom: 1px solid var(--border);
       }
+      .logo { display: flex; align-items: center; gap: 0.3rem; }
+      .logo-icon { font-size: 1.2rem; line-height: 1; }
+      .logo-text { font-size: 1.1rem; font-weight: 800; color: var(--accent); letter-spacing: 0.02em; }
       .clock {
         font-size: 0.8rem;
         font-weight: 600;

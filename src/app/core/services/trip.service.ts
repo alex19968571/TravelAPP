@@ -173,4 +173,44 @@ export class TripService {
     await db.itinerary_items.delete(itemId);
     await this.sync.enqueue('DELETE', 'itinerary_items', { id: itemId });
   }
+
+  /** 上傳景點照片，回傳公開 URL（失敗回傳 null） */
+  async uploadItineraryPhoto(file: File): Promise<string | null> {
+    const ext = file.name.split('.').pop() ?? 'jpg';
+    const path = `${generateId()}.${ext}`;
+    const { error } = await this.supabase.storage
+      .from('itinerary-images')
+      .upload(path, file, { contentType: file.type });
+    if (error) { console.error('[TripService] uploadItineraryPhoto error', error); return null; }
+    const { data } = this.supabase.storage.from('itinerary-images').getPublicUrl(path);
+    return data.publicUrl;
+  }
+
+  /** 在指定日期的第 position（0-based）個位置插入景點，自動往後遞補其餘景點順序 */
+  async addItineraryItemAtPosition(
+    data: Omit<ItineraryItem, 'id' | 'updated_at_utc' | 'order_index'>,
+    position: number,
+  ): Promise<ItineraryItem> {
+    const dayItems = (await this.getItinerary(data.trip_id))
+      .filter(i => i.day_number === data.day_number)
+      .sort((a, b) => a.order_index - b.order_index);
+    const pos = Math.max(0, Math.min(position, dayItems.length));
+
+    for (let i = dayItems.length - 1; i >= pos; i--) {
+      const it = dayItems[i];
+      const nextIndex = it.order_index + 1;
+      await db.itinerary_items.update(it.id, { order_index: nextIndex });
+      await this.sync.enqueue('UPDATE', 'itinerary_items', { id: it.id, order_index: nextIndex });
+    }
+
+    const item: ItineraryItem = {
+      id: generateId(),
+      updated_at_utc: new Date().toISOString(),
+      order_index: pos,
+      ...data,
+    };
+    await db.itinerary_items.add(item);
+    await this.sync.enqueue('CREATE', 'itinerary_items', item as unknown as Record<string, unknown>);
+    return item;
+  }
 }
