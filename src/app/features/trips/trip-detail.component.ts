@@ -4,20 +4,20 @@ import {
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { TranslocoModule } from '@jsverse/transloco';
+import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
 import { Trip, ItineraryItem, TransportMode } from '../../core/models';
 import { TripService } from '../../core/services/trip.service';
 import { MapsService } from '../../core/services/maps.service';
 
 interface DateTab { date: Date | null; dayNumber: number; }
 
-const TRANSPORT_OPTIONS: { mode: TransportMode; label: string; icon: string }[] = [
-  { mode: 'walk',    label: '步行',    icon: '🚶' },
-  { mode: 'drive',   label: '開車',    icon: '🚗' },
-  { mode: 'bike',    label: '騎車',    icon: '🚲' },
-  { mode: 'transit', label: '大眾運輸', icon: '🚇' },
-  { mode: 'flight',  label: '飛機',    icon: '✈️' },
-  { mode: 'custom',  label: '自訂',    icon: '✏️' },
+const TRANSPORT_OPTIONS: { mode: TransportMode; icon: string }[] = [
+  { mode: 'walk',    icon: '🚶' },
+  { mode: 'drive',   icon: '🚗' },
+  { mode: 'bike',    icon: '🚲' },
+  { mode: 'transit', icon: '🚇' },
+  { mode: 'flight',  icon: '✈️' },
+  { mode: 'custom',  icon: '✏️' },
 ];
 
 @Component({
@@ -76,35 +76,13 @@ const TRANSPORT_OPTIONS: { mode: TransportMode; label: string; icon: string }[] 
                   <button class="remove-btn" (click)="removeItem(item.id, $event)">×</button>
                 </div>
 
-                <!-- 景點間交通（最後一個景點後不顯示） -->
+                <!-- 景點間交通列（最後一個景點後不顯示） -->
                 @if (!last) {
                   <div class="transport-row">
-                    <div class="transport-modes">
-                      @for (opt of transportOpts; track opt.mode) {
-                        <button class="transport-btn"
-                                [class.active]="item.next_transport_mode === opt.mode"
-                                (click)="setTransportMode(item, opt.mode, $event)"
-                                [title]="opt.label">
-                          {{ opt.icon }}
-                        </button>
-                      }
-                    </div>
-                    @if (item.next_transport_mode) {
-                      <div class="transport-time">
-                        <input type="number" class="time-input" min="1"
-                               [value]="item.next_transport_minutes ?? ''"
-                               placeholder="分鐘"
-                               (change)="setTransportTime(item, $event)" />
-                        <span class="time-unit">分</span>
-                        @if (canAutoCalc(item.next_transport_mode)) {
-                          <button class="auto-calc-btn"
-                                  [disabled]="calcingId() === item.id"
-                                  (click)="autoCalc(item, $event)">
-                            {{ calcingId() === item.id ? '計算中...' : '自動' }}
-                          </button>
-                        }
-                      </div>
-                    }
+                    <button class="transport-label"
+                            (click)="openTransportModal(item, itemsForSelectedDay()[i + 1], $event)">
+                      {{ getTransportText(item) }}
+                    </button>
                   </div>
                 }
               }
@@ -125,8 +103,8 @@ const TRANSPORT_OPTIONS: { mode: TransportMode; label: string; icon: string }[] 
         <div class="modal-card" (click)="$event.stopPropagation()">
           <h3>✏️ 編輯景點</h3>
 
-          <!-- 圖片 -->
-          <button class="photo-block" type="button" (click)="editPhotoInput.click()">
+          <!-- 圖片：label 包 input，確保首次點擊即觸發檔案選取 -->
+          <label class="photo-block">
             @if (editPhotoUrl()) {
               <img [src]="editPhotoUrl()!" class="photo-img" alt="" />
               <div class="photo-overlay">點擊更換圖片</div>
@@ -140,9 +118,8 @@ const TRANSPORT_OPTIONS: { mode: TransportMode; label: string; icon: string }[] 
                 <span class="photo-hint">上傳景點圖片</span>
               </div>
             }
-          </button>
-          <input #editPhotoInput type="file" accept="image/*" hidden
-                 (change)="onEditPhotoSelected($event)" />
+            <input type="file" accept="image/*" hidden (change)="onEditPhotoSelected($event)" />
+          </label>
 
           <!-- 名稱 -->
           <div class="field-group">
@@ -177,6 +154,91 @@ const TRANSPORT_OPTIONS: { mode: TransportMode; label: string; icon: string }[] 
             <button class="btn-primary" [disabled]="!editName.trim() || editSaving()"
                     (click)="saveEdit()">
               {{ editSaving() ? '儲存中...' : '儲存' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    }
+
+    <!-- ── 交通方式設定 Modal ── -->
+    @if (editingTransportFrom()) {
+      <div class="modal-backdrop" (click)="closeTransportModal()">
+        <div class="modal-card" (click)="$event.stopPropagation()">
+          <h3>{{ 'transport.editTitle' | transloco }}</h3>
+
+          <!-- 交通方式下拉選單 -->
+          <div class="field-group">
+            <select class="field-input"
+                    [ngModel]="tMode()"
+                    (ngModelChange)="onTModeChange($event)">
+              <option value="">{{ 'transport.pleaseSelect' | transloco }}</option>
+              @for (opt of transportOpts; track opt.mode) {
+                <option [value]="opt.mode">
+                  {{ opt.icon }} {{ ('transport.' + opt.mode) | transloco }}
+                </option>
+              }
+            </select>
+          </div>
+
+          @if (tMode()) {
+            <!-- 系統 / 自訂 標籤頁 -->
+            <div class="time-tabs">
+              <button class="time-tab"
+                      [class.active]="tTimeTab() === 'system'"
+                      [disabled]="!canAutoCalc(tMode())"
+                      (click)="tTimeTab.set('system')">
+                {{ 'transport.system' | transloco }}
+              </button>
+              <button class="time-tab"
+                      [class.active]="tTimeTab() === 'custom'"
+                      (click)="tTimeTab.set('custom')">
+                {{ 'transport.customTime' | transloco }}
+              </button>
+            </div>
+
+            @if (tTimeTab() === 'system') {
+              <div class="tab-content">
+                @if (canAutoCalc(tMode())) {
+                  <button class="btn-auto-calc"
+                          [disabled]="tCalcing()"
+                          (click)="tAutoCalc()">
+                    {{ tCalcing()
+                        ? ('transport.calculating' | transloco)
+                        : ('transport.autoCalc' | transloco) }}
+                  </button>
+                  @if (tCalcResult() !== null) {
+                    <div class="calc-result">
+                      {{ 'transport.estimated' | transloco }}{{ formatDurationNoPlus(tCalcResult()!) }}
+                    </div>
+                  }
+                } @else {
+                  <p class="no-auto-msg">{{ 'transport.noAutoCalc' | transloco }}</p>
+                }
+              </div>
+            } @else {
+              <div class="tab-content">
+                <div class="time-picker">
+                  <input type="number" class="time-num" min="0" max="99"
+                         [ngModel]="tHours()"
+                         (ngModelChange)="tHours.set(+$event || 0)"
+                         placeholder="0" />
+                  <span class="time-sep">{{ 'transport.hour' | transloco }}</span>
+                  <input type="number" class="time-num" min="0" max="59"
+                         [ngModel]="tMins()"
+                         (ngModelChange)="tMins.set(+$event || 0)"
+                         placeholder="0" />
+                  <span class="time-sep">{{ 'transport.minute' | transloco }}</span>
+                </div>
+              </div>
+            }
+          }
+
+          <div class="modal-actions">
+            <button class="btn-secondary" (click)="closeTransportModal()">
+              {{ 'common.cancel' | transloco }}
+            </button>
+            <button class="btn-primary" [disabled]="tSaving()" (click)="saveTransport()">
+              {{ tSaving() ? ('common.loading' | transloco) : ('common.save' | transloco) }}
             </button>
           </div>
         </div>
@@ -254,32 +316,23 @@ const TRANSPORT_OPTIONS: { mode: TransportMode; label: string; icon: string }[] 
       font-size: 1.2rem; padding: 0.25rem; flex-shrink: 0; line-height: 1;
     }
 
-    /* ── 交通方式 ── */
+    /* ── 景點間交通列 ── */
     .transport-row {
-      display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 0.75rem;
-      border-left: 2px dashed var(--border); margin-left: 14px;
+      display: flex; align-items: center;
+      padding: 0.2rem 0.75rem;
+      border-left: 2px dashed var(--border);
+      margin-left: 14px;
     }
-    .transport-modes { display: flex; gap: 0.25rem; flex-wrap: wrap; }
-    .transport-btn {
-      font-size: 1rem; border: 1.5px solid var(--border); border-radius: 8px;
-      background: var(--bg); padding: 0.2rem 0.45rem; cursor: pointer; line-height: 1.2;
-      transition: border-color 0.15s, background 0.15s;
+    .transport-label {
+      background: none; border: none; cursor: pointer;
+      padding: 0.3rem 0.875rem; border-radius: 20px;
+      font-size: 0.78rem; color: var(--text-secondary);
+      text-align: left; letter-spacing: 0.01em;
+      transition: background 0.15s, color 0.15s;
     }
-    .transport-btn.active {
-      border-color: var(--accent); background: var(--accent-light);
+    .transport-label:hover {
+      background: var(--accent-light); color: var(--accent);
     }
-    .transport-time { display: flex; align-items: center; gap: 0.3rem; margin-left: 0.25rem; }
-    .time-input {
-      width: 56px; padding: 0.2rem 0.4rem; border: 1.5px solid var(--border);
-      border-radius: 8px; font-size: 0.85rem; background: var(--input-bg);
-      color: var(--text-primary); text-align: center;
-    }
-    .time-unit { font-size: 0.8rem; color: var(--text-secondary); }
-    .auto-calc-btn {
-      font-size: 0.72rem; padding: 0.2rem 0.5rem; border-radius: 8px;
-      background: var(--accent); color: white; border: none; cursor: pointer;
-    }
-    .auto-calc-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
     /* 浮動按鈕 */
     .fab {
@@ -290,7 +343,7 @@ const TRANSPORT_OPTIONS: { mode: TransportMode; label: string; icon: string }[] 
       font-size: 1.6rem; box-shadow: 0 6px 20px var(--shadow);
     }
 
-    /* ── 編輯 Modal ── */
+    /* ── Modal 共用 ── */
     .modal-backdrop {
       position: fixed; inset: 0; background: rgba(0,0,0,0.5);
       display: flex; align-items: center; justify-content: center; z-index: 300; padding: 1rem;
@@ -303,11 +356,12 @@ const TRANSPORT_OPTIONS: { mode: TransportMode; label: string; icon: string }[] 
     }
     .modal-card h3 { margin: 0; color: var(--text-primary); font-size: 1rem; font-weight: 700; }
 
+    /* ── 圖片上傳（label 取代 button） ── */
     .photo-block {
-      width: 100%; aspect-ratio: 4/3; max-height: 200px;
+      display: flex; width: 100%; aspect-ratio: 4/3; max-height: 200px;
       background: var(--bg); border: 2px dashed var(--border); border-radius: 12px;
       cursor: pointer; position: relative; overflow: hidden;
-      display: flex; align-items: center; justify-content: center; padding: 0;
+      align-items: center; justify-content: center;
     }
     .photo-block:hover { border-color: var(--accent); }
     .photo-img { width: 100%; height: 100%; object-fit: cover; display: block; }
@@ -354,6 +408,53 @@ const TRANSPORT_OPTIONS: { mode: TransportMode; label: string; icon: string }[] 
       border: 1.5px solid var(--border); border-radius: 10px;
       padding: 0.75rem; font-weight: 600; cursor: pointer;
     }
+
+    /* ── 交通方式 Modal 專用 ── */
+    .time-tabs {
+      display: flex; gap: 0.4rem;
+      background: var(--bg); padding: 0.3rem; border-radius: 10px;
+    }
+    .time-tab {
+      flex: 1; padding: 0.45rem 0.5rem; border: none; border-radius: 8px;
+      background: transparent; color: var(--text-secondary);
+      font-size: 0.875rem; font-weight: 600; cursor: pointer;
+      transition: background 0.15s, color 0.15s;
+    }
+    .time-tab.active {
+      background: var(--surface); color: var(--accent);
+      box-shadow: 0 2px 8px var(--shadow);
+    }
+    .time-tab:disabled { opacity: 0.38; cursor: not-allowed; }
+
+    .tab-content { display: flex; flex-direction: column; gap: 0.75rem; }
+
+    .btn-auto-calc {
+      width: 100%; padding: 0.65rem 1rem; border: none; border-radius: 10px;
+      background: var(--accent); color: white;
+      font-size: 0.9rem; font-weight: 600; cursor: pointer; transition: opacity 0.15s;
+    }
+    .btn-auto-calc:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .calc-result {
+      text-align: center; font-size: 0.95rem; font-weight: 700;
+      color: var(--accent); padding: 0.25rem 0;
+    }
+
+    .no-auto-msg {
+      font-size: 0.85rem; color: var(--text-secondary);
+      text-align: center; margin: 0; padding: 0.5rem 0;
+    }
+
+    .time-picker {
+      display: flex; align-items: center; gap: 0.5rem; justify-content: center;
+    }
+    .time-num {
+      width: 64px; padding: 0.55rem 0.5rem; border: 1.5px solid var(--border);
+      border-radius: 10px; font-size: 1.1rem; font-weight: 600;
+      text-align: center; background: var(--input-bg); color: var(--text-primary);
+    }
+    .time-num:focus { outline: none; border-color: var(--accent); }
+    .time-sep { font-size: 0.9rem; color: var(--text-secondary); font-weight: 500; }
   `],
 })
 export class TripDetailComponent implements OnInit {
@@ -362,23 +463,32 @@ export class TripDetailComponent implements OnInit {
   private route       = inject(ActivatedRoute);
   private tripService = inject(TripService);
   private mapsService = inject(MapsService);
+  private transloco   = inject(TranslocoService);
 
-  trip       = signal<Trip | undefined>(undefined);
-  items      = signal<ItineraryItem[]>([]);
+  trip             = signal<Trip | undefined>(undefined);
+  items            = signal<ItineraryItem[]>([]);
   selectedDayIndex = signal(0);
 
-  // 編輯 Modal 狀態
-  editingItem     = signal<ItineraryItem | null>(null);
-  editName        = '';
-  editNotes       = '';
-  editDayNumber   = signal(1);
-  editPhotoUrl    = signal<string | null>(null);
+  // ── 編輯景點 Modal 狀態 ──
+  editingItem        = signal<ItineraryItem | null>(null);
+  editName           = '';
+  editNotes          = '';
+  editDayNumber      = signal(1);
+  editPhotoUrl       = signal<string | null>(null);
   editUploadingPhoto = signal(false);
-  editSaving      = signal(false);
+  editSaving         = signal(false);
   private editLocalBlob: string | null = null;
 
-  // 交通自動計算狀態
-  calcingId = signal<string | null>(null);
+  // ── 交通方式 Modal 狀態 ──
+  editingTransportFrom = signal<ItineraryItem | null>(null);
+  editingTransportTo   = signal<ItineraryItem | null>(null);
+  tMode       = signal<TransportMode | null>(null);
+  tTimeTab    = signal<'system' | 'custom'>('custom');
+  tHours      = signal(0);
+  tMins       = signal(0);
+  tCalcResult = signal<number | null>(null);
+  tCalcing    = signal(false);
+  tSaving     = signal(false);
 
   transportOpts = TRANSPORT_OPTIONS;
 
@@ -431,11 +541,11 @@ export class TripDetailComponent implements OnInit {
     this.items.set(await this.tripService.getItinerary(this.trip()!.id));
   }
 
-  // ── 編輯 Modal ────────────────────────────────────────────────
+  // ── 編輯景點 Modal ──────────────────────────────────────────────
   openEdit(item: ItineraryItem): void {
     this.editingItem.set(item);
-    this.editName     = item.place_name;
-    this.editNotes    = item.notes ?? '';
+    this.editName  = item.place_name;
+    this.editNotes = item.notes ?? '';
     this.editDayNumber.set(item.day_number);
     this.editLocalBlob = null;
     this.editPhotoUrl.set(item.image_url ?? null);
@@ -488,46 +598,107 @@ export class TripDetailComponent implements OnInit {
     }
   }
 
-  // ── 交通方式 ─────────────────────────────────────────────────
+  // ── 交通方式 Modal ──────────────────────────────────────────────
   canAutoCalc(mode: TransportMode | null | undefined): boolean {
     return mode === 'walk' || mode === 'drive' || mode === 'bike' || mode === 'transit';
   }
 
-  async setTransportMode(item: ItineraryItem, mode: TransportMode, e: MouseEvent): Promise<void> {
+  openTransportModal(item: ItineraryItem, nextItem: ItineraryItem | undefined, e: MouseEvent): void {
     e.stopPropagation();
-    // 切換同一模式則取消
-    const newMode = item.next_transport_mode === mode ? null : mode;
-    await this.tripService.updateItineraryItem(item.id, { next_transport_mode: newMode });
-    this.items.set(await this.tripService.getItinerary(this.trip()!.id));
+    if (!nextItem) return;
+    this.editingTransportFrom.set(item);
+    this.editingTransportTo.set(nextItem);
+    const mode = item.next_transport_mode ?? null;
+    this.tMode.set(mode);
+    this.tCalcResult.set(null);
+    const mins = item.next_transport_minutes ?? 0;
+    this.tHours.set(Math.floor(mins / 60));
+    this.tMins.set(mins % 60);
+    this.tTimeTab.set(this.canAutoCalc(mode) ? 'system' : 'custom');
   }
 
-  async setTransportTime(item: ItineraryItem, e: Event): Promise<void> {
-    const minutes = parseInt((e.target as HTMLInputElement).value, 10);
-    if (isNaN(minutes) || minutes < 1) return;
-    await this.tripService.updateItineraryItem(item.id, { next_transport_minutes: minutes });
-    this.items.set(await this.tripService.getItinerary(this.trip()!.id));
+  closeTransportModal(): void {
+    this.editingTransportFrom.set(null);
+    this.editingTransportTo.set(null);
   }
 
-  async autoCalc(item: ItineraryItem, e: MouseEvent): Promise<void> {
-    e.stopPropagation();
-    const dayItems = this.itemsForSelectedDay();
-    const idx = dayItems.findIndex(i => i.id === item.id);
-    const next = dayItems[idx + 1];
-    if (!next || !item.next_transport_mode) return;
+  onTModeChange(value: string): void {
+    const mode = value ? (value as TransportMode) : null;
+    this.tMode.set(mode);
+    this.tCalcResult.set(null);
+    if (mode && !this.canAutoCalc(mode)) {
+      this.tTimeTab.set('custom');
+    }
+  }
 
-    this.calcingId.set(item.id);
+  async tAutoCalc(): Promise<void> {
+    const from = this.editingTransportFrom();
+    const to   = this.editingTransportTo();
+    const mode = this.tMode();
+    if (!from || !to || !mode) return;
+    this.tCalcing.set(true);
+    this.tCalcResult.set(null);
     try {
       const minutes = await this.mapsService.estimateDuration(
-        { lat: item.latitude,  lng: item.longitude },
-        { lat: next.latitude,  lng: next.longitude },
-        item.next_transport_mode,
+        { lat: from.latitude, lng: from.longitude },
+        { lat: to.latitude,   lng: to.longitude },
+        mode,
       );
-      if (minutes !== null) {
-        await this.tripService.updateItineraryItem(item.id, { next_transport_minutes: minutes });
-        this.items.set(await this.tripService.getItinerary(this.trip()!.id));
-      }
+      this.tCalcResult.set(minutes);
     } finally {
-      this.calcingId.set(null);
+      this.tCalcing.set(false);
     }
+  }
+
+  async saveTransport(): Promise<void> {
+    const from = this.editingTransportFrom();
+    if (!from) return;
+    this.tSaving.set(true);
+    try {
+      const mode = this.tMode();
+      let minutes: number | null = null;
+      if (this.tTimeTab() === 'system') {
+        minutes = this.tCalcResult();
+      } else {
+        const total = this.tHours() * 60 + this.tMins();
+        minutes = total > 0 ? total : null;
+      }
+      await this.tripService.updateItineraryItem(from.id, {
+        next_transport_mode:    mode,
+        next_transport_minutes: minutes,
+      });
+      this.items.set(await this.tripService.getItinerary(this.trip()!.id));
+      this.closeTransportModal();
+    } finally {
+      this.tSaving.set(false);
+    }
+  }
+
+  formatDuration(minutes: number | null | undefined): string {
+    if (!minutes) return '+0';
+    const h = this.transloco.translate('transport.hour');
+    const m = this.transloco.translate('transport.minute');
+    if (minutes < 60) return `+${minutes}${m}`;
+    const hours = Math.floor(minutes / 60);
+    const mins  = minutes % 60;
+    return mins > 0 ? `+${hours}${h}${mins}${m}` : `+${hours}${h}`;
+  }
+
+  formatDurationNoPlus(minutes: number): string {
+    const h = this.transloco.translate('transport.hour');
+    const m = this.transloco.translate('transport.minute');
+    if (minutes < 60) return `${minutes}${m}`;
+    const hours = Math.floor(minutes / 60);
+    const mins  = minutes % 60;
+    return mins > 0 ? `${hours}${h}${mins}${m}` : `${hours}${h}`;
+  }
+
+  getTransportText(item: ItineraryItem): string {
+    if (!item.next_transport_mode) {
+      return this.transloco.translate('transport.noSelection');
+    }
+    const icon  = TRANSPORT_OPTIONS.find(o => o.mode === item.next_transport_mode)?.icon ?? '';
+    const label = this.transloco.translate(`transport.${item.next_transport_mode}`);
+    return `${icon} ${label} ${this.formatDuration(item.next_transport_minutes)}`;
   }
 }

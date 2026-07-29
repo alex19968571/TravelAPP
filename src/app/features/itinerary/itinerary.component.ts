@@ -58,8 +58,8 @@ const DAY_COLORS = ['#667eea', '#ed8936', '#48bb78', '#f56565', '#9f7aea', '#38b
             {{ editingItemId() ? '✏️ 編輯景點' : '＋ 新增景點' }}
           </div>
 
-          <!-- 圖片 -->
-          <button class="photo-block" type="button" (click)="photoInput.click()">
+          <!-- 圖片（label 原生關聯 input，確保首次點擊即觸發） -->
+          <label class="photo-block">
             @if (stagingPhotoUrl()) {
               <img [src]="stagingPhotoUrl()!" class="photo-img" alt="" />
               <div class="photo-overlay">點擊更換圖片</div>
@@ -74,9 +74,8 @@ const DAY_COLORS = ['#667eea', '#ed8936', '#48bb78', '#f56565', '#9f7aea', '#38b
                 <span class="photo-hint">上傳景點圖片</span>
               </div>
             }
-          </button>
-          <input #photoInput type="file" accept="image/*" hidden
-                 (change)="onPhotoSelected($event)" />
+            <input type="file" accept="image/*" hidden (change)="onPhotoSelected($event)" />
+          </label>
 
           <!-- 景點名稱 -->
           <div class="field-group">

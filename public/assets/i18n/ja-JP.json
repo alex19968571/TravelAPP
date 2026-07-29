@@ -175,5 +175,24 @@
   "exchange": {
     "title": "両替",
     "clear": "クリア"
+  },
+  "transport": {
+    "noSelection": "交通手段未設定 +0",
+    "walk": "徒歩",
+    "drive": "車",
+    "bike": "自転車",
+    "transit": "公共交通",
+    "flight": "飛行機",
+    "custom": "カスタム",
+    "editTitle": "交通手段を設定",
+    "pleaseSelect": "交通手段を選択",
+    "system": "自動",
+    "customTime": "手動",
+    "autoCalc": "時間を自動取得",
+    "calculating": "計算中...",
+    "noAutoCalc": "この手段は自動計算非対応です。手動で入力してください。",
+    "estimated": "推定：",
+    "hour": "時間",
+    "minute": "分"
   }
 }

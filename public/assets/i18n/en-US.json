@@ -175,5 +175,24 @@
   "exchange": {
     "title": "Exchange",
     "clear": "Clear"
+  },
+  "transport": {
+    "noSelection": "No transport set +0",
+    "walk": "Walk",
+    "drive": "Drive",
+    "bike": "Bike",
+    "transit": "Transit",
+    "flight": "Flight",
+    "custom": "Custom",
+    "editTitle": "Set Transport",
+    "pleaseSelect": "Select transport mode",
+    "system": "System",
+    "customTime": "Custom",
+    "autoCalc": "Auto-calculate time",
+    "calculating": "Calculating...",
+    "noAutoCalc": "Auto-calc not supported, enter manually",
+    "estimated": "Estimated: ",
+    "hour": "h",
+    "minute": "m"
   }
 }

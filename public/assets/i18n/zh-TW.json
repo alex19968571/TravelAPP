@@ -175,5 +175,24 @@
   "exchange": {
     "title": "換匯",
     "clear": "清除"
+  },
+  "transport": {
+    "noSelection": "尚未選擇交通方式 +0",
+    "walk": "步行",
+    "drive": "開車",
+    "bike": "騎車",
+    "transit": "大眾運輸",
+    "flight": "飛機",
+    "custom": "自訂",
+    "editTitle": "設定交通方式",
+    "pleaseSelect": "請選擇交通方式",
+    "system": "系統",
+    "customTime": "自訂",
+    "autoCalc": "自動帶入時間",
+    "calculating": "計算中...",
+    "noAutoCalc": "此交通方式不支援自動計算，請手動輸入",
+    "estimated": "預估：",
+    "hour": "時",
+    "minute": "分"
   }
 }

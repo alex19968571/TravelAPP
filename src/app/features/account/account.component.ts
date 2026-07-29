@@ -183,7 +183,7 @@ import { PreferenceService, COUNTRIES, Country } from '../../core/services/prefe
         background: var(--surface);
         border-radius: 16px;
         box-shadow: 0 4px 20px var(--shadow);
-        overflow: hidden;
+        /* overflow: visible — 讓絕對定位下拉選單可以超出 card 邊界 */
       }
       .row-item {
         display: flex;
@@ -200,8 +200,12 @@ import { PreferenceService, COUNTRIES, Country } from '../../core/services/prefe
         font-size: 0.95rem;
         border-bottom: 1px solid var(--border);
       }
+      .row-item:first-child {
+        border-radius: 16px 16px 0 0;
+      }
       .row-item:last-child {
         border-bottom: none;
+        border-radius: 0 0 16px 16px;
       }
       .row-item:hover {
         background: var(--accent-light);
