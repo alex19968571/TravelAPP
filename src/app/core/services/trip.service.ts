@@ -169,6 +169,15 @@ export class TripService {
     });
   }
 
+  async updateItineraryItem(
+    id: string,
+    changes: Partial<Pick<ItineraryItem, 'place_name' | 'image_url' | 'notes'>>,
+  ): Promise<void> {
+    const now = new Date().toISOString();
+    await db.itinerary_items.update(id, { ...changes, updated_at_utc: now });
+    await this.sync.enqueue('UPDATE', 'itinerary_items', { id, ...changes, updated_at_utc: now });
+  }
+
   async removeItineraryItem(itemId: string): Promise<void> {
     await db.itinerary_items.delete(itemId);
     await this.sync.enqueue('DELETE', 'itinerary_items', { id: itemId });
