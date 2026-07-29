@@ -18,7 +18,9 @@
   "account": {
     "changeAvatar": "アバターを変更",
     "homeCountry": "現在の滞在国",
-    "account": "アカウント"
+    "account": "アカウント",
+    "uploadPhoto": "写真をアップロード",
+    "orChoosePreset": "またはプリセットアバターを選択"
   },
   "trips": {
     "myTrips": "マイ旅程",
@@ -47,8 +49,8 @@
   "settings": {
     "title": "設定",
     "theme": "テーマ",
-    "themeLight": "☀️ ライト",
-    "themeDark": "🌙 ダーク",
+    "themeLight": "ライト",
+    "themeDark": "ダーク",
     "color": "テーマカラー",
     "fontSize": "文字サイズ",
     "fontSizeSm": "小",
@@ -73,7 +75,8 @@
     "inviteViewer": "閲覧のみ招待",
     "copyCode": "コードをコピー",
     "copyLink": "リンクをコピー",
-    "copied": "コピーしました！"
+    "copied": "コピーしました！",
+    "inviteLinkLabel": "招待リンク"
   },
   "itinerary": {
     "backToTrip": "← 旅程に戻る",

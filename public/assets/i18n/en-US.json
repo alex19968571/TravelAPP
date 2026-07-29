@@ -18,7 +18,9 @@
   "account": {
     "changeAvatar": "Change Avatar",
     "homeCountry": "Home Country",
-    "account": "Account"
+    "account": "Account",
+    "uploadPhoto": "Upload Photo",
+    "orChoosePreset": "Or choose a preset avatar"
   },
   "trips": {
     "myTrips": "My Trips",
@@ -47,8 +49,8 @@
   "settings": {
     "title": "Settings",
     "theme": "Theme",
-    "themeLight": "☀️ Light",
-    "themeDark": "🌙 Dark",
+    "themeLight": "Light",
+    "themeDark": "Dark",
     "color": "Accent Color",
     "fontSize": "Font Size",
     "fontSizeSm": "Small",
@@ -73,7 +75,8 @@
     "inviteViewer": "Viewer Invite",
     "copyCode": "Copy Code",
     "copyLink": "Copy Link",
-    "copied": "Copied!"
+    "copied": "Copied!",
+    "inviteLinkLabel": "Invite Link"
   },
   "itinerary": {
     "backToTrip": "← Back to Trip",

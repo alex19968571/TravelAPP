@@ -1,12 +1,50 @@
-import { Component } from '@angular/core';
+import { Component, HostListener, inject } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
+import { Location } from '@angular/common';
+
+/** 邊緣觸控起點需在螢幕最左側幾 px 內，才視為「邊緣滑動」手勢 */
+const EDGE_ZONE_PX = 24;
+/** 需向右拖曳超過這個距離才觸發返回上一頁 */
+const SWIPE_THRESHOLD_PX = 70;
 
 @Component({
   selector: 'app-root',
   imports: [RouterOutlet],
   template: `<router-outlet />`,
-  styles: [`
-    :host { display: block; min-height: 100vh; }
-  `]
+  styles: [
+    `
+      :host {
+        display: block;
+        min-height: 100vh;
+      }
+    `,
+  ],
 })
-export class App {}
+export class App {
+  private location = inject(Location);
+  private startX = 0;
+  private startY = 0;
+  private tracking = false;
+
+  // 獨立安裝的 PWA（standalone 模式）沒有瀏覽器原生的邊緣滑動返回手勢，
+  // 這裡用簡單的觸控偵測補上：從螢幕最左緣開始、明顯向右拖曳即視為「返回上一頁」。
+  @HostListener('document:touchstart', ['$event'])
+  onTouchStart(e: TouchEvent): void {
+    const t = e.touches[0];
+    this.tracking = t.clientX <= EDGE_ZONE_PX;
+    this.startX = t.clientX;
+    this.startY = t.clientY;
+  }
+
+  @HostListener('document:touchend', ['$event'])
+  onTouchEnd(e: TouchEvent): void {
+    if (!this.tracking) return;
+    this.tracking = false;
+    const t = e.changedTouches[0];
+    const dx = t.clientX - this.startX;
+    const dy = Math.abs(t.clientY - this.startY);
+    if (dx > SWIPE_THRESHOLD_PX && dy < 60) {
+      this.location.back();
+    }
+  }
+}

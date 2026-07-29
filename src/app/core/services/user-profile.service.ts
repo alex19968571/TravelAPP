@@ -2,6 +2,42 @@ import { Injectable, inject, signal, effect } from '@angular/core';
 import { SupabaseService } from './supabase.service';
 import { AuthService } from './auth.service';
 
+export interface PresetAvatar {
+  id: string;
+  emoji: string;
+  bg: string;
+}
+
+/** 男/女人像 + 動物頭像 emoji，搭配不同色彩圓形背景 */
+export const PRESET_AVATARS: PresetAvatar[] = [
+  { id: 'man1', emoji: '👨', bg: '#667eea' },
+  { id: 'woman1', emoji: '👩', bg: '#ef476f' },
+  { id: 'man2', emoji: '👨‍🦱', bg: '#06d6a0' },
+  { id: 'woman2', emoji: '👩‍🦱', bg: '#f59e0b' },
+  { id: 'man3', emoji: '👨‍🦰', bg: '#4361ee' },
+  { id: 'woman3', emoji: '👩‍🦰', bg: '#c026d3' },
+  { id: 'dog', emoji: '🐶', bg: '#fbbf24' },
+  { id: 'cat', emoji: '🐱', bg: '#fb923c' },
+  { id: 'fox', emoji: '🦊', bg: '#f97316' },
+  { id: 'bear', emoji: '🐻', bg: '#a16207' },
+  { id: 'panda', emoji: '🐼', bg: '#64748b' },
+  { id: 'koala', emoji: '🐨', bg: '#94a3b8' },
+];
+
+const PRESET_PREFIX = 'preset:';
+
+export type ParsedAvatar =
+  { type: 'image'; src: string } | { type: 'preset'; emoji: string; bg: string } | { type: 'none' };
+
+export function parseAvatar(url: string | null | undefined): ParsedAvatar {
+  if (!url) return { type: 'none' };
+  if (url.startsWith(PRESET_PREFIX)) {
+    const [, emoji, bg] = url.split(':');
+    return { type: 'preset', emoji, bg: bg ?? '#667eea' };
+  }
+  return { type: 'image', src: url };
+}
+
 @Injectable({ providedIn: 'root' })
 export class UserProfileService {
   private supabase = inject(SupabaseService).client;
@@ -62,5 +98,21 @@ export class UserProfileService {
     } finally {
       this.uploading.set(false);
     }
+  }
+
+  async setPresetAvatar(preset: PresetAvatar): Promise<void> {
+    const user = this.auth.user();
+    if (!user) return;
+
+    const value = `${PRESET_PREFIX}${preset.emoji}:${preset.bg}`;
+    const { error } = await this.supabase
+      .from('user_profiles')
+      .upsert({ id: user.id, email: user.email, avatar_url: value }, { onConflict: 'id' });
+    if (error) {
+      console.error('[UserProfile] preset avatar upsert error', error);
+      return;
+    }
+
+    this.avatarUrl.set(value);
   }
 }

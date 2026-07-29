@@ -33,9 +33,12 @@ interface GrossEntry {
   template: `
     <div class="page-container">
       <header class="page-header">
-        <a [routerLink]="['/trips', tripId]" class="back-btn">{{
-          'expenses.backToTrip' | transloco
-        }}</a>
+        <a
+          [routerLink]="['/trips', tripId]"
+          class="back-btn"
+          [attr.aria-label]="'expenses.backToTrip' | transloco"
+          >←</a
+        >
         <h1>💰 {{ 'expenses.title' | transloco }}</h1>
       </header>
 
@@ -356,9 +359,18 @@ interface GrossEntry {
         margin-bottom: 1rem;
       }
       .back-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
         color: var(--accent);
         text-decoration: none;
-        font-weight: 500;
+        font-size: 1.3rem;
+        font-weight: 600;
+        background: var(--accent-light);
+        flex-shrink: 0;
       }
       h1 {
         font-size: 1.6rem;

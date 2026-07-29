@@ -16,9 +16,12 @@ import { ExchangeRateService } from '../../core/services/exchange-rate.service';
   template: `
     <div class="page-container">
       <header class="page-header">
-        <a [routerLink]="['/trips', tripId]" class="back-btn">{{
-          'shopping.backToTrip' | transloco
-        }}</a>
+        <a
+          [routerLink]="['/trips', tripId]"
+          class="back-btn"
+          [attr.aria-label]="'shopping.backToTrip' | transloco"
+          >←</a
+        >
         <div class="header-mid">
           <h1>🛍️ {{ 'shopping.title' | transloco }}</h1>
           <div class="currency-indicator">
@@ -195,11 +198,18 @@ import { ExchangeRateService } from '../../core/services/exchange-rate.service';
         flex-wrap: wrap;
       }
       .back-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
         color: var(--accent);
         text-decoration: none;
-        font-weight: 500;
-        white-space: nowrap;
-        margin-top: 0.25rem;
+        font-size: 1.3rem;
+        font-weight: 600;
+        background: var(--accent-light);
+        flex-shrink: 0;
       }
       .header-mid {
         display: flex;

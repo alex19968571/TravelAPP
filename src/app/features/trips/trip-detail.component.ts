@@ -1,9 +1,12 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, inject, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { TranslocoModule } from '@jsverse/transloco';
 import { Trip, TripMember } from '../../core/models';
 import { TripService } from '../../core/services/trip.service';
+import { AuthService } from '../../core/services/auth.service';
+
+const SWIPE_REVEAL_PX = 72;
 
 @Component({
   selector: 'app-trip-detail',
@@ -12,7 +15,7 @@ import { TripService } from '../../core/services/trip.service';
   template: `
     <div class="page-container">
       <header class="page-header">
-        <a routerLink="/trips" class="back-btn">← {{ 'common.back' | transloco }}</a>
+        <a routerLink="/trips" class="back-btn" [attr.aria-label]="'common.back' | transloco">←</a>
         <h1>{{ trip()?.title ?? ('tripDetail.loading' | transloco) }}</h1>
       </header>
 
@@ -36,71 +39,104 @@ import { TripService } from '../../core/services/trip.service';
 
           <!-- 成員清單 -->
           <div class="card">
-            <h3>{{ 'tripDetail.members' | transloco }}</h3>
+            <div class="card-header-row">
+              <h3>{{ 'tripDetail.members' | transloco }}</h3>
+              <div class="invite-menu" [class.open]="showInviteMenu()">
+                <button class="icon-btn" (click)="toggleInviteMenu($event)">＋</button>
+                <div class="invite-dropdown">
+                  <button class="invite-option" (click)="openInviteModal('EDITOR')">
+                    ✏️ {{ 'tripDetail.inviteEditor' | transloco }}
+                  </button>
+                  <button class="invite-option" (click)="openInviteModal('VIEWER')">
+                    👀 {{ 'tripDetail.inviteViewer' | transloco }}
+                  </button>
+                </div>
+              </div>
+            </div>
+
             <div class="member-list">
               @for (m of members(); track m.id) {
-                <div class="member-row">
-                  <span class="member-avatar">{{ m.display_name.charAt(0) }}</span>
-                  <span class="member-name">{{ m.display_name }}</span>
-                  <span class="member-role badge">{{ m.role }}</span>
-                  @if (m.role !== 'OWNER') {
-                    <button class="remove-btn" (click)="removeMember(m.id)">×</button>
-                  }
+                <div class="member-row-wrap">
+                  <button class="swipe-delete" (click)="removeMember(m.id)">
+                    {{ 'common.delete' | transloco }}
+                  </button>
+                  <div
+                    class="member-row"
+                    [class.swiped]="swipedId() === m.id"
+                    (touchstart)="onTouchStart($event)"
+                    (touchmove)="onTouchMove($event)"
+                    (touchend)="onTouchEnd($event, m)"
+                  >
+                    <span class="member-avatar">{{ m.display_name.charAt(0) }}</span>
+                    <span class="member-name">{{ m.display_name }}</span>
+                    <span class="member-role badge">{{ m.role }}</span>
+                    @if (canRemove(m)) {
+                      <button class="remove-btn" (click)="removeMember(m.id)">×</button>
+                    }
+                  </div>
                 </div>
               }
             </div>
           </div>
+        </div>
 
-          <!-- 邀請成員（邀請碼／連結） -->
-          <div class="card">
-            <h3>{{ 'tripDetail.inviteTitle' | transloco }}</h3>
-            <p class="section-desc">{{ 'tripDetail.inviteDesc' | transloco }}</p>
+        @if (inviteModalRole(); as role) {
+          <div class="modal-backdrop" (click)="closeInviteModal()">
+            <div class="modal-card" (click)="$event.stopPropagation()">
+              <h3>
+                {{
+                  (role === 'EDITOR' ? 'tripDetail.inviteEditor' : 'tripDetail.inviteViewer')
+                    | transloco
+                }}
+              </h3>
 
-            <div class="invite-row">
-              <div class="invite-label editor">✏️ {{ 'tripDetail.inviteEditor' | transloco }}</div>
-              <div class="invite-controls">
-                <code class="invite-code">{{ t.invite_code_editor }}</code>
-                <button class="btn-sm" (click)="copy(t.invite_code_editor, 'editorCode')">
-                  {{
-                    (copied() === 'editorCode' ? 'tripDetail.copied' : 'tripDetail.copyCode')
-                      | transloco
-                  }}
-                </button>
-                <button
-                  class="btn-sm"
-                  (click)="copy(inviteLink(t.invite_code_editor), 'editorLink')"
-                >
-                  {{
-                    (copied() === 'editorLink' ? 'tripDetail.copied' : 'tripDetail.copyLink')
-                      | transloco
-                  }}
-                </button>
+              <div class="modal-row">
+                <label>{{ 'trips.inviteCode' | transloco }}</label>
+                <div class="modal-value-row">
+                  <code>{{ role === 'EDITOR' ? t.invite_code_editor : t.invite_code_viewer }}</code>
+                  <button
+                    class="btn-sm"
+                    (click)="
+                      copy(role === 'EDITOR' ? t.invite_code_editor : t.invite_code_viewer, 'code')
+                    "
+                  >
+                    {{
+                      (copied() === 'code' ? 'tripDetail.copied' : 'tripDetail.copyCode')
+                        | transloco
+                    }}
+                  </button>
+                </div>
               </div>
-            </div>
 
-            <div class="invite-row">
-              <div class="invite-label viewer">👀 {{ 'tripDetail.inviteViewer' | transloco }}</div>
-              <div class="invite-controls">
-                <code class="invite-code">{{ t.invite_code_viewer }}</code>
-                <button class="btn-sm" (click)="copy(t.invite_code_viewer, 'viewerCode')">
-                  {{
-                    (copied() === 'viewerCode' ? 'tripDetail.copied' : 'tripDetail.copyCode')
-                      | transloco
-                  }}
-                </button>
-                <button
-                  class="btn-sm"
-                  (click)="copy(inviteLink(t.invite_code_viewer), 'viewerLink')"
-                >
-                  {{
-                    (copied() === 'viewerLink' ? 'tripDetail.copied' : 'tripDetail.copyLink')
-                      | transloco
-                  }}
-                </button>
+              <div class="modal-row">
+                <label>{{ 'tripDetail.inviteLinkLabel' | transloco }}</label>
+                <div class="modal-value-row">
+                  <span class="link-text">{{
+                    inviteLink(role === 'EDITOR' ? t.invite_code_editor : t.invite_code_viewer)
+                  }}</span>
+                  <button
+                    class="btn-sm"
+                    (click)="
+                      copy(
+                        inviteLink(role === 'EDITOR' ? t.invite_code_editor : t.invite_code_viewer),
+                        'link'
+                      )
+                    "
+                  >
+                    {{
+                      (copied() === 'link' ? 'tripDetail.copied' : 'tripDetail.copyLink')
+                        | transloco
+                    }}
+                  </button>
+                </div>
               </div>
+
+              <button class="btn-secondary full-width" (click)="closeInviteModal()">
+                {{ 'common.confirm' | transloco }}
+              </button>
             </div>
           </div>
-        </div>
+        }
       }
     </div>
   `,
@@ -120,9 +156,18 @@ import { TripService } from '../../core/services/trip.service';
         margin-bottom: 1.5rem;
       }
       .back-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        flex-shrink: 0;
         color: var(--accent);
         text-decoration: none;
-        font-weight: 500;
+        font-size: 1.3rem;
+        font-weight: 600;
+        background: var(--accent-light);
       }
       h1 {
         font-size: 1.8rem;
@@ -166,23 +211,99 @@ import { TripService } from '../../core/services/trip.service';
         box-shadow: 0 4px 20px var(--shadow);
       }
       .card h3 {
-        margin: 0 0 1rem;
+        margin: 0;
         color: var(--text-primary);
       }
-      .section-desc {
-        margin: -0.5rem 0 1rem;
-        color: var(--text-secondary);
-        font-size: 0.85rem;
+      .card-header-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 1rem;
       }
+
+      /* 邀請選單 */
+      .invite-menu {
+        position: relative;
+      }
+      .icon-btn {
+        background: var(--accent);
+        color: white;
+        border: none;
+        border-radius: 50%;
+        width: 32px;
+        height: 32px;
+        font-size: 1.1rem;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .invite-dropdown {
+        position: absolute;
+        top: calc(100% + 6px);
+        right: 0;
+        background: var(--surface);
+        border: 1.5px solid var(--border);
+        border-radius: 12px;
+        box-shadow: 0 8px 32px var(--shadow);
+        min-width: 180px;
+        z-index: 100;
+        display: none;
+        padding: 0.4rem;
+      }
+      .invite-menu.open .invite-dropdown {
+        display: block;
+      }
+      .invite-option {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        width: 100%;
+        padding: 0.625rem 0.75rem;
+        border: none;
+        background: transparent;
+        cursor: pointer;
+        text-align: left;
+        color: var(--text-primary);
+        font-size: 0.875rem;
+        border-radius: 8px;
+      }
+      .invite-option:hover {
+        background: var(--accent-light);
+      }
+
+      /* 成員清單 */
       .member-list {
         display: flex;
         flex-direction: column;
         gap: 0.75rem;
       }
+      .member-row-wrap {
+        position: relative;
+        overflow: hidden;
+        border-radius: 10px;
+      }
+      .swipe-delete {
+        position: absolute;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        width: 72px;
+        background: #e53e3e;
+        color: white;
+        border: none;
+        font-size: 0.85rem;
+        font-weight: 600;
+        cursor: pointer;
+        display: none;
+      }
       .member-row {
         display: flex;
         align-items: center;
         gap: 0.75rem;
+        background: var(--surface);
+        position: relative;
+        transition: transform 0.2s ease;
       }
       .member-avatar {
         width: 36px;
@@ -218,41 +339,74 @@ import { TripService } from '../../core/services/trip.service';
         padding: 0 0.25rem;
       }
 
-      .invite-row {
+      @media (hover: none) and (pointer: coarse) {
+        /* 觸控裝置：改用左滑露出右側「刪除」，隱藏原本的 X 按鈕 */
+        .remove-btn {
+          display: none;
+        }
+        .swipe-delete {
+          display: block;
+        }
+        .member-row.swiped {
+          transform: translateX(-72px);
+        }
+      }
+
+      /* ── 彈窗 ── */
+      .modal-backdrop {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.45);
         display: flex;
         align-items: center;
-        justify-content: space-between;
-        gap: 1rem;
-        flex-wrap: wrap;
-        padding: 0.875rem 1rem;
-        border: 1.5px solid var(--border);
-        border-radius: 12px;
-        margin-bottom: 0.75rem;
+        justify-content: center;
+        z-index: 200;
+        padding: 1rem;
       }
-      .invite-row:last-child {
-        margin-bottom: 0;
+      .modal-card {
+        background: var(--surface);
+        border-radius: 16px;
+        padding: 1.5rem;
+        max-width: 380px;
+        width: 100%;
+        box-shadow: 0 12px 40px var(--shadow);
       }
-      .invite-label {
-        font-weight: 600;
-        font-size: 0.9rem;
-        color: var(--text-primary);
-        white-space: nowrap;
+      .modal-card h3 {
+        margin: 0 0 1rem;
       }
-      .invite-controls {
+      .modal-row {
+        margin-bottom: 1rem;
+      }
+      .modal-row label {
+        display: block;
+        font-size: 0.8rem;
+        color: var(--text-secondary);
+        margin-bottom: 0.35rem;
+      }
+      .modal-value-row {
         display: flex;
         align-items: center;
         gap: 0.5rem;
-        flex-wrap: wrap;
       }
-      .invite-code {
+      .modal-value-row code {
         font-family: monospace;
         font-size: 1rem;
         font-weight: 700;
-        letter-spacing: 0.08em;
+        letter-spacing: 0.06em;
         background: var(--accent-light);
         color: var(--accent);
         padding: 0.3rem 0.6rem;
         border-radius: 8px;
+        flex-shrink: 0;
+      }
+      .link-text {
+        flex: 1;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        font-size: 0.8rem;
+        color: var(--text-secondary);
       }
       .btn-sm {
         background: var(--accent-light);
@@ -264,10 +418,23 @@ import { TripService } from '../../core/services/trip.service';
         font-size: 0.8rem;
         font-weight: 500;
         white-space: nowrap;
+        flex-shrink: 0;
       }
       .btn-sm:hover {
         background: var(--accent);
         color: white;
+      }
+      .btn-secondary {
+        background: var(--accent-light);
+        color: var(--text-secondary);
+        border: none;
+        border-radius: 10px;
+        padding: 0.625rem 1.5rem;
+        cursor: pointer;
+      }
+      .full-width {
+        width: 100%;
+        margin-top: 0.5rem;
       }
     `,
   ],
@@ -275,15 +442,43 @@ import { TripService } from '../../core/services/trip.service';
 export class TripDetailComponent implements OnInit {
   private route = inject(ActivatedRoute);
   private tripService = inject(TripService);
+  private auth = inject(AuthService);
 
   trip = signal<Trip | undefined>(undefined);
   members = signal<TripMember[]>([]);
   copied = signal<string | null>(null);
+  showInviteMenu = signal(false);
+  inviteModalRole = signal<'EDITOR' | 'VIEWER' | null>(null);
+  swipedId = signal<string | null>(null);
+
+  private touchStartX = 0;
+  private touchDeltaX = 0;
+
+  isOwner = computed(() => this.trip()?.owner_id === this.auth.user()?.id);
 
   async ngOnInit(): Promise<void> {
     const id = this.route.snapshot.paramMap.get('id')!;
     this.trip.set(await this.tripService.getById(id));
     this.members.set(await this.tripService.getMembers(id));
+  }
+
+  canRemove(m: TripMember): boolean {
+    return this.isOwner() && m.role !== 'OWNER';
+  }
+
+  toggleInviteMenu(e: MouseEvent): void {
+    e.stopPropagation();
+    this.showInviteMenu.set(!this.showInviteMenu());
+  }
+
+  openInviteModal(role: 'EDITOR' | 'VIEWER'): void {
+    this.showInviteMenu.set(false);
+    this.copied.set(null);
+    this.inviteModalRole.set(role);
+  }
+
+  closeInviteModal(): void {
+    this.inviteModalRole.set(null);
   }
 
   inviteLink(code: string | null | undefined): string {
@@ -300,7 +495,27 @@ export class TripDetailComponent implements OnInit {
     }, 1500);
   }
 
+  // ── 觸控左滑刪除（Gmail / iOS 郵件慣用手勢） ──────────────────
+  onTouchStart(e: TouchEvent): void {
+    this.touchStartX = e.touches[0].clientX;
+    this.touchDeltaX = 0;
+  }
+
+  onTouchMove(e: TouchEvent): void {
+    this.touchDeltaX = e.touches[0].clientX - this.touchStartX;
+  }
+
+  onTouchEnd(e: TouchEvent, m: TripMember): void {
+    if (!this.canRemove(m)) return;
+    if (this.touchDeltaX < -40) {
+      this.swipedId.set(m.id);
+    } else if (this.touchDeltaX > 20 || this.swipedId() === m.id) {
+      this.swipedId.set(null);
+    }
+  }
+
   async removeMember(memberId: string): Promise<void> {
+    this.swipedId.set(null);
     await this.tripService.removeMember(memberId);
     this.members.set(await this.tripService.getMembers(this.trip()!.id));
   }

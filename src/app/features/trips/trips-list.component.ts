@@ -3,6 +3,7 @@ import {
   inject,
   OnInit,
   signal,
+  computed,
   HostListener,
   ViewChild,
   ElementRef,
@@ -14,7 +15,12 @@ import { TranslocoModule } from '@jsverse/transloco';
 import { Trip } from '../../core/models';
 import { TripService } from '../../core/services/trip.service';
 import { AuthService } from '../../core/services/auth.service';
-import { UserProfileService } from '../../core/services/user-profile.service';
+import {
+  UserProfileService,
+  PRESET_AVATARS,
+  PresetAvatar,
+  parseAvatar,
+} from '../../core/services/user-profile.service';
 import { PreferenceService, COUNTRIES, Country } from '../../core/services/preference.service';
 
 @Component({
@@ -57,16 +63,22 @@ import { PreferenceService, COUNTRIES, Country } from '../../core/services/prefe
           <!-- 圓形帳戶按鈕（取代原本登出按鈕） -->
           <div class="account-menu" [class.open]="showAccount()">
             <button class="account-trigger" (click)="toggleAccount($event)">
-              @if (profile.avatarUrl()) {
-                <img [src]="profile.avatarUrl()" class="avatar-img" alt="avatar" />
-              } @else {
-                <span class="avatar-fallback">👤</span>
-              }
+              <span class="avatar-frame">
+                @if (avatarParsed().type === 'image') {
+                  <img [src]="$any(avatarParsed()).src" class="avatar-img" alt="avatar" />
+                } @else if (avatarParsed().type === 'preset') {
+                  <span class="avatar-preset" [style.background]="$any(avatarParsed()).bg">{{
+                    $any(avatarParsed()).emoji
+                  }}</span>
+                } @else {
+                  <span class="avatar-fallback">👤</span>
+                }
+              </span>
             </button>
 
             <div class="account-dropdown">
-              <button class="account-item" (click)="avatarInputRef.nativeElement.click()">
-                🖼️ {{ 'account.changeAvatar' | transloco }}
+              <button class="account-item" (click)="openAvatarPicker($event)">
+                👤 {{ 'account.changeAvatar' | transloco }}
               </button>
               <input
                 #avatarInput
@@ -77,7 +89,7 @@ import { PreferenceService, COUNTRIES, Country } from '../../core/services/prefe
               />
 
               <div class="account-item account-country" (click)="$event.stopPropagation()">
-                <div class="account-country-label">🏠 {{ 'account.homeCountry' | transloco }}</div>
+                <div class="account-country-label">📍 {{ 'account.homeCountry' | transloco }}</div>
                 <div class="country-picker-inline" [class.open]="showHomeCountry()">
                   <button class="country-trigger" (click)="toggleHomeCountry($event)">
                     <span class="fi fi-{{ pref.homeCountry().code.toLowerCase() }}"></span>
@@ -101,12 +113,31 @@ import { PreferenceService, COUNTRIES, Country } from '../../core/services/prefe
               </div>
 
               <button class="account-item danger" (click)="auth.signOut()">
-                🚪 {{ 'auth.signOut' | transloco }}
+                → {{ 'auth.signOut' | transloco }}
               </button>
             </div>
           </div>
         </div>
       </header>
+
+      @if (showAvatarPicker()) {
+        <div class="modal-backdrop" (click)="showAvatarPicker.set(false)">
+          <div class="modal-card" (click)="$event.stopPropagation()">
+            <h3>{{ 'account.changeAvatar' | transloco }}</h3>
+            <button class="btn-secondary full-width" (click)="avatarInputRef.nativeElement.click()">
+              📷 {{ 'account.uploadPhoto' | transloco }}
+            </button>
+            <p class="section-desc">{{ 'account.orChoosePreset' | transloco }}</p>
+            <div class="preset-grid">
+              @for (p of presetAvatars; track p.id) {
+                <button class="preset-swatch" [style.background]="p.bg" (click)="selectPreset(p)">
+                  {{ p.emoji }}
+                </button>
+              }
+            </div>
+          </div>
+        </div>
+      }
 
       <!-- 行程列表工具列：'+' 獨立一列，右上角 -->
       <div class="list-toolbar">
@@ -446,13 +477,87 @@ import { PreferenceService, COUNTRIES, Country } from '../../core/services/prefe
       .account-menu.open .account-trigger {
         border-color: var(--accent);
       }
+      /* 頭像邊框留白：外圈容器留一圈 padding，圖片/預設圖不貼齊邊緣 */
+      .avatar-frame {
+        width: 100%;
+        height: 100%;
+        padding: 3px;
+        box-sizing: border-box;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
       .avatar-img {
         width: 100%;
         height: 100%;
+        border-radius: 50%;
         object-fit: cover;
+      }
+      .avatar-preset {
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1rem;
       }
       .avatar-fallback {
         font-size: 1.1rem;
+      }
+
+      /* ── 彈窗（頭像選擇 / 邀請等共用） ── */
+      .modal-backdrop {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.45);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 200;
+        padding: 1rem;
+      }
+      .modal-card {
+        background: var(--surface);
+        border-radius: 16px;
+        padding: 1.5rem;
+        max-width: 360px;
+        width: 100%;
+        box-shadow: 0 12px 40px var(--shadow);
+      }
+      .modal-card h3 {
+        margin: 0 0 1rem;
+        color: var(--text-primary);
+      }
+      .full-width {
+        width: 100%;
+        text-align: center;
+      }
+      .section-desc {
+        margin: 1rem 0 0;
+        color: var(--text-secondary);
+        font-size: 0.85rem;
+      }
+      .preset-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 0.75rem;
+        margin-top: 0.75rem;
+      }
+      .preset-swatch {
+        width: 100%;
+        aspect-ratio: 1;
+        border-radius: 50%;
+        border: none;
+        font-size: 1.4rem;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: transform 0.15s;
+      }
+      .preset-swatch:hover {
+        transform: scale(1.08);
       }
 
       .account-dropdown {
@@ -734,6 +839,9 @@ export class TripsListComponent implements OnInit {
   joinCode = signal('');
   joinError = signal(false);
   joining = signal(false);
+  showAvatarPicker = signal(false);
+  presetAvatars = PRESET_AVATARS;
+  avatarParsed = computed(() => parseAvatar(this.profile.avatarUrl()));
 
   form = this.fb.group({
     title: ['', [Validators.required, Validators.maxLength(100)]],
@@ -827,11 +935,23 @@ export class TripsListComponent implements OnInit {
     this.showHomeCountry.set(false);
   }
 
+  openAvatarPicker(e: MouseEvent): void {
+    e.stopPropagation();
+    this.showAccount.set(false);
+    this.showAvatarPicker.set(true);
+  }
+
+  async selectPreset(preset: PresetAvatar): Promise<void> {
+    await this.profile.setPresetAvatar(preset);
+    this.showAvatarPicker.set(false);
+  }
+
   async onAvatarSelected(event: Event): Promise<void> {
     const file = (event.target as HTMLInputElement).files?.[0];
     if (!file) return;
     await this.profile.uploadAvatar(file);
     (event.target as HTMLInputElement).value = '';
+    this.showAvatarPicker.set(false);
   }
 
   async createTrip(): Promise<void> {

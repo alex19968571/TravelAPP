@@ -18,7 +18,9 @@
   "account": {
     "changeAvatar": "更换头像",
     "homeCountry": "当前所在国家",
-    "account": "账号"
+    "account": "账号",
+    "uploadPhoto": "上传照片",
+    "orChoosePreset": "或选择预设头像"
   },
   "trips": {
     "myTrips": "我的行程",
@@ -47,8 +49,8 @@
   "settings": {
     "title": "设置",
     "theme": "主题",
-    "themeLight": "☀️ 浅色",
-    "themeDark": "🌙 深色",
+    "themeLight": "浅色",
+    "themeDark": "深色",
     "color": "主题色彩",
     "fontSize": "字体大小",
     "fontSizeSm": "小",
@@ -73,7 +75,8 @@
     "inviteViewer": "可查看邀请",
     "copyCode": "复制邀请码",
     "copyLink": "复制链接",
-    "copied": "已复制！"
+    "copied": "已复制！",
+    "inviteLinkLabel": "邀请链接"
   },
   "itinerary": {
     "backToTrip": "← 返回行程",
