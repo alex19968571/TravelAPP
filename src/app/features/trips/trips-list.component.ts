@@ -9,7 +9,7 @@ import {
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
-import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
+import { ReactiveFormsModule, FormsModule, FormBuilder, Validators } from '@angular/forms';
 import { TranslocoModule } from '@jsverse/transloco';
 import { Trip } from '../../core/models';
 import { TripService } from '../../core/services/trip.service';
@@ -20,17 +20,16 @@ import { PreferenceService, COUNTRIES, Country } from '../../core/services/prefe
 @Component({
   selector: 'app-trips-list',
   standalone: true,
-  imports: [CommonModule, RouterModule, ReactiveFormsModule, TranslocoModule],
+  imports: [CommonModule, RouterModule, ReactiveFormsModule, FormsModule, TranslocoModule],
   template: `
     <div class="page-container">
       <header class="page-header">
         <h1 class="header-title">{{ 'trips.myTrips' | transloco }}</h1>
 
         <div class="header-actions">
-          <!-- 當地時間（＋ 左側） -->
+          <!-- 當地時間 -->
           <div class="header-clock">{{ pref.clockDisplay() }}</div>
 
-          <button class="btn-icon" (click)="showForm.set(!showForm())">＋</button>
           <a routerLink="/settings" class="btn-icon">⚙️</a>
 
           <!-- 目的地國家選單 -->
@@ -108,6 +107,48 @@ import { PreferenceService, COUNTRIES, Country } from '../../core/services/prefe
           </div>
         </div>
       </header>
+
+      <!-- 行程列表工具列：'+' 獨立一列，右上角 -->
+      <div class="list-toolbar">
+        <div class="add-menu" [class.open]="showAddMenu()">
+          <button class="btn-icon" (click)="toggleAddMenu($event)">＋</button>
+          <div class="add-dropdown">
+            <button class="add-option" (click)="openJoinPrompt()">
+              🔑 {{ 'trips.enterInviteCode' | transloco }}
+            </button>
+            <button class="add-option" (click)="openCreateForm()">
+              🗺️ {{ 'trips.create' | transloco }}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      @if (showJoin()) {
+        <form class="card join-form" (ngSubmit)="submitJoin()">
+          <h3>{{ 'trips.enterInviteCode' | transloco }}</h3>
+          <div class="form-row">
+            <label>{{ 'trips.inviteCode' | transloco }}</label>
+            <input
+              [ngModel]="joinCode()"
+              (ngModelChange)="joinCode.set($event)"
+              name="joinCode"
+              [placeholder]="'trips.inviteCodePlaceholder' | transloco"
+              style="text-transform: uppercase;"
+            />
+          </div>
+          @if (joinError()) {
+            <p class="join-error">{{ 'trips.joinError' | transloco }}</p>
+          }
+          <div class="form-actions">
+            <button type="button" class="btn-secondary" (click)="showJoin.set(false)">
+              {{ 'trips.cancel' | transloco }}
+            </button>
+            <button type="submit" class="btn-primary" [disabled]="!joinCode().trim() || joining()">
+              {{ (joining() ? 'trips.joining' : 'trips.join') | transloco }}
+            </button>
+          </div>
+        </form>
+      }
 
       @if (showForm()) {
         <form [formGroup]="form" (ngSubmit)="createTrip()" class="trip-form card">
@@ -467,6 +508,54 @@ import { PreferenceService, COUNTRIES, Country } from '../../core/services/prefe
         font-weight: 500;
       }
 
+      /* ── 行程列表工具列（+ 選單） ── */
+      .list-toolbar {
+        display: flex;
+        justify-content: flex-end;
+        margin-bottom: 0.75rem;
+      }
+      .add-menu {
+        position: relative;
+      }
+      .add-dropdown {
+        position: absolute;
+        top: calc(100% + 6px);
+        right: 0;
+        background: var(--surface);
+        border: 1.5px solid var(--border);
+        border-radius: 12px;
+        box-shadow: 0 8px 32px var(--shadow);
+        min-width: 200px;
+        z-index: 100;
+        display: none;
+        padding: 0.4rem;
+      }
+      .add-menu.open .add-dropdown {
+        display: block;
+      }
+      .add-option {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        width: 100%;
+        padding: 0.625rem 0.75rem;
+        border: none;
+        background: transparent;
+        cursor: pointer;
+        text-align: left;
+        color: var(--text-primary);
+        font-size: 0.875rem;
+        border-radius: 8px;
+      }
+      .add-option:hover {
+        background: var(--accent-light);
+      }
+      .join-error {
+        color: #e53e3e;
+        font-size: 0.85rem;
+        margin: -0.5rem 0 1rem;
+      }
+
       /* ── Cards ── */
       .card {
         background: var(--surface);
@@ -640,6 +729,11 @@ export class TripsListComponent implements OnInit {
   showCountry = signal(false);
   showAccount = signal(false);
   showHomeCountry = signal(false);
+  showAddMenu = signal(false);
+  showJoin = signal(false);
+  joinCode = signal('');
+  joinError = signal(false);
+  joining = signal(false);
 
   form = this.fb.group({
     title: ['', [Validators.required, Validators.maxLength(100)]],
@@ -658,6 +752,44 @@ export class TripsListComponent implements OnInit {
       this.showHomeCountry.set(false);
     } else if (!document.querySelector('.account-menu .country-picker-inline')?.contains(target)) {
       this.showHomeCountry.set(false);
+    }
+    if (!document.querySelector('.add-menu')?.contains(target)) this.showAddMenu.set(false);
+  }
+
+  toggleAddMenu(e: MouseEvent): void {
+    e.stopPropagation();
+    this.showAddMenu.set(!this.showAddMenu());
+  }
+
+  openJoinPrompt(): void {
+    this.showAddMenu.set(false);
+    this.showForm.set(false);
+    this.joinCode.set('');
+    this.joinError.set(false);
+    this.showJoin.set(true);
+  }
+
+  openCreateForm(): void {
+    this.showAddMenu.set(false);
+    this.showJoin.set(false);
+    this.showForm.set(true);
+  }
+
+  async submitJoin(): Promise<void> {
+    const code = this.joinCode().trim();
+    if (!code) return;
+    this.joining.set(true);
+    this.joinError.set(false);
+    try {
+      const tripId = await this.tripService.joinByInviteCode(code);
+      if (tripId) {
+        this.showJoin.set(false);
+        await this.loadTrips();
+      } else {
+        this.joinError.set(true);
+      }
+    } finally {
+      this.joining.set(false);
     }
   }
 

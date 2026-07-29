@@ -30,7 +30,11 @@ export class AuthService {
 
       if (event === 'SIGNED_IN' && session?.user) {
         this.syncEngine.syncDown(session.user.id);
-        this.router.navigate(['/trips']);
+        // 若是從 /login 或首頁登入才強制導向 /trips；若是深連結（例如 /join/:code）
+        // 回來的登入，保留當前路由讓該頁面自行接手（例如加入行程後再導頁）
+        if (this.router.url === '/login' || this.router.url === '/') {
+          this.router.navigate(['/trips']);
+        }
       } else if (event === 'SIGNED_OUT') {
         this.router.navigate(['/login']);
       }
@@ -40,7 +44,10 @@ export class AuthService {
   // 取得正確的 base URL（相容 GitHub Pages 子路徑，如 /TravelAPP/）
   private getRedirectUrl(): string {
     const base = document.querySelector('base')?.href ?? `${window.location.origin}/`;
-    return `${base}trips`;
+    const pending = sessionStorage.getItem('pending_return_url');
+    sessionStorage.removeItem('pending_return_url');
+    const path = pending ? pending.replace(/^\//, '') : 'trips';
+    return `${base}${path}`;
   }
 
   async signInWithGoogle(): Promise<void> {

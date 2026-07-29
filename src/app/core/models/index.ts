@@ -16,6 +16,8 @@ export interface Trip {
   row_version: number;
   start_date_utc?: string | null;
   end_date_utc?: string | null;
+  invite_code_editor?: string | null;
+  invite_code_viewer?: string | null;
   created_at_utc: string;
   updated_at_utc: string;
 }

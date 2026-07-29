@@ -36,7 +36,13 @@
     "itinerary": "行程",
     "shopping": "購物",
     "expenses": "記帳",
-    "delete": "刪除"
+    "delete": "刪除",
+    "enterInviteCode": "輸入邀請碼",
+    "inviteCode": "邀請碼",
+    "inviteCodePlaceholder": "例：AB12CD34",
+    "join": "加入",
+    "joining": "加入中...",
+    "joinError": "邀請碼無效或已失效，請確認後再試一次"
   },
   "settings": {
     "title": "設定",
@@ -60,7 +66,14 @@
     "addMember": "新增",
     "itinerary": "景點行程",
     "shopping": "購物清單",
-    "expenses": "記帳分帳"
+    "expenses": "記帳分帳",
+    "inviteTitle": "邀請成員",
+    "inviteDesc": "分享邀請碼或連結，對方登入後即可加入本行程",
+    "inviteEditor": "可編輯邀請",
+    "inviteViewer": "可查看邀請",
+    "copyCode": "複製邀請碼",
+    "copyLink": "複製連結",
+    "copied": "已複製！"
   },
   "itinerary": {
     "backToTrip": "← 返回行程",
@@ -136,5 +149,10 @@
     "back": "返回",
     "confirm": "確認",
     "loading": "載入中..."
+  },
+  "join": {
+    "joining": "正在加入行程...",
+    "invalidCode": "邀請碼無效或已失效",
+    "backToTrips": "返回我的行程"
   }
 }

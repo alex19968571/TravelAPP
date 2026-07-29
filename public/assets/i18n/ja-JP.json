@@ -36,7 +36,13 @@
     "itinerary": "観光",
     "shopping": "買い物",
     "expenses": "経費",
-    "delete": "削除"
+    "delete": "削除",
+    "enterInviteCode": "招待コードを入力",
+    "inviteCode": "招待コード",
+    "inviteCodePlaceholder": "例：AB12CD34",
+    "join": "参加",
+    "joining": "参加中...",
+    "joinError": "招待コードが無効または期限切れです。ご確認の上もう一度お試しください"
   },
   "settings": {
     "title": "設定",
@@ -60,7 +66,14 @@
     "addMember": "追加",
     "itinerary": "観光スポット",
     "shopping": "買い物リスト",
-    "expenses": "経費・割り勘"
+    "expenses": "経費・割り勘",
+    "inviteTitle": "メンバーを招待",
+    "inviteDesc": "招待コードまたはリンクを共有すると、ログイン後この旅程に参加できます",
+    "inviteEditor": "編集可能招待",
+    "inviteViewer": "閲覧のみ招待",
+    "copyCode": "コードをコピー",
+    "copyLink": "リンクをコピー",
+    "copied": "コピーしました！"
   },
   "itinerary": {
     "backToTrip": "← 旅程に戻る",
@@ -136,5 +149,10 @@
     "back": "戻る",
     "confirm": "確認",
     "loading": "読み込み中..."
+  },
+  "join": {
+    "joining": "旅程に参加中...",
+    "invalidCode": "招待コードが無効または期限切れです",
+    "backToTrips": "マイ旅程に戻る"
   }
 }

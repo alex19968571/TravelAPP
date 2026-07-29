@@ -6,8 +6,8 @@ import { SupabaseService } from './supabase.service';
 import { SyncQueueItem, Trip, ShoppingItem, Expense } from '../models';
 import { generateId } from '../utils/uuid.util';
 
-type TableName = 'trips' | 'shopping_list' | 'expenses' | 'itinerary_items' |
-                 'trip_members' | 'expense_splits';
+type TableName =
+  'trips' | 'shopping_list' | 'expenses' | 'itinerary_items' | 'trip_members' | 'expense_splits';
 
 const CONFLICT_FIELD: Partial<Record<TableName, string>> = {
   shopping_list: 'client_record_id',
@@ -27,7 +27,7 @@ export class SyncEngineService implements OnDestroy {
   private initNetworkListener(): void {
     const online$ = fromEvent(window, 'online');
     const visible$ = fromEvent(document, 'visibilitychange').pipe(
-      filter(() => document.visibilityState === 'visible')
+      filter(() => document.visibilityState === 'visible'),
     );
 
     merge(online$, visible$)
@@ -38,33 +38,53 @@ export class SyncEngineService implements OnDestroy {
   // ── Sync-Down：登入後從雲端覆蓋寫入本地 ──────────────────────────
   async syncDown(userId: string): Promise<void> {
     try {
+      const [{ data: ownedTrips }, { data: members }] = await Promise.all([
+        this.supabase.from('trips').select('*').eq('owner_id', userId),
+        this.supabase.from('trip_members').select('*').eq('user_id', userId),
+      ]);
+
+      // 除了自己擁有的行程，也要抓透過邀請碼／連結加入的行程
+      const joinedTripIds = [
+        ...new Set((members ?? []).map((m) => (m as any).trip_id as string)),
+      ].filter((id) => !(ownedTrips ?? []).some((t) => (t as any).id === id));
+      const { data: joinedTrips } = joinedTripIds.length
+        ? await this.supabase.from('trips').select('*').in('id', joinedTripIds)
+        : { data: [] as unknown[] };
+
+      const trips = [...(ownedTrips ?? []), ...(joinedTrips ?? [])];
+
       const [
-        { data: trips },
-        { data: members },
         { data: itineraryItems },
         { data: shoppingItems },
         { data: expenses },
         { data: splits },
       ] = await Promise.all([
-        this.supabase.from('trips').select('*').eq('owner_id', userId),
-        this.supabase.from('trip_members').select('*').eq('user_id', userId),
         this.supabase.from('itinerary_items').select('*'),
         this.supabase.from('shopping_list').select('*'),
         this.supabase.from('expenses').select('*'),
         this.supabase.from('expense_splits').select('*'),
       ]);
 
-      await db.transaction('rw', [
-        db.trips, db.trip_members, db.itinerary_items,
-        db.shopping_list, db.expenses, db.expense_splits,
-      ], async () => {
-        if (trips?.length)          await db.trips.bulkPut(trips as Trip[]);
-        if (members?.length)        await db.trip_members.bulkPut(members as any[]);
-        if (itineraryItems?.length) await db.itinerary_items.bulkPut(itineraryItems as any[]);
-        if (shoppingItems?.length)  await db.shopping_list.bulkPut(shoppingItems as ShoppingItem[]);
-        if (expenses?.length)       await db.expenses.bulkPut(expenses as Expense[]);
-        if (splits?.length)         await db.expense_splits.bulkPut(splits as any[]);
-      });
+      await db.transaction(
+        'rw',
+        [
+          db.trips,
+          db.trip_members,
+          db.itinerary_items,
+          db.shopping_list,
+          db.expenses,
+          db.expense_splits,
+        ],
+        async () => {
+          if (trips.length) await db.trips.bulkPut(trips as Trip[]);
+          if (members?.length) await db.trip_members.bulkPut(members as any[]);
+          if (itineraryItems?.length) await db.itinerary_items.bulkPut(itineraryItems as any[]);
+          if (shoppingItems?.length)
+            await db.shopping_list.bulkPut(shoppingItems as ShoppingItem[]);
+          if (expenses?.length) await db.expenses.bulkPut(expenses as Expense[]);
+          if (splits?.length) await db.expense_splits.bulkPut(splits as any[]);
+        },
+      );
     } catch (err) {
       console.error('[SyncEngine] syncDown error', err);
     }
@@ -78,8 +98,9 @@ export class SyncEngineService implements OnDestroy {
     try {
       await this.flushBlobs();
       const pending = await db.sync_queue
-        .where('status').anyOf(['PENDING', 'FAILED'])
-        .and(item => item.retry_count < 5)
+        .where('status')
+        .anyOf(['PENDING', 'FAILED'])
+        .and((item) => item.retry_count < 5)
         .sortBy('created_at');
 
       for (const item of pending) {
@@ -97,7 +118,10 @@ export class SyncEngineService implements OnDestroy {
     try {
       if (item.operation === 'DELETE') {
         const pkField = CONFLICT_FIELD[item.table_name as TableName] ?? 'id';
-        await this.supabase.from(item.table_name).delete().eq(pkField, (item.payload as any)[pkField]);
+        await this.supabase
+          .from(item.table_name)
+          .delete()
+          .eq(pkField, (item.payload as any)[pkField]);
       } else {
         const conflictCol = CONFLICT_FIELD[item.table_name as TableName] ?? 'id';
         await this.supabase.from(item.table_name).upsert(item.payload, { onConflict: conflictCol });
@@ -147,7 +171,7 @@ export class SyncEngineService implements OnDestroy {
   async enqueue(
     operation: SyncQueueItem['operation'],
     tableName: string,
-    payload: Record<string, unknown>
+    payload: Record<string, unknown>,
   ): Promise<void> {
     await db.sync_queue.add({
       id: generateId(),

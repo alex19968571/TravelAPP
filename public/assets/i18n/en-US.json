@@ -36,7 +36,13 @@
     "itinerary": "Itinerary",
     "shopping": "Shopping",
     "expenses": "Expenses",
-    "delete": "Delete"
+    "delete": "Delete",
+    "enterInviteCode": "Enter Invite Code",
+    "inviteCode": "Invite Code",
+    "inviteCodePlaceholder": "e.g. AB12CD34",
+    "join": "Join",
+    "joining": "Joining...",
+    "joinError": "Invalid or expired invite code, please check and try again"
   },
   "settings": {
     "title": "Settings",
@@ -60,7 +66,14 @@
     "addMember": "Add",
     "itinerary": "Itinerary",
     "shopping": "Shopping List",
-    "expenses": "Expenses"
+    "expenses": "Expenses",
+    "inviteTitle": "Invite Members",
+    "inviteDesc": "Share an invite code or link — after signing in, they'll join this trip",
+    "inviteEditor": "Editor Invite",
+    "inviteViewer": "Viewer Invite",
+    "copyCode": "Copy Code",
+    "copyLink": "Copy Link",
+    "copied": "Copied!"
   },
   "itinerary": {
     "backToTrip": "← Back to Trip",
@@ -136,5 +149,10 @@
     "back": "Back",
     "confirm": "Confirm",
     "loading": "Loading..."
+  },
+  "join": {
+    "joining": "Joining trip...",
+    "invalidCode": "Invalid or expired invite code",
+    "backToTrips": "Back to My Trips"
   }
 }

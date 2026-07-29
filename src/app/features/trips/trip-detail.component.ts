@@ -1,7 +1,6 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterModule } from '@angular/router';
-import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { TranslocoModule } from '@jsverse/transloco';
 import { Trip, TripMember } from '../../core/models';
 import { TripService } from '../../core/services/trip.service';
@@ -9,7 +8,7 @@ import { TripService } from '../../core/services/trip.service';
 @Component({
   selector: 'app-trip-detail',
   standalone: true,
-  imports: [CommonModule, RouterModule, ReactiveFormsModule, TranslocoModule],
+  imports: [CommonModule, RouterModule, TranslocoModule],
   template: `
     <div class="page-container">
       <header class="page-header">
@@ -35,7 +34,7 @@ import { TripService } from '../../core/services/trip.service';
             </a>
           </div>
 
-          <!-- 成員管理 -->
+          <!-- 成員清單 -->
           <div class="card">
             <h3>{{ 'tripDetail.members' | transloco }}</h3>
             <div class="member-list">
@@ -50,16 +49,56 @@ import { TripService } from '../../core/services/trip.service';
                 </div>
               }
             </div>
+          </div>
 
-            <form [formGroup]="memberForm" (ngSubmit)="addMember()" class="add-member-form">
-              <input
-                formControlName="display_name"
-                [placeholder]="'tripDetail.addMemberPlaceholder' | transloco"
-              />
-              <button type="submit" [disabled]="memberForm.invalid" class="btn-primary">
-                {{ 'tripDetail.addMember' | transloco }}
-              </button>
-            </form>
+          <!-- 邀請成員（邀請碼／連結） -->
+          <div class="card">
+            <h3>{{ 'tripDetail.inviteTitle' | transloco }}</h3>
+            <p class="section-desc">{{ 'tripDetail.inviteDesc' | transloco }}</p>
+
+            <div class="invite-row">
+              <div class="invite-label editor">✏️ {{ 'tripDetail.inviteEditor' | transloco }}</div>
+              <div class="invite-controls">
+                <code class="invite-code">{{ t.invite_code_editor }}</code>
+                <button class="btn-sm" (click)="copy(t.invite_code_editor, 'editorCode')">
+                  {{
+                    (copied() === 'editorCode' ? 'tripDetail.copied' : 'tripDetail.copyCode')
+                      | transloco
+                  }}
+                </button>
+                <button
+                  class="btn-sm"
+                  (click)="copy(inviteLink(t.invite_code_editor), 'editorLink')"
+                >
+                  {{
+                    (copied() === 'editorLink' ? 'tripDetail.copied' : 'tripDetail.copyLink')
+                      | transloco
+                  }}
+                </button>
+              </div>
+            </div>
+
+            <div class="invite-row">
+              <div class="invite-label viewer">👀 {{ 'tripDetail.inviteViewer' | transloco }}</div>
+              <div class="invite-controls">
+                <code class="invite-code">{{ t.invite_code_viewer }}</code>
+                <button class="btn-sm" (click)="copy(t.invite_code_viewer, 'viewerCode')">
+                  {{
+                    (copied() === 'viewerCode' ? 'tripDetail.copied' : 'tripDetail.copyCode')
+                      | transloco
+                  }}
+                </button>
+                <button
+                  class="btn-sm"
+                  (click)="copy(inviteLink(t.invite_code_viewer), 'viewerLink')"
+                >
+                  {{
+                    (copied() === 'viewerLink' ? 'tripDetail.copied' : 'tripDetail.copyLink')
+                      | transloco
+                  }}
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       }
@@ -130,11 +169,15 @@ import { TripService } from '../../core/services/trip.service';
         margin: 0 0 1rem;
         color: var(--text-primary);
       }
+      .section-desc {
+        margin: -0.5rem 0 1rem;
+        color: var(--text-secondary);
+        font-size: 0.85rem;
+      }
       .member-list {
         display: flex;
         flex-direction: column;
         gap: 0.75rem;
-        margin-bottom: 1rem;
       }
       .member-row {
         display: flex;
@@ -174,31 +217,57 @@ import { TripService } from '../../core/services/trip.service';
         font-size: 1.2rem;
         padding: 0 0.25rem;
       }
-      .add-member-form {
+
+      .invite-row {
         display: flex;
-        gap: 0.75rem;
-      }
-      .add-member-form input {
-        flex: 1;
-        padding: 0.625rem 0.875rem;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        flex-wrap: wrap;
+        padding: 0.875rem 1rem;
         border: 1.5px solid var(--border);
-        border-radius: 10px;
-        font-size: 0.95rem;
-        background: var(--input-bg);
-        color: var(--text-primary);
+        border-radius: 12px;
+        margin-bottom: 0.75rem;
       }
-      .btn-primary {
-        background: var(--accent);
-        color: white;
-        border: none;
-        border-radius: 10px;
-        padding: 0.625rem 1.25rem;
+      .invite-row:last-child {
+        margin-bottom: 0;
+      }
+      .invite-label {
         font-weight: 600;
-        cursor: pointer;
+        font-size: 0.9rem;
+        color: var(--text-primary);
         white-space: nowrap;
       }
-      .btn-primary:disabled {
-        opacity: 0.5;
+      .invite-controls {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+      }
+      .invite-code {
+        font-family: monospace;
+        font-size: 1rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        background: var(--accent-light);
+        color: var(--accent);
+        padding: 0.3rem 0.6rem;
+        border-radius: 8px;
+      }
+      .btn-sm {
+        background: var(--accent-light);
+        color: var(--accent);
+        border: none;
+        border-radius: 8px;
+        padding: 0.375rem 0.75rem;
+        cursor: pointer;
+        font-size: 0.8rem;
+        font-weight: 500;
+        white-space: nowrap;
+      }
+      .btn-sm:hover {
+        background: var(--accent);
+        color: white;
       }
     `,
   ],
@@ -206,14 +275,10 @@ import { TripService } from '../../core/services/trip.service';
 export class TripDetailComponent implements OnInit {
   private route = inject(ActivatedRoute);
   private tripService = inject(TripService);
-  private fb = inject(FormBuilder);
 
   trip = signal<Trip | undefined>(undefined);
   members = signal<TripMember[]>([]);
-
-  memberForm = this.fb.group({
-    display_name: ['', [Validators.required, Validators.maxLength(100)]],
-  });
+  copied = signal<string | null>(null);
 
   async ngOnInit(): Promise<void> {
     const id = this.route.snapshot.paramMap.get('id')!;
@@ -221,12 +286,18 @@ export class TripDetailComponent implements OnInit {
     this.members.set(await this.tripService.getMembers(id));
   }
 
-  async addMember(): Promise<void> {
-    if (this.memberForm.invalid) return;
-    const tripId = this.trip()!.id;
-    await this.tripService.addMember(tripId, this.memberForm.value.display_name!);
-    this.memberForm.reset();
-    this.members.set(await this.tripService.getMembers(tripId));
+  inviteLink(code: string | null | undefined): string {
+    const base = document.querySelector('base')?.href ?? `${window.location.origin}/`;
+    return `${base}join/${code}`;
+  }
+
+  async copy(text: string | null | undefined, key: string): Promise<void> {
+    if (!text) return;
+    await navigator.clipboard.writeText(text);
+    this.copied.set(key);
+    setTimeout(() => {
+      if (this.copied() === key) this.copied.set(null);
+    }, 1500);
   }
 
   async removeMember(memberId: string): Promise<void> {

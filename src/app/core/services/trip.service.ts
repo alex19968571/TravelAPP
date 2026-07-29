@@ -2,17 +2,26 @@ import { Injectable, inject } from '@angular/core';
 import { db } from '../db/local.db';
 import { SyncEngineService } from './sync-engine.service';
 import { AuthService } from './auth.service';
+import { SupabaseService } from './supabase.service';
 import { Trip, TripMember, ItineraryItem } from '../models';
-import { generateId } from '../utils/uuid.util';
+import { generateId, generateInviteCode } from '../utils/uuid.util';
 
 @Injectable({ providedIn: 'root' })
 export class TripService {
   private sync = inject(SyncEngineService);
   private auth = inject(AuthService);
+  private supabase = inject(SupabaseService).client;
 
   async getAll(): Promise<Trip[]> {
     const userId = this.auth.user()?.id ?? '';
-    return db.trips.where('owner_id').equals(userId).sortBy('updated_at_utc');
+    const owned = await db.trips.where('owner_id').equals(userId).toArray();
+    const memberships = await db.trip_members.where('user_id').equals(userId).toArray();
+    const memberTripIds = memberships
+      .map((m) => m.trip_id)
+      .filter((id) => !owned.some((t) => t.id === id));
+    const joined = memberTripIds.length ? await db.trips.bulkGet(memberTripIds) : [];
+    const all = [...owned, ...joined.filter((t): t is Trip => !!t)];
+    return all.sort((a, b) => b.updated_at_utc.localeCompare(a.updated_at_utc));
   }
 
   async getById(id: string): Promise<Trip | undefined> {
@@ -31,6 +40,8 @@ export class TripService {
       id: generateId(),
       owner_id: userId,
       row_version: 1,
+      invite_code_editor: generateInviteCode(),
+      invite_code_viewer: generateInviteCode(),
       created_at_utc: now,
       updated_at_utc: now,
       ...data,
@@ -64,6 +75,25 @@ export class TripService {
   async delete(id: string): Promise<void> {
     await db.trips.delete(id);
     await this.sync.enqueue('DELETE', 'trips', { id });
+  }
+
+  // ── 邀請碼加入行程 ─────────────────────────────────────────────────
+  /** 以邀請碼（可編輯／可查看）加入行程；成功則回傳行程 id，失敗回傳 null */
+  async joinByInviteCode(code: string): Promise<string | null> {
+    const trimmed = code.trim().toUpperCase();
+    if (!trimmed) return null;
+
+    const { data, error } = await this.supabase.rpc('join_trip_by_invite_code', {
+      p_invite_code: trimmed,
+    });
+    if (error || !data?.length) {
+      console.error('[TripService] joinByInviteCode error', error);
+      return null;
+    }
+
+    const userId = this.auth.user()?.id ?? '';
+    await this.sync.syncDown(userId);
+    return data[0].trip_id as string;
   }
 
   // ── 成員管理 ──────────────────────────────────────────────────────

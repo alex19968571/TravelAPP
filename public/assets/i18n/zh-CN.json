@@ -36,7 +36,13 @@
     "itinerary": "行程",
     "shopping": "购物",
     "expenses": "记账",
-    "delete": "删除"
+    "delete": "删除",
+    "enterInviteCode": "输入邀请码",
+    "inviteCode": "邀请码",
+    "inviteCodePlaceholder": "例：AB12CD34",
+    "join": "加入",
+    "joining": "加入中...",
+    "joinError": "邀请码无效或已失效，请确认后再试一次"
   },
   "settings": {
     "title": "设置",
@@ -60,7 +66,14 @@
     "addMember": "新增",
     "itinerary": "景点行程",
     "shopping": "购物清单",
-    "expenses": "记账分账"
+    "expenses": "记账分账",
+    "inviteTitle": "邀请成员",
+    "inviteDesc": "分享邀请码或链接，对方登录后即可加入本行程",
+    "inviteEditor": "可编辑邀请",
+    "inviteViewer": "可查看邀请",
+    "copyCode": "复制邀请码",
+    "copyLink": "复制链接",
+    "copied": "已复制！"
   },
   "itinerary": {
     "backToTrip": "← 返回行程",
@@ -136,5 +149,10 @@
     "back": "返回",
     "confirm": "确认",
     "loading": "加载中..."
+  },
+  "join": {
+    "joining": "正在加入行程...",
+    "invalidCode": "邀请码无效或已失效",
+    "backToTrips": "返回我的行程"
   }
 }
