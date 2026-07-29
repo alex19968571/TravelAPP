@@ -16,7 +16,11 @@ export class MapsService {
     this.initialized = true;
   }
 
-  /** 依地址／地點名稱查詢座標；輸入若已是「緯度,經度」格式則直接解析，不呼叫 API */
+  /** 依地址／地點名稱查詢座標；
+   *  1. 直接解析「緯度,經度」格式
+   *  2. 嘗試 Google Geocoding API
+   *  3. Fallback：Nominatim（OpenStreetMap，免 API key）
+   */
   async searchPlace(query: string): Promise<{ name: string; lat: number; lng: number } | null> {
     const latLngMatch = query.trim().match(/^(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)$/);
     if (latLngMatch) {
@@ -26,20 +30,66 @@ export class MapsService {
     }
 
     await this.ensureLoaded();
-    const geocoder = new google.maps.Geocoder();
+
+    // 先嘗試 Google Geocoding API
     try {
+      const geocoder = new google.maps.Geocoder();
       const result = await geocoder.geocode({ address: query });
       const first = result.results[0];
-      if (!first) return null;
-      return {
-        name: first.formatted_address,
-        lat: first.geometry.location.lat(),
-        lng: first.geometry.location.lng(),
-      };
+      if (first) {
+        return {
+          name: first.formatted_address,
+          lat: first.geometry.location.lat(),
+          lng: first.geometry.location.lng(),
+        };
+      }
+    } catch {
+      // Geocoding API 未啟用，改用 Nominatim
+    }
+
+    // Fallback: Nominatim (OpenStreetMap)
+    return this.nominatimForward(query);
+  }
+
+  /** Nominatim 正向地理編碼（免費，不需 API key） */
+  private async nominatimForward(query: string): Promise<{ name: string; lat: number; lng: number } | null> {
+    try {
+      const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=1`;
+      const res = await fetch(url, {
+        headers: { 'User-Agent': 'TravelAPP/1.0', 'Accept-Language': 'zh-TW,zh;q=0.9,en;q=0.8' },
+      });
+      if (!res.ok) return null;
+      const data = await res.json();
+      if (!data.length) return null;
+      return { name: data[0].display_name, lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) };
     } catch (err) {
-      console.error('[Maps] searchPlace error', err);
+      console.error('[Maps] Nominatim forward geocoding failed', err);
       return null;
     }
+  }
+
+  /** 反向地理編碼（取得點擊座標的地名）：Google Geocoding → Nominatim → 座標字串 */
+  async reverseGeocode(lat: number, lng: number): Promise<string> {
+    // 嘗試 Google Geocoding
+    try {
+      const geocoder = new google.maps.Geocoder();
+      const res = await geocoder.geocode({ location: { lat, lng } });
+      if (res.results?.[0]?.formatted_address) return res.results[0].formatted_address;
+    } catch { /* fallback */ }
+
+    // Fallback: Nominatim
+    try {
+      const url = `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`;
+      const res = await fetch(url, {
+        headers: { 'User-Agent': 'TravelAPP/1.0', 'Accept-Language': 'zh-TW,zh;q=0.9,en;q=0.8' },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        return data.display_name ?? `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+      }
+    } catch { /* ignore */ }
+
+    return `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
   }
 
   async initMap(element: HTMLElement, center: google.maps.LatLngLiteral): Promise<google.maps.Map> {

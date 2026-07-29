@@ -325,6 +325,22 @@ export class ItineraryComponent implements OnInit, AfterViewInit {
       );
       // 若行程資料已載入（ngOnInit 先完成），立即繪製景點
       this.renderSpotMarkers();
+
+      // 點擊地圖空白處 → 顯示地點小卡 + 新增按鈕
+      this.mapInstance.addListener('click', (e: google.maps.MapMouseEvent) => {
+        if (!e.latLng) return;
+        const lat = e.latLng.lat();
+        const lng = e.latLng.lng();
+        // 先立即顯示座標小卡，再非同步更新為地名
+        const coordName = `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+        this.ngZone.run(() => this.showSearchOnMap({ name: coordName, lat, lng }));
+        // 嘗試反向地理編碼取得真實地名
+        this.mapsService.reverseGeocode(lat, lng).then(name => {
+          if (name !== coordName) {
+            this.ngZone.run(() => this.showSearchOnMap({ name, lat, lng }));
+          }
+        });
+      });
     } catch (err) {
       console.warn('[Itinerary] Map init failed', err);
     }
