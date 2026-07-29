@@ -4,10 +4,11 @@
     "tagline": "Offline-First · Split Bills · Receipt Scan"
   },
   "nav": {
-    "trips": "My Trips",
+    "trips": "Trips",
     "itinerary": "Itinerary",
     "shopping": "Shopping List",
     "expenses": "Expenses",
+    "exchange": "Exchange",
     "settings": "Settings"
   },
   "auth": {
@@ -48,6 +49,8 @@
   },
   "settings": {
     "title": "Settings",
+    "destCountry": "Destination Country",
+    "destCountryDesc": "Affects the default currency for new trips and the shopping page",
     "theme": "Theme",
     "themeLight": "Light",
     "themeDark": "Dark",
@@ -79,7 +82,7 @@
     "inviteLinkLabel": "Invite Link"
   },
   "itinerary": {
-    "backToTrip": "← Back to Trip",
+    "backToTrip": "Back to Trip",
     "title": "Itinerary",
     "day": "Day {{day}}",
     "showRoute": "🗺 Show Route",
@@ -92,7 +95,7 @@
     "submit": "Add Spot"
   },
   "shopping": {
-    "backToTrip": "← Back to Trip",
+    "backToTrip": "Back to Trip",
     "title": "Shopping List",
     "total": "Total",
     "bought": "Bought",
@@ -111,7 +114,7 @@
     "delete": "🗑 Delete"
   },
   "expenses": {
-    "backToTrip": "← Back to Trip",
+    "backToTrip": "Back to Trip",
     "title": "Expenses",
     "scan": "Scan Receipt",
     "selectImage": "Select Receipt Image",
@@ -157,5 +160,9 @@
     "joining": "Joining trip...",
     "invalidCode": "Invalid or expired invite code",
     "backToTrips": "Back to My Trips"
+  },
+  "exchange": {
+    "title": "Exchange",
+    "clear": "Clear"
   }
 }

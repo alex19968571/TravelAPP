@@ -4,10 +4,11 @@
     "tagline": "离线优先・多人分账・收据扫描"
   },
   "nav": {
-    "trips": "我的行程",
+    "trips": "行程",
     "itinerary": "景点行程",
     "shopping": "购物清单",
     "expenses": "记账分账",
+    "exchange": "换汇",
     "settings": "设置"
   },
   "auth": {
@@ -18,7 +19,7 @@
   "account": {
     "changeAvatar": "更换头像",
     "homeCountry": "当前所在国家",
-    "account": "账号",
+    "account": "账户",
     "uploadPhoto": "上传照片",
     "orChoosePreset": "或选择预设头像"
   },
@@ -48,6 +49,8 @@
   },
   "settings": {
     "title": "设置",
+    "destCountry": "目的地国家",
+    "destCountryDesc": "影响新建行程的预设货币与购物页货币",
     "theme": "主题",
     "themeLight": "浅色",
     "themeDark": "深色",
@@ -79,7 +82,7 @@
     "inviteLinkLabel": "邀请链接"
   },
   "itinerary": {
-    "backToTrip": "← 返回行程",
+    "backToTrip": "返回行程",
     "title": "景点行程",
     "day": "第 {{day}} 天",
     "showRoute": "🗺 显示路线",
@@ -92,7 +95,7 @@
     "submit": "新增景点"
   },
   "shopping": {
-    "backToTrip": "← 返回行程",
+    "backToTrip": "返回行程",
     "title": "购物清单",
     "total": "合计",
     "bought": "已购买",
@@ -111,7 +114,7 @@
     "delete": "🗑 删除"
   },
   "expenses": {
-    "backToTrip": "← 返回行程",
+    "backToTrip": "返回行程",
     "title": "记账分账",
     "scan": "扫描收据",
     "selectImage": "选择收据图片",
@@ -157,5 +160,9 @@
     "joining": "正在加入行程...",
     "invalidCode": "邀请码无效或已失效",
     "backToTrips": "返回我的行程"
+  },
+  "exchange": {
+    "title": "换汇",
+    "clear": "清除"
   }
 }

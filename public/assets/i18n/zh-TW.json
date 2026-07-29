@@ -4,10 +4,11 @@
     "tagline": "離線優先・多人分帳・收據掃描"
   },
   "nav": {
-    "trips": "我的行程",
+    "trips": "行程",
     "itinerary": "景點行程",
     "shopping": "購物清單",
     "expenses": "記帳分帳",
+    "exchange": "換匯",
     "settings": "設定"
   },
   "auth": {
@@ -18,7 +19,7 @@
   "account": {
     "changeAvatar": "更換頭像",
     "homeCountry": "當前所在國家",
-    "account": "帳號",
+    "account": "帳戶",
     "uploadPhoto": "上傳照片",
     "orChoosePreset": "或選擇預設頭像"
   },
@@ -48,6 +49,8 @@
   },
   "settings": {
     "title": "設定",
+    "destCountry": "目的地國家",
+    "destCountryDesc": "影響新建行程的預設幣別與購物頁幣別",
     "theme": "主題",
     "themeLight": "淺色",
     "themeDark": "深色",
@@ -79,7 +82,7 @@
     "inviteLinkLabel": "邀請連結"
   },
   "itinerary": {
-    "backToTrip": "← 返回行程",
+    "backToTrip": "返回行程",
     "title": "景點行程",
     "day": "第 {{day}} 天",
     "showRoute": "🗺 顯示路線",
@@ -92,7 +95,7 @@
     "submit": "新增景點"
   },
   "shopping": {
-    "backToTrip": "← 返回行程",
+    "backToTrip": "返回行程",
     "title": "購物清單",
     "total": "合計",
     "bought": "已購買",
@@ -111,7 +114,7 @@
     "delete": "🗑 刪除"
   },
   "expenses": {
-    "backToTrip": "← 返回行程",
+    "backToTrip": "返回行程",
     "title": "記帳分帳",
     "scan": "掃描收據",
     "selectImage": "選擇收據圖片",
@@ -157,5 +160,9 @@
     "joining": "正在加入行程...",
     "invalidCode": "邀請碼無效或已失效",
     "backToTrips": "返回我的行程"
+  },
+  "exchange": {
+    "title": "換匯",
+    "clear": "清除"
   }
 }

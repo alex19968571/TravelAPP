@@ -4,10 +4,11 @@
     "tagline": "オフラインファースト・割り勘・レシートスキャン"
   },
   "nav": {
-    "trips": "マイ旅程",
+    "trips": "旅程",
     "itinerary": "観光スポット",
     "shopping": "買い物リスト",
     "expenses": "経費・割り勘",
+    "exchange": "両替",
     "settings": "設定"
   },
   "auth": {
@@ -48,6 +49,8 @@
   },
   "settings": {
     "title": "設定",
+    "destCountry": "目的地の国",
+    "destCountryDesc": "新規旅程の基準通貨と買い物ページの通貨に影響します",
     "theme": "テーマ",
     "themeLight": "ライト",
     "themeDark": "ダーク",
@@ -79,7 +82,7 @@
     "inviteLinkLabel": "招待リンク"
   },
   "itinerary": {
-    "backToTrip": "← 旅程に戻る",
+    "backToTrip": "旅程に戻る",
     "title": "観光スポット",
     "day": "{{day}} 日目",
     "showRoute": "🗺 ルート表示",
@@ -92,7 +95,7 @@
     "submit": "スポットを追加"
   },
   "shopping": {
-    "backToTrip": "← 旅程に戻る",
+    "backToTrip": "旅程に戻る",
     "title": "買い物リスト",
     "total": "合計",
     "bought": "購入済み",
@@ -111,7 +114,7 @@
     "delete": "🗑 削除"
   },
   "expenses": {
-    "backToTrip": "← 旅程に戻る",
+    "backToTrip": "旅程に戻る",
     "title": "経費・割り勘",
     "scan": "レシートをスキャン",
     "selectImage": "レシート画像を選択",
@@ -157,5 +160,9 @@
     "joining": "旅程に参加中...",
     "invalidCode": "招待コードが無効または期限切れです",
     "backToTrips": "マイ旅程に戻る"
+  },
+  "exchange": {
+    "title": "両替",
+    "clear": "クリア"
   }
 }

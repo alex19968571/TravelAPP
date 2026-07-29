@@ -1,27 +1,11 @@
-import {
-  Component,
-  inject,
-  OnInit,
-  signal,
-  computed,
-  HostListener,
-  ViewChild,
-  ElementRef,
-} from '@angular/core';
+import { Component, inject, OnInit, signal, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { ReactiveFormsModule, FormsModule, FormBuilder, Validators } from '@angular/forms';
 import { TranslocoModule } from '@jsverse/transloco';
 import { Trip } from '../../core/models';
 import { TripService } from '../../core/services/trip.service';
-import { AuthService } from '../../core/services/auth.service';
-import {
-  UserProfileService,
-  PRESET_AVATARS,
-  PresetAvatar,
-  parseAvatar,
-} from '../../core/services/user-profile.service';
-import { PreferenceService, COUNTRIES, Country } from '../../core/services/preference.service';
+import { PreferenceService } from '../../core/services/preference.service';
 
 @Component({
   selector: 'app-trips-list',
@@ -29,115 +13,7 @@ import { PreferenceService, COUNTRIES, Country } from '../../core/services/prefe
   imports: [CommonModule, RouterModule, ReactiveFormsModule, FormsModule, TranslocoModule],
   template: `
     <div class="page-container">
-      <header class="page-header">
-        <h1 class="header-title">{{ 'trips.myTrips' | transloco }}</h1>
-
-        <div class="header-actions">
-          <!-- 當地時間 -->
-          <div class="header-clock">{{ pref.clockDisplay() }}</div>
-
-          <a routerLink="/settings" class="btn-icon">⚙️</a>
-
-          <!-- 目的地國家選單 -->
-          <div class="country-picker" [class.open]="showCountry()">
-            <button class="country-trigger" (click)="toggleCountry($event)">
-              <span class="fi fi-{{ pref.countryCode().toLowerCase() }}"></span>
-              <span class="cname">{{ pref.country().nativeName }}</span>
-              <span class="caret" [class.flipped]="showCountry()">▾</span>
-            </button>
-            <div class="country-dropdown">
-              @for (c of countries; track c.code) {
-                <button
-                  class="country-option"
-                  [class.selected]="c.code === pref.countryCode()"
-                  (click)="selectCountry(c)"
-                >
-                  <span class="fi fi-{{ c.code.toLowerCase() }}"></span>
-                  <span>{{ c.nativeName }}</span>
-                  <span class="currency-badge">{{ c.currency }}</span>
-                </button>
-              }
-            </div>
-          </div>
-
-          <!-- 圓形帳戶按鈕（取代原本登出按鈕） -->
-          <div class="account-menu" [class.open]="showAccount()">
-            <button class="account-trigger" (click)="toggleAccount($event)">
-              <span class="avatar-frame">
-                @if (avatarParsed().type === 'image') {
-                  <img [src]="$any(avatarParsed()).src" class="avatar-img" alt="avatar" />
-                } @else if (avatarParsed().type === 'preset') {
-                  <span class="avatar-preset" [style.background]="$any(avatarParsed()).bg">{{
-                    $any(avatarParsed()).emoji
-                  }}</span>
-                } @else {
-                  <span class="avatar-fallback">👤</span>
-                }
-              </span>
-            </button>
-
-            <div class="account-dropdown">
-              <button class="account-item" (click)="openAvatarPicker($event)">
-                👤 {{ 'account.changeAvatar' | transloco }}
-              </button>
-              <input
-                #avatarInput
-                type="file"
-                accept="image/*"
-                hidden
-                (change)="onAvatarSelected($event)"
-              />
-
-              <div class="account-item account-country" (click)="$event.stopPropagation()">
-                <div class="account-country-label">📍 {{ 'account.homeCountry' | transloco }}</div>
-                <div class="country-picker-inline" [class.open]="showHomeCountry()">
-                  <button class="country-trigger" (click)="toggleHomeCountry($event)">
-                    <span class="fi fi-{{ pref.homeCountry().code.toLowerCase() }}"></span>
-                    <span class="cname">{{ pref.homeCountry().nativeName }}</span>
-                    <span class="caret" [class.flipped]="showHomeCountry()">▾</span>
-                  </button>
-                  <div class="country-dropdown">
-                    @for (c of countries; track c.code) {
-                      <button
-                        class="country-option"
-                        [class.selected]="c.code === pref.homeCountryCode()"
-                        (click)="selectHomeCountry(c)"
-                      >
-                        <span class="fi fi-{{ c.code.toLowerCase() }}"></span>
-                        <span>{{ c.nativeName }}</span>
-                        <span class="currency-badge">{{ c.currency }}</span>
-                      </button>
-                    }
-                  </div>
-                </div>
-              </div>
-
-              <button class="account-item danger" (click)="auth.signOut()">
-                → {{ 'auth.signOut' | transloco }}
-              </button>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      @if (showAvatarPicker()) {
-        <div class="modal-backdrop" (click)="showAvatarPicker.set(false)">
-          <div class="modal-card" (click)="$event.stopPropagation()">
-            <h3>{{ 'account.changeAvatar' | transloco }}</h3>
-            <button class="btn-secondary full-width" (click)="avatarInputRef.nativeElement.click()">
-              📷 {{ 'account.uploadPhoto' | transloco }}
-            </button>
-            <p class="section-desc">{{ 'account.orChoosePreset' | transloco }}</p>
-            <div class="preset-grid">
-              @for (p of presetAvatars; track p.id) {
-                <button class="preset-swatch" [style.background]="p.bg" (click)="selectPreset(p)">
-                  {{ p.emoji }}
-                </button>
-              }
-            </div>
-          </div>
-        </div>
-      }
+      <h1 class="page-title">{{ 'trips.myTrips' | transloco }}</h1>
 
       <!-- 行程列表工具列：'+' 獨立一列，右上角 -->
       <div class="list-toolbar">
@@ -301,39 +177,11 @@ import { PreferenceService, COUNTRIES, Country } from '../../core/services/prefe
         background: var(--bg);
         min-height: 100vh;
       }
-
-      /* ── Header ── */
-      .page-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 1.5rem;
-        flex-wrap: wrap;
-        gap: 0.5rem;
-      }
-      .header-title {
+      .page-title {
         font-size: 1.6rem;
         font-weight: 700;
         color: var(--text-primary);
-        margin: 0;
-      }
-      .header-actions {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        flex-wrap: wrap;
-      }
-
-      .header-clock {
-        font-size: 0.8rem;
-        font-weight: 600;
-        font-variant-numeric: tabular-nums;
-        color: var(--accent);
-        background: var(--accent-light);
-        padding: 0.35rem 0.7rem;
-        border-radius: 8px;
-        white-space: nowrap;
-        letter-spacing: 0.02em;
+        margin: 0 0 1rem;
       }
 
       .btn-icon {
@@ -351,266 +199,6 @@ import { PreferenceService, COUNTRIES, Country } from '../../core/services/prefe
       }
       .btn-icon:hover {
         opacity: 0.85;
-      }
-
-      /* ── 國家選單（共用樣式） ── */
-      .country-picker,
-      .country-picker-inline {
-        position: relative;
-      }
-      .country-trigger {
-        display: flex;
-        align-items: center;
-        gap: 0.4rem;
-        background: var(--surface);
-        color: var(--text-primary);
-        border: 1.5px solid var(--border);
-        border-radius: 10px;
-        padding: 0.5rem 0.75rem;
-        cursor: pointer;
-        font-size: 0.875rem;
-        white-space: nowrap;
-        transition: border-color 0.2s;
-        width: 100%;
-      }
-      .country-trigger:hover,
-      .country-picker.open .country-trigger,
-      .country-picker-inline.open .country-trigger {
-        border-color: var(--accent);
-      }
-      .fi {
-        width: 1.3em;
-        flex-shrink: 0;
-        border-radius: 2px;
-      }
-      .cname {
-        font-weight: 500;
-        max-width: 72px;
-        overflow: hidden;
-        text-overflow: ellipsis;
-      }
-      .currency-badge {
-        font-size: 0.7rem;
-        padding: 0.1rem 0.4rem;
-        border-radius: 5px;
-        background: var(--accent-light);
-        color: var(--accent);
-        font-weight: 700;
-      }
-      .caret {
-        font-size: 0.7rem;
-        color: var(--text-secondary);
-        transition: transform 0.2s;
-        margin-left: auto;
-      }
-      .caret.flipped {
-        transform: rotate(180deg);
-      }
-
-      .country-dropdown {
-        position: absolute;
-        top: calc(100% + 6px);
-        right: 0;
-        background: var(--surface);
-        border: 1.5px solid var(--border);
-        border-radius: 12px;
-        box-shadow: 0 8px 32px var(--shadow);
-        min-width: 190px;
-        max-height: 300px;
-        overflow-y: auto;
-        z-index: 100;
-        display: none;
-        scrollbar-width: thin;
-      }
-      .country-picker.open .country-dropdown,
-      .country-picker-inline.open .country-dropdown {
-        display: block;
-      }
-      .country-option {
-        display: flex;
-        align-items: center;
-        gap: 0.6rem;
-        width: 100%;
-        padding: 0.625rem 1rem;
-        border: none;
-        background: transparent;
-        cursor: pointer;
-        text-align: left;
-        color: var(--text-primary);
-        font-size: 0.875rem;
-        transition: background 0.15s;
-      }
-      .country-option:hover {
-        background: var(--accent-light);
-      }
-      .country-option.selected {
-        background: var(--accent-light);
-        color: var(--accent);
-        font-weight: 600;
-      }
-      .country-option:first-child {
-        border-radius: 10px 10px 0 0;
-      }
-      .country-option:last-child {
-        border-radius: 0 0 10px 10px;
-      }
-
-      /* ── 帳戶圓形按鈕 ── */
-      .account-menu {
-        position: relative;
-      }
-      .account-trigger {
-        width: 38px;
-        height: 38px;
-        border-radius: 50%;
-        border: 1.5px solid var(--border);
-        background: var(--surface);
-        cursor: pointer;
-        padding: 0;
-        overflow: hidden;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        transition: border-color 0.2s;
-      }
-      .account-trigger:hover,
-      .account-menu.open .account-trigger {
-        border-color: var(--accent);
-      }
-      /* 頭像邊框留白：外圈容器留一圈 padding，圖片/預設圖不貼齊邊緣 */
-      .avatar-frame {
-        width: 100%;
-        height: 100%;
-        padding: 3px;
-        box-sizing: border-box;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-      }
-      .avatar-img {
-        width: 100%;
-        height: 100%;
-        border-radius: 50%;
-        object-fit: cover;
-      }
-      .avatar-preset {
-        width: 100%;
-        height: 100%;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 1rem;
-      }
-      .avatar-fallback {
-        font-size: 1.1rem;
-      }
-
-      /* ── 彈窗（頭像選擇 / 邀請等共用） ── */
-      .modal-backdrop {
-        position: fixed;
-        inset: 0;
-        background: rgba(0, 0, 0, 0.45);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        z-index: 200;
-        padding: 1rem;
-      }
-      .modal-card {
-        background: var(--surface);
-        border-radius: 16px;
-        padding: 1.5rem;
-        max-width: 360px;
-        width: 100%;
-        box-shadow: 0 12px 40px var(--shadow);
-      }
-      .modal-card h3 {
-        margin: 0 0 1rem;
-        color: var(--text-primary);
-      }
-      .full-width {
-        width: 100%;
-        text-align: center;
-      }
-      .section-desc {
-        margin: 1rem 0 0;
-        color: var(--text-secondary);
-        font-size: 0.85rem;
-      }
-      .preset-grid {
-        display: grid;
-        grid-template-columns: repeat(4, 1fr);
-        gap: 0.75rem;
-        margin-top: 0.75rem;
-      }
-      .preset-swatch {
-        width: 100%;
-        aspect-ratio: 1;
-        border-radius: 50%;
-        border: none;
-        font-size: 1.4rem;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        transition: transform 0.15s;
-      }
-      .preset-swatch:hover {
-        transform: scale(1.08);
-      }
-
-      .account-dropdown {
-        position: absolute;
-        top: calc(100% + 6px);
-        right: 0;
-        background: var(--surface);
-        border: 1.5px solid var(--border);
-        border-radius: 12px;
-        box-shadow: 0 8px 32px var(--shadow);
-        min-width: 220px;
-        z-index: 100;
-        display: none;
-        padding: 0.4rem;
-      }
-      .account-menu.open .account-dropdown {
-        display: block;
-      }
-      .account-item {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        width: 100%;
-        padding: 0.625rem 0.75rem;
-        border: none;
-        background: transparent;
-        cursor: pointer;
-        text-align: left;
-        color: var(--text-primary);
-        font-size: 0.875rem;
-        border-radius: 8px;
-      }
-      .account-item:hover {
-        background: var(--accent-light);
-      }
-      .account-item.danger {
-        color: #e53e3e;
-      }
-      .account-item.danger:hover {
-        background: #fff0f0;
-      }
-      .account-country {
-        display: block;
-        cursor: default;
-      }
-      .account-country:hover {
-        background: transparent;
-      }
-      .account-country-label {
-        font-size: 0.8rem;
-        color: var(--text-secondary);
-        margin-bottom: 0.4rem;
-        font-weight: 500;
       }
 
       /* ── 行程列表工具列（+ 選單） ── */
@@ -805,13 +393,6 @@ import { PreferenceService, COUNTRIES, Country } from '../../core/services/prefe
       }
 
       @media (max-width: 600px) {
-        .header-clock {
-          font-size: 0.7rem;
-          padding: 0.3rem 0.55rem;
-        }
-        .cname {
-          display: none;
-        }
         .form-row-grid {
           grid-template-columns: 1fr;
         }
@@ -820,28 +401,17 @@ import { PreferenceService, COUNTRIES, Country } from '../../core/services/prefe
   ],
 })
 export class TripsListComponent implements OnInit {
-  @ViewChild('avatarInput') avatarInputRef!: ElementRef<HTMLInputElement>;
-
   tripService = inject(TripService);
-  auth = inject(AuthService);
-  profile = inject(UserProfileService);
   pref = inject(PreferenceService);
   fb = inject(FormBuilder);
 
-  countries = COUNTRIES;
   trips = signal<Trip[]>([]);
   showForm = signal(false);
-  showCountry = signal(false);
-  showAccount = signal(false);
-  showHomeCountry = signal(false);
   showAddMenu = signal(false);
   showJoin = signal(false);
   joinCode = signal('');
   joinError = signal(false);
   joining = signal(false);
-  showAvatarPicker = signal(false);
-  presetAvatars = PRESET_AVATARS;
-  avatarParsed = computed(() => parseAvatar(this.profile.avatarUrl()));
 
   form = this.fb.group({
     title: ['', [Validators.required, Validators.maxLength(100)]],
@@ -854,13 +424,6 @@ export class TripsListComponent implements OnInit {
   @HostListener('document:click', ['$event'])
   onDocumentClick(e: MouseEvent): void {
     const target = e.target as Node;
-    if (!document.querySelector('.country-picker')?.contains(target)) this.showCountry.set(false);
-    if (!document.querySelector('.account-menu')?.contains(target)) {
-      this.showAccount.set(false);
-      this.showHomeCountry.set(false);
-    } else if (!document.querySelector('.account-menu .country-picker-inline')?.contains(target)) {
-      this.showHomeCountry.set(false);
-    }
     if (!document.querySelector('.add-menu')?.contains(target)) this.showAddMenu.set(false);
   }
 
@@ -907,51 +470,6 @@ export class TripsListComponent implements OnInit {
 
   async loadTrips(): Promise<void> {
     this.trips.set(await this.tripService.getAll());
-  }
-
-  toggleCountry(e: MouseEvent): void {
-    e.stopPropagation();
-    this.showCountry.set(!this.showCountry());
-  }
-
-  selectCountry(c: Country): void {
-    this.pref.setCountry(c.code);
-    this.form.patchValue({ target_timezone: c.timezone, base_currency: c.currency });
-    this.showCountry.set(false);
-  }
-
-  toggleAccount(e: MouseEvent): void {
-    e.stopPropagation();
-    this.showAccount.set(!this.showAccount());
-  }
-
-  toggleHomeCountry(e: MouseEvent): void {
-    e.stopPropagation();
-    this.showHomeCountry.set(!this.showHomeCountry());
-  }
-
-  selectHomeCountry(c: Country): void {
-    this.pref.setHomeCountry(c.code);
-    this.showHomeCountry.set(false);
-  }
-
-  openAvatarPicker(e: MouseEvent): void {
-    e.stopPropagation();
-    this.showAccount.set(false);
-    this.showAvatarPicker.set(true);
-  }
-
-  async selectPreset(preset: PresetAvatar): Promise<void> {
-    await this.profile.setPresetAvatar(preset);
-    this.showAvatarPicker.set(false);
-  }
-
-  async onAvatarSelected(event: Event): Promise<void> {
-    const file = (event.target as HTMLInputElement).files?.[0];
-    if (!file) return;
-    await this.profile.uploadAvatar(file);
-    (event.target as HTMLInputElement).value = '';
-    this.showAvatarPicker.set(false);
   }
 
   async createTrip(): Promise<void> {

@@ -15,7 +15,20 @@ const SWIPE_REVEAL_PX = 72;
   template: `
     <div class="page-container">
       <header class="page-header">
-        <a routerLink="/trips" class="back-btn" [attr.aria-label]="'common.back' | transloco">←</a>
+        <a routerLink="/trips" class="back-btn" [attr.aria-label]="'common.back' | transloco">
+          <svg
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <polyline points="15 18 9 12 15 6"></polyline>
+          </svg>
+        </a>
         <h1>{{ trip()?.title ?? ('tripDetail.loading' | transloco) }}</h1>
       </header>
 
