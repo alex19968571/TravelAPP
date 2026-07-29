@@ -65,7 +65,9 @@ export class TripService {
 
   async update(
     id: string,
-    changes: Partial<Pick<Trip, 'title' | 'target_timezone' | 'base_currency'>>,
+    changes: Partial<
+      Pick<Trip, 'title' | 'target_timezone' | 'base_currency' | 'start_date_utc' | 'end_date_utc'>
+    >,
   ): Promise<void> {
     const now = new Date().toISOString();
     await db.trips.update(id, { ...changes, updated_at_utc: now });

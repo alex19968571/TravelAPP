@@ -1,11 +1,56 @@
-import { Component, inject, OnInit, signal, HostListener } from '@angular/core';
+import {
+  Component,
+  inject,
+  OnInit,
+  signal,
+  HostListener,
+  ViewChild,
+  ElementRef,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 import { ReactiveFormsModule, FormsModule, FormBuilder, Validators } from '@angular/forms';
 import { TranslocoModule } from '@jsverse/transloco';
 import { Trip } from '../../core/models';
 import { TripService } from '../../core/services/trip.service';
 import { PreferenceService } from '../../core/services/preference.service';
+
+const TIMEZONE_OPTIONS = [
+  { value: 'Asia/Taipei', label: '台北 (UTC+8)' },
+  { value: 'Asia/Tokyo', label: '東京 (UTC+9)' },
+  { value: 'Asia/Seoul', label: '首爾 (UTC+9)' },
+  { value: 'Asia/Shanghai', label: '上海 (UTC+8)' },
+  { value: 'Asia/Bangkok', label: '曼谷 (UTC+7)' },
+  { value: 'Asia/Ho_Chi_Minh', label: '胡志明 (UTC+7)' },
+  { value: 'Asia/Singapore', label: '新加坡 (UTC+8)' },
+  { value: 'Asia/Kuala_Lumpur', label: '吉隆坡 (UTC+8)' },
+  { value: 'Asia/Jakarta', label: '雅加達 (UTC+7)' },
+  { value: 'Australia/Sydney', label: '雪梨 (UTC+10)' },
+  { value: 'Europe/London', label: '倫敦 (UTC+0)' },
+  { value: 'Europe/Paris', label: '巴黎 (UTC+1)' },
+  { value: 'Europe/Berlin', label: '柏林 (UTC+1)' },
+  { value: 'Europe/Rome', label: '羅馬 (UTC+1)' },
+  { value: 'America/New_York', label: '紐約 (UTC-5)' },
+  { value: 'America/Toronto', label: '多倫多 (UTC-5)' },
+];
+
+const CURRENCY_OPTIONS = [
+  { value: 'TWD', label: 'TWD 台幣' },
+  { value: 'JPY', label: 'JPY 日圓' },
+  { value: 'KRW', label: 'KRW 韓圓' },
+  { value: 'CNY', label: 'CNY 人民幣' },
+  { value: 'THB', label: 'THB 泰銖' },
+  { value: 'VND', label: 'VND 越南盾' },
+  { value: 'SGD', label: 'SGD 新幣' },
+  { value: 'MYR', label: 'MYR 馬幣' },
+  { value: 'IDR', label: 'IDR 盾' },
+  { value: 'AUD', label: 'AUD 澳幣' },
+  { value: 'GBP', label: 'GBP 英鎊' },
+  { value: 'EUR', label: 'EUR 歐元' },
+  { value: 'USD', label: 'USD 美元' },
+  { value: 'CAD', label: 'CAD 加元' },
+  { value: 'CHF', label: 'CHF 瑞郎' },
+];
 
 @Component({
   selector: 'app-trips-list',
@@ -78,22 +123,9 @@ import { PreferenceService } from '../../core/services/preference.service';
             <label>{{ 'trips.timezone' | transloco }}</label>
             <div class="select-wrap">
               <select formControlName="target_timezone">
-                <option value="Asia/Taipei">台北 (UTC+8)</option>
-                <option value="Asia/Tokyo">東京 (UTC+9)</option>
-                <option value="Asia/Seoul">首爾 (UTC+9)</option>
-                <option value="Asia/Shanghai">上海 (UTC+8)</option>
-                <option value="Asia/Bangkok">曼谷 (UTC+7)</option>
-                <option value="Asia/Ho_Chi_Minh">胡志明 (UTC+7)</option>
-                <option value="Asia/Singapore">新加坡 (UTC+8)</option>
-                <option value="Asia/Kuala_Lumpur">吉隆坡 (UTC+8)</option>
-                <option value="Asia/Jakarta">雅加達 (UTC+7)</option>
-                <option value="Australia/Sydney">雪梨 (UTC+10)</option>
-                <option value="Europe/London">倫敦 (UTC+0)</option>
-                <option value="Europe/Paris">巴黎 (UTC+1)</option>
-                <option value="Europe/Berlin">柏林 (UTC+1)</option>
-                <option value="Europe/Rome">羅馬 (UTC+1)</option>
-                <option value="America/New_York">紐約 (UTC-5)</option>
-                <option value="America/Toronto">多倫多 (UTC-5)</option>
+                @for (o of timezoneOptions; track o.value) {
+                  <option [value]="o.value">{{ o.label }}</option>
+                }
               </select>
               <span class="select-caret">▾</span>
             </div>
@@ -102,21 +134,9 @@ import { PreferenceService } from '../../core/services/preference.service';
             <label>{{ 'trips.currency' | transloco }}</label>
             <div class="select-wrap">
               <select formControlName="base_currency">
-                <option value="TWD">TWD 台幣</option>
-                <option value="JPY">JPY 日圓</option>
-                <option value="KRW">KRW 韓圓</option>
-                <option value="CNY">CNY 人民幣</option>
-                <option value="THB">THB 泰銖</option>
-                <option value="VND">VND 越南盾</option>
-                <option value="SGD">SGD 新幣</option>
-                <option value="MYR">MYR 馬幣</option>
-                <option value="IDR">IDR 盾</option>
-                <option value="AUD">AUD 澳幣</option>
-                <option value="GBP">GBP 英鎊</option>
-                <option value="EUR">EUR 歐元</option>
-                <option value="USD">USD 美元</option>
-                <option value="CAD">CAD 加元</option>
-                <option value="CHF">CHF 瑞郎</option>
+                @for (o of currencyOptions; track o.value) {
+                  <option [value]="o.value">{{ o.label }}</option>
+                }
               </select>
               <span class="select-caret">▾</span>
             </div>
@@ -141,31 +161,134 @@ import { PreferenceService } from '../../core/services/preference.service';
 
       <div class="trips-grid">
         @for (trip of trips(); track trip.id) {
-          <div class="trip-card card">
-            <div class="trip-info" [routerLink]="['/trips', trip.id]">
-              <h3>{{ trip.title }}</h3>
-              <div class="trip-meta">
-                <span>🌏 {{ trip.target_timezone }}</span>
-                <span>💰 {{ trip.base_currency }}</span>
+          <div class="trip-card-wrap">
+            <button class="swipe-delete" (click)="confirmDeleteTrip(trip)">
+              {{ 'trips.delete' | transloco }}
+            </button>
+            <div
+              class="trip-card card"
+              [class.swiped]="swipedTripId() === trip.id"
+              (touchstart)="onTouchStart($event)"
+              (touchmove)="onTouchMove($event)"
+              (touchend)="onTouchEnd($event, trip)"
+              (click)="onCardClick(trip)"
+            >
+              <div class="trip-info">
+                <h3>{{ trip.title }}</h3>
+                @if (formatDateRange(trip); as range) {
+                  <div class="trip-dates">📅 {{ range }}</div>
+                }
+                <div class="trip-meta">
+                  <span>🌏 {{ trip.target_timezone }}</span>
+                  <span>💰 {{ trip.base_currency }}</span>
+                </div>
               </div>
-            </div>
-            <div class="trip-nav">
-              <a [routerLink]="['/trips', trip.id, 'itinerary']" class="nav-btn">{{
-                'trips.itinerary' | transloco
-              }}</a>
-              <a [routerLink]="['/trips', trip.id, 'shopping']" class="nav-btn">{{
-                'trips.shopping' | transloco
-              }}</a>
-              <a [routerLink]="['/trips', trip.id, 'expenses']" class="nav-btn">{{
-                'trips.expenses' | transloco
-              }}</a>
-              <button class="nav-btn danger" (click)="deleteTrip(trip.id)">
-                {{ 'trips.delete' | transloco }}
+              <button
+                class="info-btn desktop-only"
+                (click)="openEditTrip(trip); $event.stopPropagation()"
+              >
+                ⓘ
               </button>
+              <div class="trip-nav desktop-only">
+                <a
+                  [routerLink]="['/trips', trip.id]"
+                  class="nav-btn"
+                  (click)="$event.stopPropagation()"
+                  >{{ 'trips.itinerary' | transloco }}</a
+                >
+                <a
+                  [routerLink]="['/trips', trip.id, 'shopping']"
+                  class="nav-btn"
+                  (click)="$event.stopPropagation()"
+                  >{{ 'trips.shopping' | transloco }}</a
+                >
+                <a
+                  [routerLink]="['/trips', trip.id, 'expenses']"
+                  class="nav-btn"
+                  (click)="$event.stopPropagation()"
+                  >{{ 'trips.expenses' | transloco }}</a
+                >
+              </div>
             </div>
           </div>
         }
       </div>
+
+      @if (actionMenuTrip(); as amt) {
+        <div class="modal-backdrop" (click)="actionMenuTrip.set(null)">
+          <div class="modal-card action-sheet" (click)="$event.stopPropagation()">
+            <button class="action-item" (click)="openEditTrip(amt); actionMenuTrip.set(null)">
+              ✏️ {{ 'trips.edit' | transloco }}
+            </button>
+            <button class="action-item" (click)="goTo(['/trips', amt.id])">
+              🗺️ {{ 'trips.itinerary' | transloco }}
+            </button>
+            <button class="action-item" (click)="goTo(['/trips', amt.id, 'shopping'])">
+              🛍️ {{ 'trips.shopping' | transloco }}
+            </button>
+            <button class="action-item" (click)="goTo(['/trips', amt.id, 'expenses'])">
+              💰 {{ 'trips.expenses' | transloco }}
+            </button>
+          </div>
+        </div>
+      }
+
+      @if (editingTrip(); as et) {
+        <div class="modal-backdrop" (click)="closeEditTrip()">
+          <div class="modal-card edit-modal" (click)="$event.stopPropagation()">
+            <div class="modal-header">
+              <h3>{{ 'trips.edit' | transloco }}</h3>
+              <button class="trash-btn" (click)="confirmDeleteTrip(et)">🗑</button>
+            </div>
+            <form [formGroup]="editForm" (ngSubmit)="saveEditTrip(et.id)">
+              <div class="form-row">
+                <label>{{ 'trips.titleLabel' | transloco }}</label>
+                <input formControlName="title" />
+              </div>
+              <div class="form-row-grid">
+                <div class="form-row">
+                  <label>{{ 'trips.startDate' | transloco }}</label>
+                  <input formControlName="start_date_local" type="datetime-local" />
+                </div>
+                <div class="form-row">
+                  <label>{{ 'trips.endDate' | transloco }}</label>
+                  <input formControlName="end_date_local" type="datetime-local" />
+                </div>
+              </div>
+              <div class="form-row">
+                <label>{{ 'trips.timezone' | transloco }}</label>
+                <div class="select-wrap">
+                  <select formControlName="target_timezone">
+                    @for (o of timezoneOptions; track o.value) {
+                      <option [value]="o.value">{{ o.label }}</option>
+                    }
+                  </select>
+                  <span class="select-caret">▾</span>
+                </div>
+              </div>
+              <div class="form-row">
+                <label>{{ 'trips.currency' | transloco }}</label>
+                <div class="select-wrap">
+                  <select formControlName="base_currency">
+                    @for (o of currencyOptions; track o.value) {
+                      <option [value]="o.value">{{ o.label }}</option>
+                    }
+                  </select>
+                  <span class="select-caret">▾</span>
+                </div>
+              </div>
+              <div class="form-actions">
+                <button type="button" class="btn-secondary" (click)="closeEditTrip()">
+                  {{ 'trips.cancel' | transloco }}
+                </button>
+                <button type="submit" class="btn-primary" [disabled]="editForm.invalid">
+                  {{ 'common.save' | transloco }}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      }
     </div>
   `,
   styles: [
@@ -351,18 +474,52 @@ import { PreferenceService } from '../../core/services/preference.service';
         display: grid;
         gap: 1rem;
       }
+
+      /* ── 行程卡片 + 左滑刪除 ── */
+      .trip-card-wrap {
+        position: relative;
+        overflow: hidden;
+        border-radius: 16px;
+      }
+      .swipe-delete {
+        position: absolute;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        width: 88px;
+        background: #e53e3e;
+        color: white;
+        border: none;
+        font-size: 0.9rem;
+        font-weight: 600;
+        cursor: pointer;
+        display: none;
+      }
       .trip-card.card {
         padding: 1.25rem 1.5rem;
+        margin-bottom: 0;
+        position: relative;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        transition: transform 0.2s ease;
       }
       .trip-info {
+        flex: 1;
         cursor: pointer;
-        margin-bottom: 1rem;
+        min-width: 0;
       }
       .trip-info h3 {
         font-size: 1.2rem;
         font-weight: 600;
-        margin: 0 0 0.5rem;
+        margin: 0 0 0.4rem;
         color: var(--text-primary);
+      }
+      .trip-dates {
+        color: var(--accent);
+        font-size: 0.85rem;
+        font-weight: 600;
+        margin-bottom: 0.3rem;
       }
       .trip-meta {
         display: flex;
@@ -370,10 +527,22 @@ import { PreferenceService } from '../../core/services/preference.service';
         color: var(--text-secondary);
         font-size: 0.9rem;
       }
+      .info-btn {
+        flex-shrink: 0;
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: var(--accent-light);
+        color: var(--accent);
+        border: none;
+        font-size: 1.1rem;
+        cursor: pointer;
+      }
       .trip-nav {
         display: flex;
         gap: 0.5rem;
         flex-wrap: wrap;
+        flex-shrink: 0;
       }
       .nav-btn {
         padding: 0.4rem 1rem;
@@ -387,23 +556,109 @@ import { PreferenceService } from '../../core/services/preference.service';
         font-size: 0.875rem;
         display: inline-block;
       }
-      .nav-btn.danger {
+
+      @media (hover: none) and (pointer: coarse) {
+        .desktop-only {
+          display: none !important;
+        }
+        .swipe-delete {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+        .trip-card.swiped {
+          transform: translateX(-88px);
+        }
+      }
+
+      /* ── 彈窗 ── */
+      .modal-backdrop {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.45);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 200;
+        padding: 1rem;
+      }
+      .modal-card {
+        background: var(--surface);
+        border-radius: 16px;
+        padding: 1.5rem;
+        max-width: 380px;
+        width: 100%;
+        box-shadow: 0 12px 40px var(--shadow);
+      }
+      .modal-card h3 {
+        margin: 0;
+        color: var(--text-primary);
+      }
+      .modal-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 1rem;
+      }
+      .trash-btn {
         background: #fff0f0;
         color: #e53e3e;
+        border: none;
+        border-radius: 8px;
+        width: 34px;
+        height: 34px;
+        font-size: 1rem;
+        cursor: pointer;
+      }
+      .action-sheet {
+        display: flex;
+        flex-direction: column;
+        gap: 0.3rem;
+        padding: 0.75rem;
+      }
+      .action-item {
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+        width: 100%;
+        padding: 0.75rem 1rem;
+        border: none;
+        background: transparent;
+        cursor: pointer;
+        text-align: left;
+        color: var(--text-primary);
+        font-size: 0.95rem;
+        border-radius: 10px;
+      }
+      .action-item:hover {
+        background: var(--accent-light);
       }
 
       @media (max-width: 600px) {
         .form-row-grid {
           grid-template-columns: 1fr;
         }
+        .trip-card.card {
+          flex-wrap: wrap;
+        }
       }
     `,
   ],
 })
 export class TripsListComponent implements OnInit {
+  @ViewChild('avatarInput') avatarInputRef?: ElementRef<HTMLInputElement>;
+
   tripService = inject(TripService);
   pref = inject(PreferenceService);
   fb = inject(FormBuilder);
+  private router = inject(Router);
+
+  timezoneOptions = TIMEZONE_OPTIONS;
+  currencyOptions = CURRENCY_OPTIONS;
+
+  isTouch =
+    typeof window !== 'undefined' &&
+    window.matchMedia('(hover: none) and (pointer: coarse)').matches;
 
   trips = signal<Trip[]>([]);
   showForm = signal(false);
@@ -412,6 +667,12 @@ export class TripsListComponent implements OnInit {
   joinCode = signal('');
   joinError = signal(false);
   joining = signal(false);
+  swipedTripId = signal<string | null>(null);
+  actionMenuTrip = signal<Trip | null>(null);
+  editingTrip = signal<Trip | null>(null);
+
+  private touchStartX = 0;
+  private touchDeltaX = 0;
 
   form = this.fb.group({
     title: ['', [Validators.required, Validators.maxLength(100)]],
@@ -419,6 +680,14 @@ export class TripsListComponent implements OnInit {
     end_date_local: [''],
     target_timezone: [this.pref.country().timezone, Validators.required],
     base_currency: [this.pref.country().currency, Validators.required],
+  });
+
+  editForm = this.fb.group({
+    title: ['', [Validators.required, Validators.maxLength(100)]],
+    start_date_local: [''],
+    end_date_local: [''],
+    target_timezone: ['', Validators.required],
+    base_currency: ['', Validators.required],
   });
 
   @HostListener('document:click', ['$event'])
@@ -493,9 +762,97 @@ export class TripsListComponent implements OnInit {
     await this.loadTrips();
   }
 
-  async deleteTrip(id: string): Promise<void> {
+  // ── 卡片互動 ──────────────────────────────────────────
+  onCardClick(trip: Trip): void {
+    if (this.isTouch) return; // 觸控裝置改由 onTouchEnd 處理（開啟選單）
+    this.router.navigate(['/trips', trip.id]);
+  }
+
+  goTo(commands: any[]): void {
+    this.actionMenuTrip.set(null);
+    this.router.navigate(commands);
+  }
+
+  onTouchStart(e: TouchEvent): void {
+    this.touchStartX = e.touches[0].clientX;
+    this.touchDeltaX = 0;
+  }
+
+  onTouchMove(e: TouchEvent): void {
+    this.touchDeltaX = e.touches[0].clientX - this.touchStartX;
+  }
+
+  onTouchEnd(e: TouchEvent, trip: Trip): void {
+    if (this.touchDeltaX < -40) {
+      this.swipedTripId.set(trip.id);
+      return;
+    }
+    if (this.swipedTripId() === trip.id) {
+      this.swipedTripId.set(null);
+      return;
+    }
+    if (Math.abs(this.touchDeltaX) < 10) {
+      this.actionMenuTrip.set(trip);
+    }
+  }
+
+  // ── 日期顯示 ──────────────────────────────────────────
+  formatDateRange(trip: Trip): string {
+    if (!trip.start_date_utc) return '';
+    const fmt = (iso: string) => {
+      const d = new Date(iso);
+      return `${d.getMonth() + 1}/${d.getDate()}`;
+    };
+    const start = fmt(trip.start_date_utc);
+    if (!trip.end_date_utc || trip.end_date_utc === trip.start_date_utc) return start;
+    return `${start} ~ ${fmt(trip.end_date_utc)}`;
+  }
+
+  // ── 編輯 / 刪除 ────────────────────────────────────────
+  private toLocalInput(iso: string | null | undefined): string {
+    if (!iso) return '';
+    const d = new Date(iso);
+    const pad = (n: number) => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  }
+
+  openEditTrip(trip: Trip): void {
+    this.actionMenuTrip.set(null);
+    this.editForm.reset({
+      title: trip.title,
+      start_date_local: this.toLocalInput(trip.start_date_utc),
+      end_date_local: this.toLocalInput(trip.end_date_utc),
+      target_timezone: trip.target_timezone,
+      base_currency: trip.base_currency,
+    });
+    this.editingTrip.set(trip);
+  }
+
+  closeEditTrip(): void {
+    this.editingTrip.set(null);
+  }
+
+  async saveEditTrip(id: string): Promise<void> {
+    if (this.editForm.invalid) return;
+    const { title, target_timezone, base_currency, start_date_local, end_date_local } =
+      this.editForm.value;
+    await this.tripService.update(id, {
+      title: title!,
+      target_timezone: target_timezone!,
+      base_currency: base_currency!,
+      start_date_utc: start_date_local ? new Date(start_date_local).toISOString() : null,
+      end_date_utc: end_date_local ? new Date(end_date_local).toISOString() : null,
+    });
+    this.editingTrip.set(null);
+    await this.loadTrips();
+  }
+
+  async confirmDeleteTrip(trip: Trip): Promise<void> {
     if (!confirm('確定刪除此行程？相關購物清單與記帳也會一併刪除。')) return;
-    await this.tripService.delete(id);
+    await this.tripService.delete(trip.id);
+    this.swipedTripId.set(null);
+    this.editingTrip.set(null);
+    this.actionMenuTrip.set(null);
     await this.loadTrips();
   }
 }
