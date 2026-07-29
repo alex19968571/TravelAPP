@@ -11,7 +11,9 @@ import { routes } from './app.routes';
 class TranslocoHttpLoader implements TranslocoLoader {
   constructor(private http: HttpClient) {}
   getTranslation(lang: string) {
-    return this.http.get<Record<string, unknown>>(`/assets/i18n/${lang}.json`);
+    // 使用相對路徑（不加開頭 /），才會正確依照 <base href> 解析
+    // （本地開發 base 為 "/"；GitHub Pages 部署時 base 為 "/TravelAPP/"）
+    return this.http.get<Record<string, unknown>>(`assets/i18n/${lang}.json`);
   }
 }
 
