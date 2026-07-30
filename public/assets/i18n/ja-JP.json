@@ -9,7 +9,8 @@
     "shopping": "買い物リスト",
     "expenses": "経費・割り勘",
     "exchange": "両替",
-    "settings": "設定"
+    "settings": "設定",
+    "collapse": "メニューを折りたたむ"
   },
   "auth": {
     "signInGoogle": "Google でログイン",

@@ -1,6 +1,13 @@
 import {
-  Component, inject, OnInit, AfterViewInit,
-  signal, computed, ViewChild, ElementRef, NgZone,
+  Component,
+  inject,
+  OnInit,
+  AfterViewInit,
+  signal,
+  computed,
+  ViewChild,
+  ElementRef,
+  NgZone,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterModule } from '@angular/router';
@@ -10,8 +17,15 @@ import { ItineraryItem, Trip } from '../../core/models';
 import { TripService } from '../../core/services/trip.service';
 import { MapsService } from '../../core/services/maps.service';
 
-interface DateTab { date: Date | null; dayNumber: number; }
-interface SearchResult { name: string; lat: number; lng: number; }
+interface DateTab {
+  date: Date | null;
+  dayNumber: number;
+}
+interface SearchResult {
+  name: string;
+  lat: number;
+  lng: number;
+}
 
 const DAY_COLORS = ['#667eea', '#ed8936', '#48bb78', '#f56565', '#9f7aea', '#38b2ac'];
 
@@ -22,11 +36,21 @@ const DAY_COLORS = ['#667eea', '#ed8936', '#48bb78', '#f56565', '#9f7aea', '#38b
   template: `
     <div class="page-container">
       <header class="page-header">
-        <a [routerLink]="['/trips', tripId]" class="back-btn"
-           [attr.aria-label]="'itinerary.backToTrip' | transloco">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
-               stroke="currentColor" stroke-width="2.5"
-               stroke-linecap="round" stroke-linejoin="round">
+        <a
+          [routerLink]="['/trips', tripId]"
+          class="back-btn"
+          [attr.aria-label]="'itinerary.backToTrip' | transloco"
+        >
+          <svg
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
             <polyline points="15 18 9 12 15 6"></polyline>
           </svg>
         </a>
@@ -35,10 +59,12 @@ const DAY_COLORS = ['#667eea', '#ed8936', '#48bb78', '#f56565', '#9f7aea', '#38b
 
       <!-- 搜尋列 -->
       <form class="search-row" (ngSubmit)="search()">
-        <input [(ngModel)]="searchQuery" name="searchQuery"
-               [placeholder]="'itinerary.searchPlaceholder' | transloco" />
-        <button type="submit" class="btn-primary"
-                [disabled]="!searchQuery.trim() || searching()">
+        <input
+          [(ngModel)]="searchQuery"
+          name="searchQuery"
+          [placeholder]="'itinerary.searchPlaceholder' | transloco"
+        />
+        <button type="submit" class="btn-primary" [disabled]="!searchQuery.trim() || searching()">
           {{ (searching() ? 'itinerary.searching' : 'itinerary.searchButton') | transloco }}
         </button>
       </form>
@@ -80,16 +106,19 @@ const DAY_COLORS = ['#667eea', '#ed8936', '#48bb78', '#f56565', '#9f7aea', '#38b
           <!-- 景點名稱 -->
           <div class="field-group">
             <label class="field-label">景點名稱</label>
-            <input class="field-input" [(ngModel)]="stagingName" name="stagingName"
-                   placeholder="輸入景點名稱" />
+            <input
+              class="field-input"
+              [(ngModel)]="stagingName"
+              name="stagingName"
+              placeholder="輸入景點名稱"
+            />
           </div>
 
           <!-- 加入日期（僅新增模式） -->
           @if (!editingItemId()) {
             <div class="field-group">
               <label class="field-label">加入日期</label>
-              <button class="date-select-btn" type="button"
-                      (click)="showDatePicker.set(true)">
+              <button class="date-select-btn" type="button" (click)="showDatePicker.set(true)">
                 {{ selectedDateLabel() }} ▾
               </button>
             </div>
@@ -98,22 +127,36 @@ const DAY_COLORS = ['#667eea', '#ed8936', '#48bb78', '#f56565', '#9f7aea', '#38b
           <!-- 筆記 -->
           <div class="field-group">
             <label class="field-label">筆記</label>
-            <textarea class="field-input field-notes"
-                      [(ngModel)]="stagingNotes" name="stagingNotes"
-                      placeholder="選填備註" rows="3"></textarea>
+            <textarea
+              class="field-input field-notes"
+              [(ngModel)]="stagingNotes"
+              name="stagingNotes"
+              placeholder="選填備註"
+              rows="3"
+            ></textarea>
           </div>
 
           <!-- 按鈕列 -->
           <div class="panel-actions">
             <button class="btn-secondary" type="button" (click)="closePanel()">取消</button>
             @if (editingItemId()) {
-              <button class="btn-primary" type="button"
-                      [disabled]="!stagingName.trim()"
-                      (click)="confirmSave()">儲存</button>
+              <button
+                class="btn-primary"
+                type="button"
+                [disabled]="!stagingName.trim()"
+                (click)="confirmSave()"
+              >
+                儲存
+              </button>
             } @else {
-              <button class="btn-primary" type="button"
-                      [disabled]="!stagingName.trim()"
-                      (click)="onStagingConfirm()">確認</button>
+              <button
+                class="btn-primary"
+                type="button"
+                [disabled]="!stagingName.trim()"
+                (click)="onStagingConfirm()"
+              >
+                確認
+              </button>
             }
           </div>
         </div>
@@ -126,9 +169,11 @@ const DAY_COLORS = ['#667eea', '#ed8936', '#48bb78', '#f56565', '#9f7aea', '#38b
             <h3>{{ 'itinerary.chooseDate' | transloco }}</h3>
             <div class="picker-list">
               @for (d of dateTabs(); track $index) {
-                <button class="picker-option"
-                        [class.selected]="selectedDate()?.dayNumber === d.dayNumber"
-                        (click)="chooseDate(d)">
+                <button
+                  class="picker-option"
+                  [class.selected]="selectedDate()?.dayNumber === d.dayNumber"
+                  (click)="chooseDate(d)"
+                >
                   {{ formatTabDate(d) }}
                 </button>
               }
@@ -144,9 +189,11 @@ const DAY_COLORS = ['#667eea', '#ed8936', '#48bb78', '#f56565', '#9f7aea', '#38b
             <h3>{{ 'itinerary.choosePosition' | transloco }}</h3>
             <div class="picker-list">
               @for (p of positionOptions(); track p) {
-                <button class="picker-option"
-                        [class.selected]="p === selectedPosition()"
-                        (click)="selectedPosition.set(p)">
+                <button
+                  class="picker-option"
+                  [class.selected]="p === selectedPosition()"
+                  (click)="selectedPosition.set(p)"
+                >
                   {{ positionLabel(p) }}
                 </button>
               }
@@ -159,183 +206,345 @@ const DAY_COLORS = ['#667eea', '#ed8936', '#48bb78', '#f56565', '#9f7aea', '#38b
       }
     </div>
   `,
-  styles: [`
-    .page-container {
-      max-width: 900px; margin: 0 auto; padding: 1.5rem;
-      background: var(--bg); min-height: 100vh;
-    }
-    .page-header { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem; }
-    .back-btn {
-      display: inline-flex; align-items: center; justify-content: center;
-      width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0;
-      color: var(--accent); text-decoration: none; background: var(--accent-light);
-    }
-    h1 { font-size: 1.4rem; font-weight: 700; color: var(--text-primary); margin: 0; }
+  styles: [
+    `
+      .page-container {
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 1.5rem;
+        background: var(--bg);
+        min-height: 100vh;
+      }
+      .page-header {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+      }
+      .back-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        flex-shrink: 0;
+        color: var(--accent);
+        text-decoration: none;
+        background: var(--icon-bg);
+        transition: background 0.15s;
+      }
+      .back-btn:hover {
+        background: var(--icon-bg-hover);
+      }
+      h1 {
+        font-size: 1.4rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin: 0;
+      }
 
-    /* ── 搜尋 ── */
-    .search-row { display: flex; gap: 0.5rem; margin-bottom: 0.75rem; }
-    .search-row input {
-      flex: 1; padding: 0.625rem 0.875rem; border: 1.5px solid var(--border);
-      border-radius: 10px; font-size: 0.95rem; box-sizing: border-box;
-      background: var(--input-bg); color: var(--text-primary);
-    }
-    .not-found { color: var(--text-secondary); font-size: 0.9rem; margin: -0.25rem 0 0.75rem; }
+      /* ── 搜尋 ── */
+      .search-row {
+        display: flex;
+        gap: 0.5rem;
+        margin-bottom: 0.75rem;
+      }
+      .search-row input {
+        flex: 1;
+        padding: 0.625rem 0.875rem;
+        border: 1.5px solid var(--border);
+        border-radius: 10px;
+        font-size: 0.95rem;
+        box-sizing: border-box;
+        background: var(--input-bg);
+        color: var(--text-primary);
+      }
+      .not-found {
+        color: var(--text-secondary);
+        font-size: 0.9rem;
+        margin: -0.25rem 0 0.75rem;
+      }
 
-    /* ── 地圖 ── */
-    .map-container {
-      width: 100%; height: 340px; border-radius: 16px; overflow: hidden;
-      margin-bottom: 1rem; background: var(--bg); border: 1px solid var(--border);
-    }
+      /* ── 地圖 ── */
+      .map-container {
+        width: 100%;
+        height: 340px;
+        border-radius: 16px;
+        overflow: hidden;
+        margin-bottom: 1rem;
+        background: var(--bg);
+        border: 1px solid var(--border);
+      }
 
-    /* ── 功能區塊（垂直排列） ── */
-    .card {
-      background: var(--surface); border-radius: 16px; padding: 1.25rem;
-      box-shadow: 0 4px 20px var(--shadow); margin-bottom: 1rem;
-    }
-    .staging-card { display: flex; flex-direction: column; gap: 1rem; }
+      /* ── 功能區塊（垂直排列） ── */
+      .card {
+        background: var(--surface);
+        border-radius: 16px;
+        padding: 1.25rem;
+        box-shadow: 0 4px 20px var(--shadow);
+        margin-bottom: 1rem;
+      }
+      .staging-card {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+      }
 
-    .panel-title {
-      font-size: 1rem; font-weight: 700; color: var(--text-primary);
-      padding-bottom: 0.75rem; border-bottom: 1px solid var(--border);
-    }
+      .panel-title {
+        font-size: 1rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        padding-bottom: 0.75rem;
+        border-bottom: 1px solid var(--border);
+      }
 
-    /* ── 圖片區塊 ── */
-    .photo-block {
-      width: 100%; aspect-ratio: 4/3; max-height: 240px;
-      background: var(--bg); border: 2px dashed var(--border); border-radius: 12px;
-      cursor: pointer; position: relative; overflow: hidden;
-      display: flex; align-items: center; justify-content: center; padding: 0;
-      transition: border-color 0.2s;
-    }
-    .photo-block:hover { border-color: var(--accent); }
-    .photo-img { width: 100%; height: 100%; object-fit: cover; display: block; }
-    .photo-overlay {
-      position: absolute; inset: 0; background: rgba(0,0,0,0.45);
-      color: white; font-size: 0.875rem; font-weight: 500;
-      display: flex; align-items: center; justify-content: center;
-      opacity: 0; transition: opacity 0.2s;
-    }
-    .photo-block:hover .photo-overlay { opacity: 1; }
-    .photo-placeholder {
-      display: flex; flex-direction: column; align-items: center; gap: 0.5rem;
-    }
-    .photo-plus { font-size: 2.2rem; color: var(--text-secondary); line-height: 1; }
-    .photo-hint { font-size: 0.85rem; color: var(--text-secondary); }
-    .upload-spin { font-size: 1.5rem; }
+      /* ── 圖片區塊 ── */
+      .photo-block {
+        width: 100%;
+        aspect-ratio: 4/3;
+        max-height: 240px;
+        background: var(--bg);
+        border: 2px dashed var(--border);
+        border-radius: 12px;
+        cursor: pointer;
+        position: relative;
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0;
+        transition: border-color 0.2s;
+      }
+      .photo-block:hover {
+        border-color: var(--accent);
+      }
+      .photo-img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+      }
+      .photo-overlay {
+        position: absolute;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.45);
+        color: white;
+        font-size: 0.875rem;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        transition: opacity 0.2s;
+      }
+      .photo-block:hover .photo-overlay {
+        opacity: 1;
+      }
+      .photo-placeholder {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.5rem;
+      }
+      .photo-plus {
+        font-size: 2.2rem;
+        color: var(--text-secondary);
+        line-height: 1;
+      }
+      .photo-hint {
+        font-size: 0.85rem;
+        color: var(--text-secondary);
+      }
+      .upload-spin {
+        font-size: 1.5rem;
+      }
 
-    /* ── 欄位 ── */
-    .field-group { display: flex; flex-direction: column; gap: 0.35rem; }
-    .field-label {
-      font-size: 0.875rem; font-weight: 600; color: var(--text-secondary);
-    }
-    .field-input {
-      width: 100%; padding: 0.625rem 0.875rem; border: 1.5px solid var(--border);
-      border-radius: 10px; font-size: 0.95rem; box-sizing: border-box;
-      background: var(--input-bg); color: var(--text-primary);
-    }
-    .field-input:focus { outline: none; border-color: var(--accent); }
-    .field-notes { resize: vertical; min-height: 72px; font-family: inherit; }
+      /* ── 欄位 ── */
+      .field-group {
+        display: flex;
+        flex-direction: column;
+        gap: 0.35rem;
+      }
+      .field-label {
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: var(--text-secondary);
+      }
+      .field-input {
+        width: 100%;
+        padding: 0.625rem 0.875rem;
+        border: 1.5px solid var(--border);
+        border-radius: 10px;
+        font-size: 0.95rem;
+        box-sizing: border-box;
+        background: var(--input-bg);
+        color: var(--text-primary);
+      }
+      .field-input:focus {
+        outline: none;
+        border-color: var(--accent);
+      }
+      .field-notes {
+        resize: vertical;
+        min-height: 72px;
+        font-family: inherit;
+      }
 
-    .date-select-btn {
-      width: 100%; padding: 0.625rem 0.875rem; text-align: left;
-      background: var(--accent-light); color: var(--accent);
-      border: 1.5px solid var(--accent); border-radius: 10px;
-      font-size: 0.9rem; font-weight: 600; cursor: pointer;
-    }
+      .date-select-btn {
+        width: 100%;
+        padding: 0.625rem 0.875rem;
+        text-align: left;
+        background: var(--accent-light);
+        color: var(--accent);
+        border: 1.5px solid var(--accent);
+        border-radius: 10px;
+        font-size: 0.9rem;
+        font-weight: 600;
+        cursor: pointer;
+      }
 
-    /* ── 按鈕列 ── */
-    .panel-actions { display: flex; gap: 0.75rem; }
-    .btn-primary {
-      flex: 1; background: var(--accent); color: white; border: none;
-      border-radius: 10px; padding: 0.75rem 1.25rem;
-      font-weight: 600; cursor: pointer; font-size: 0.95rem;
-    }
-    .btn-primary:disabled { opacity: 0.45; cursor: not-allowed; }
-    .btn-secondary {
-      flex: 1; background: var(--bg); color: var(--text-secondary);
-      border: 1.5px solid var(--border); border-radius: 10px;
-      padding: 0.75rem 1.25rem; font-weight: 600; cursor: pointer; font-size: 0.95rem;
-    }
-    .full-width { width: 100%; margin-top: 0.75rem; }
+      /* ── 按鈕列 ── */
+      .panel-actions {
+        display: flex;
+        gap: 0.75rem;
+      }
+      .btn-primary {
+        flex: 1;
+        background: var(--accent);
+        color: white;
+        border: none;
+        border-radius: 10px;
+        padding: 0.75rem 1.25rem;
+        font-weight: 600;
+        cursor: pointer;
+        font-size: 0.95rem;
+      }
+      .btn-primary:disabled {
+        opacity: 0.45;
+        cursor: not-allowed;
+      }
+      .btn-secondary {
+        flex: 1;
+        background: var(--bg);
+        color: var(--text-secondary);
+        border: 1.5px solid var(--border);
+        border-radius: 10px;
+        padding: 0.75rem 1.25rem;
+        font-weight: 600;
+        cursor: pointer;
+        font-size: 0.95rem;
+      }
+      .full-width {
+        width: 100%;
+        margin-top: 0.75rem;
+      }
 
-    /* ── Modal ── */
-    .modal-backdrop {
-      position: fixed; inset: 0; background: rgba(0,0,0,0.45);
-      display: flex; align-items: center; justify-content: center; z-index: 200; padding: 1rem;
-    }
-    .modal-card {
-      background: var(--surface); border-radius: 16px; padding: 1.5rem;
-      max-width: 340px; width: 100%; box-shadow: 0 12px 40px var(--shadow);
-    }
-    .modal-card h3 { margin: 0 0 1rem; color: var(--text-primary); }
-    .picker-list {
-      display: flex; flex-direction: column; gap: 0.4rem; max-height: 320px; overflow-y: auto;
-    }
-    .picker-option {
-      padding: 0.625rem 0.875rem; border-radius: 10px; border: 1.5px solid var(--border);
-      background: var(--bg); color: var(--text-primary); cursor: pointer;
-      text-align: left; font-size: 0.9rem;
-    }
-    .picker-option:hover { border-color: var(--accent); }
-    .picker-option.selected {
-      border-color: var(--accent); background: var(--accent-light);
-      color: var(--accent); font-weight: 600;
-    }
-  `],
+      /* ── Modal ── */
+      .modal-backdrop {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.45);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 200;
+        padding: 1rem;
+      }
+      .modal-card {
+        background: var(--surface);
+        border-radius: 16px;
+        padding: 1.5rem;
+        max-width: 340px;
+        width: 100%;
+        box-shadow: 0 12px 40px var(--shadow);
+      }
+      .modal-card h3 {
+        margin: 0 0 1rem;
+        color: var(--text-primary);
+      }
+      .picker-list {
+        display: flex;
+        flex-direction: column;
+        gap: 0.4rem;
+        max-height: 320px;
+        overflow-y: auto;
+      }
+      .picker-option {
+        padding: 0.625rem 0.875rem;
+        border-radius: 10px;
+        border: 1.5px solid var(--border);
+        background: var(--bg);
+        color: var(--text-primary);
+        cursor: pointer;
+        text-align: left;
+        font-size: 0.9rem;
+      }
+      .picker-option:hover {
+        border-color: var(--accent);
+      }
+      .picker-option.selected {
+        border-color: var(--accent);
+        background: var(--accent-light);
+        color: var(--accent);
+        font-weight: 600;
+      }
+    `,
+  ],
 })
 export class ItineraryComponent implements OnInit, AfterViewInit {
   @ViewChild('mapEl') mapElRef!: ElementRef<HTMLDivElement>;
 
-  private route       = inject(ActivatedRoute);
+  private route = inject(ActivatedRoute);
   private tripService = inject(TripService);
   private mapsService = inject(MapsService);
-  private transloco   = inject(TranslocoService);
-  private ngZone      = inject(NgZone);
+  private transloco = inject(TranslocoService);
+  private ngZone = inject(NgZone);
 
   tripId!: string;
-  trip   = signal<Trip | undefined>(undefined);
-  items  = signal<ItineraryItem[]>([]);
+  trip = signal<Trip | undefined>(undefined);
+  items = signal<ItineraryItem[]>([]);
 
-  searchQuery    = '';
-  searching      = signal(false);
-  searchResult   = signal<SearchResult | null>(null);
+  searchQuery = '';
+  searching = signal(false);
+  searchResult = signal<SearchResult | null>(null);
   searchNotFound = signal(false);
 
   // ── 功能區塊狀態 ─────────────────────────────────────────────
-  stagingName     = '';
-  stagingNotes    = '';
-  stagingLat      = signal<number | null>(null);
-  stagingLng      = signal<number | null>(null);
+  stagingName = '';
+  stagingNotes = '';
+  stagingLat = signal<number | null>(null);
+  stagingLng = signal<number | null>(null);
   stagingPhotoUrl = signal<string | null>(null);
-  uploadingPhoto  = signal(false);
-  editingItemId   = signal<string | null>(null);
+  uploadingPhoto = signal(false);
+  editingItemId = signal<string | null>(null);
 
   // 功能區塊顯示條件：新增（有座標）或編輯（有 ID）
   readonly panelVisible = computed(
     () => this.stagingLat() !== null || this.editingItemId() !== null,
   );
 
-  showDatePicker     = signal(false);
+  showDatePicker = signal(false);
   showPositionPicker = signal(false);
-  selectedDate       = signal<DateTab | null>(null);
-  selectedPosition   = signal(0);
+  selectedDate = signal<DateTab | null>(null);
+  selectedPosition = signal(0);
 
   // ── 地圖物件（不放 Signal，避免 Proxy 問題）────────────────
-  private mapInstance:     google.maps.Map | null = null;
-  private searchMarker:    google.maps.Marker | null = null;
-  private infoWindow:      google.maps.InfoWindow | null = null;
-  private spotMarkers:     google.maps.Marker[] = [];
+  private mapInstance: google.maps.Map | null = null;
+  private searchMarker: google.maps.Marker | null = null;
+  private infoWindow: google.maps.InfoWindow | null = null;
+  private spotMarkers: google.maps.Marker[] = [];
   private polylineObjects: google.maps.Polyline[] = [];
-  private localPhotoBlob:  string | null = null; // for revokeObjectURL
+  private localPhotoBlob: string | null = null; // for revokeObjectURL
 
   // ── Computed ─────────────────────────────────────────────────
   dateTabs = computed<DateTab[]>(() => {
     const t = this.trip();
     if (t?.start_date_utc) {
-      const start    = new Date(t.start_date_utc);
-      const end      = t.end_date_utc ? new Date(t.end_date_utc) : start;
+      const start = new Date(t.start_date_utc);
+      const end = t.end_date_utc ? new Date(t.end_date_utc) : start;
       const startDay = new Date(start.getFullYear(), start.getMonth(), start.getDate());
-      const endDay   = new Date(end.getFullYear(),   end.getMonth(),   end.getDate());
+      const endDay = new Date(end.getFullYear(), end.getMonth(), end.getDate());
       const tabs: DateTab[] = [];
       const cur = new Date(startDay);
       let n = 1;
@@ -346,7 +555,7 @@ export class ItineraryComponent implements OnInit, AfterViewInit {
       }
       return tabs.length ? tabs : [{ date: startDay, dayNumber: 1 }];
     }
-    const maxDay = Math.max(1, ...this.items().map(i => i.day_number));
+    const maxDay = Math.max(1, ...this.items().map((i) => i.day_number));
     return Array.from({ length: maxDay }, (_, i) => ({ date: null, dayNumber: i + 1 }));
   });
 
@@ -358,7 +567,7 @@ export class ItineraryComponent implements OnInit, AfterViewInit {
   positionOptions = computed(() => {
     const d = this.selectedDate();
     if (!d) return [0];
-    const count = this.items().filter(i => i.day_number === d.dayNumber).length;
+    const count = this.items().filter((i) => i.day_number === d.dayNumber).length;
     return Array.from({ length: count + 1 }, (_, i) => i);
   });
 
@@ -370,7 +579,7 @@ export class ItineraryComponent implements OnInit, AfterViewInit {
 
     const dayParam = Number(this.route.snapshot.queryParamMap.get('day'));
     if (dayParam) {
-      const match = this.dateTabs().find(d => d.dayNumber === dayParam);
+      const match = this.dateTabs().find((d) => d.dayNumber === dayParam);
       if (match) this.selectedDate.set(match);
     }
     this.renderSpotMarkers();
@@ -390,7 +599,7 @@ export class ItineraryComponent implements OnInit, AfterViewInit {
         const coordName = `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
         this.ngZone.run(() => this.showSearchOnMap({ name: coordName, lat, lng }));
         // 非同步取得真實地名後更新小卡
-        this.mapsService.reverseGeocode(lat, lng).then(name => {
+        this.mapsService.reverseGeocode(lat, lng).then((name) => {
           if (name !== coordName) {
             this.ngZone.run(() => this.showSearchOnMap({ name, lat, lng }));
           }
@@ -404,12 +613,16 @@ export class ItineraryComponent implements OnInit, AfterViewInit {
   // ── 地圖預設中心 ──────────────────────────────────────────────
   private getDefaultCenter(): Promise<google.maps.LatLngLiteral> {
     const items = this.items();
-    if (items.length > 0) return Promise.resolve({ lat: items[0].latitude, lng: items[0].longitude });
-    return new Promise(resolve => {
-      if (!navigator.geolocation) { resolve({ lat: 25.0478, lng: 121.5319 }); return; }
+    if (items.length > 0)
+      return Promise.resolve({ lat: items[0].latitude, lng: items[0].longitude });
+    return new Promise((resolve) => {
+      if (!navigator.geolocation) {
+        resolve({ lat: 25.0478, lng: 121.5319 });
+        return;
+      }
       navigator.geolocation.getCurrentPosition(
-        pos => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
-        ()  => resolve({ lat: 25.0478, lng: 121.5319 }),
+        (pos) => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+        () => resolve({ lat: 25.0478, lng: 121.5319 }),
         { timeout: 3000 },
       );
     });
@@ -418,9 +631,9 @@ export class ItineraryComponent implements OnInit, AfterViewInit {
   // ── 繪製景點 Marker + Polyline ─────────────────────────────
   private renderSpotMarkers(): void {
     if (!this.mapInstance) return;
-    this.spotMarkers.forEach(m => m.setMap(null));
+    this.spotMarkers.forEach((m) => m.setMap(null));
     this.spotMarkers = [];
-    this.polylineObjects.forEach(p => p.setMap(null));
+    this.polylineObjects.forEach((p) => p.setMap(null));
     this.polylineObjects = [];
 
     const grouped = new Map<number, ItineraryItem[]>();
@@ -433,7 +646,7 @@ export class ItineraryComponent implements OnInit, AfterViewInit {
     let hasItems = false;
 
     grouped.forEach((dayItems, day) => {
-      const color  = DAY_COLORS[(day - 1) % DAY_COLORS.length];
+      const color = DAY_COLORS[(day - 1) % DAY_COLORS.length];
       const sorted = [...dayItems].sort((a, b) => a.order_index - b.order_index);
 
       sorted.forEach((item, idx) => {
@@ -447,8 +660,11 @@ export class ItineraryComponent implements OnInit, AfterViewInit {
           label: { text: String(idx + 1), color: 'white', fontWeight: 'bold', fontSize: '12px' },
           icon: {
             path: google.maps.SymbolPath.CIRCLE,
-            fillColor: color, fillOpacity: 1,
-            strokeColor: 'white', strokeWeight: 2, scale: 14,
+            fillColor: color,
+            fillOpacity: 1,
+            strokeColor: 'white',
+            strokeWeight: 2,
+            scale: 14,
           },
           title: `第 ${day} 天 #${idx + 1}：${item.place_name}`,
         });
@@ -463,8 +679,11 @@ export class ItineraryComponent implements OnInit, AfterViewInit {
 
       if (sorted.length >= 2) {
         const polyline = new google.maps.Polyline({
-          path: sorted.map(i => ({ lat: i.latitude, lng: i.longitude })),
-          geodesic: true, strokeColor: color, strokeOpacity: 0.8, strokeWeight: 3,
+          path: sorted.map((i) => ({ lat: i.latitude, lng: i.longitude })),
+          geodesic: true,
+          strokeColor: color,
+          strokeOpacity: 0.8,
+          strokeWeight: 3,
           map: this.mapInstance!,
         });
         this.polylineObjects.push(polyline);
@@ -482,8 +701,10 @@ export class ItineraryComponent implements OnInit, AfterViewInit {
     this.searchNotFound.set(false);
     try {
       const result = await this.mapsService.searchPlace(query);
-      if (result) { this.searchResult.set(result); this.showSearchOnMap(result); }
-      else          this.searchNotFound.set(true);
+      if (result) {
+        this.searchResult.set(result);
+        this.showSearchOnMap(result);
+      } else this.searchNotFound.set(true);
     } finally {
       this.searching.set(false);
     }
@@ -493,7 +714,7 @@ export class ItineraryComponent implements OnInit, AfterViewInit {
   private showSearchOnMap(r: SearchResult): void {
     if (!this.mapInstance) return;
     if (this.searchMarker) this.searchMarker.setMap(null);
-    if (this.infoWindow)   this.infoWindow.close();
+    if (this.infoWindow) this.infoWindow.close();
 
     this.mapInstance.panTo({ lat: r.lat, lng: r.lng });
     this.mapInstance.setZoom(15);
@@ -502,12 +723,14 @@ export class ItineraryComponent implements OnInit, AfterViewInit {
       position: { lat: r.lat, lng: r.lng },
       map: this.mapInstance,
       icon: {
-        url: 'data:image/svg+xml,' + encodeURIComponent(
-          '<svg xmlns="http://www.w3.org/2000/svg" width="28" height="36" viewBox="0 0 28 36">' +
-          '<path fill="#e53e3e" stroke="white" stroke-width="2"' +
-          ' d="M14 2C8.5 2 4 6.5 4 12c0 7.5 10 22 10 22S24 19.5 24 12C24 6.5 19.5 2 14 2z"/>' +
-          '<circle fill="white" cx="14" cy="12" r="4"/></svg>',
-        ),
+        url:
+          'data:image/svg+xml,' +
+          encodeURIComponent(
+            '<svg xmlns="http://www.w3.org/2000/svg" width="28" height="36" viewBox="0 0 28 36">' +
+              '<path fill="#e53e3e" stroke="white" stroke-width="2"' +
+              ' d="M14 2C8.5 2 4 6.5 4 12c0 7.5 10 22 10 22S24 19.5 24 12C24 6.5 19.5 2 14 2z"/>' +
+              '<circle fill="white" cx="14" cy="12" r="4"/></svg>',
+          ),
         scaledSize: new google.maps.Size(28, 36),
         anchor: new google.maps.Point(14, 36),
       },
@@ -539,7 +762,10 @@ export class ItineraryComponent implements OnInit, AfterViewInit {
   // InfoWindow：已有景點（顯示「✏️ 編輯」按鈕）
   private showSpotInfoWindow(item: ItineraryItem, marker: google.maps.Marker): void {
     if (this.infoWindow) this.infoWindow.close();
-    if (this.searchMarker) { this.searchMarker.setMap(null); this.searchMarker = null; }
+    if (this.searchMarker) {
+      this.searchMarker.setMap(null);
+      this.searchMarker = null;
+    }
 
     const btnId = `edit-btn-${item.id.slice(0, 8)}`;
     this.infoWindow = new google.maps.InfoWindow({
@@ -565,15 +791,18 @@ export class ItineraryComponent implements OnInit, AfterViewInit {
   }
 
   private escHtml(s: string): string {
-    return s.replace(/&/g, '&amp;').replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    return s
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
   }
 
   // ── 功能區塊操作 ────────────────────────────────────────────
   // 新增模式：從地圖點擊或搜尋結果進入
   stageNewSpot(r: SearchResult): void {
     this.editingItemId.set(null);
-    this.stagingName  = r.name;
+    this.stagingName = r.name;
     this.stagingNotes = '';
     this.stagingLat.set(r.lat);
     this.stagingLng.set(r.lng);
@@ -585,9 +814,9 @@ export class ItineraryComponent implements OnInit, AfterViewInit {
   // 編輯模式：從已有景點 InfoWindow 進入
   startEdit(item: ItineraryItem): void {
     this.editingItemId.set(item.id);
-    this.stagingName  = item.place_name;
+    this.stagingName = item.place_name;
     this.stagingNotes = item.notes ?? '';
-    this.stagingLat.set(null);  // 編輯模式不需座標（已有）
+    this.stagingLat.set(null); // 編輯模式不需座標（已有）
     this.stagingLng.set(null);
     this.revokeLocalPhoto();
     this.stagingPhotoUrl.set(item.image_url ?? null);
@@ -598,7 +827,7 @@ export class ItineraryComponent implements OnInit, AfterViewInit {
     this.editingItemId.set(null);
     this.stagingLat.set(null);
     this.stagingLng.set(null);
-    this.stagingName  = '';
+    this.stagingName = '';
     this.stagingNotes = '';
     this.revokeLocalPhoto();
     this.stagingPhotoUrl.set(null);
@@ -611,7 +840,7 @@ export class ItineraryComponent implements OnInit, AfterViewInit {
 
     this.revokeLocalPhoto();
     this.localPhotoBlob = URL.createObjectURL(file);
-    this.stagingPhotoUrl.set(this.localPhotoBlob);  // 立即顯示縮圖
+    this.stagingPhotoUrl.set(this.localPhotoBlob); // 立即顯示縮圖
 
     this.uploadingPhoto.set(true);
     try {
@@ -628,14 +857,20 @@ export class ItineraryComponent implements OnInit, AfterViewInit {
   }
 
   private revokeLocalPhoto(): void {
-    if (this.localPhotoBlob) { URL.revokeObjectURL(this.localPhotoBlob); this.localPhotoBlob = null; }
+    if (this.localPhotoBlob) {
+      URL.revokeObjectURL(this.localPhotoBlob);
+      this.localPhotoBlob = null;
+    }
   }
 
   // 新增模式「確認」：未選日期則先開日期選單
   onStagingConfirm(): void {
     const d = this.selectedDate();
-    if (!d) { this.showDatePicker.set(true); return; }
-    const count = this.items().filter(i => i.day_number === d.dayNumber).length;
+    if (!d) {
+      this.showDatePicker.set(true);
+      return;
+    }
+    const count = this.items().filter((i) => i.day_number === d.dayNumber).length;
     this.selectedPosition.set(count);
     this.showPositionPicker.set(true);
   }
@@ -646,8 +881,8 @@ export class ItineraryComponent implements OnInit, AfterViewInit {
     if (!id || !this.stagingName.trim()) return;
     await this.tripService.updateItineraryItem(id, {
       place_name: this.stagingName.trim(),
-      image_url:  this.stagingPhotoUrl() ?? undefined,
-      notes:      this.stagingNotes.trim() || undefined,
+      image_url: this.stagingPhotoUrl() ?? undefined,
+      notes: this.stagingNotes.trim() || undefined,
     });
     this.items.set(await this.tripService.getItinerary(this.tripId));
     this.closePanel();
@@ -659,33 +894,36 @@ export class ItineraryComponent implements OnInit, AfterViewInit {
     this.selectedDate.set(d);
     this.showDatePicker.set(false);
     // 選完日期後自動進入順序選擇
-    const count = this.items().filter(i => i.day_number === d.dayNumber).length;
-    this.selectedPosition.set(count);  // 預設放到最後
+    const count = this.items().filter((i) => i.day_number === d.dayNumber).length;
+    this.selectedPosition.set(count); // 預設放到最後
     this.showPositionPicker.set(true);
   }
 
   async confirmAdd(): Promise<void> {
-    const d   = this.selectedDate();
+    const d = this.selectedDate();
     const lat = this.stagingLat();
     const lng = this.stagingLng();
     if (!d || lat === null || lng === null || !this.stagingName.trim()) return;
 
     await this.tripService.addItineraryItemAtPosition(
       {
-        trip_id:    this.tripId,
+        trip_id: this.tripId,
         day_number: d.dayNumber,
         place_name: this.stagingName.trim(),
-        latitude:   lat,
-        longitude:  lng,
-        image_url:  this.stagingPhotoUrl() ?? undefined,
-        notes:      this.stagingNotes.trim() || undefined,
+        latitude: lat,
+        longitude: lng,
+        image_url: this.stagingPhotoUrl() ?? undefined,
+        notes: this.stagingNotes.trim() || undefined,
       },
       this.selectedPosition(),
     );
 
     this.items.set(await this.tripService.getItinerary(this.tripId));
     this.showPositionPicker.set(false);
-    if (this.searchMarker) { this.searchMarker.setMap(null); this.searchMarker = null; }
+    if (this.searchMarker) {
+      this.searchMarker.setMap(null);
+      this.searchMarker = null;
+    }
     this.closePanel();
     this.renderSpotMarkers();
   }
@@ -700,7 +938,7 @@ export class ItineraryComponent implements OnInit, AfterViewInit {
     const d = this.selectedDate();
     if (!d) return `第 ${p + 1} 個位置`;
     const dayItems = this.items()
-      .filter(i => i.day_number === d.dayNumber)
+      .filter((i) => i.day_number === d.dayNumber)
       .sort((a, b) => a.order_index - b.order_index);
     if (dayItems.length === 0) return '第 1 個位置（唯一）';
     if (p === 0) return `排在最前面（${dayItems[0].place_name} 之前）`;

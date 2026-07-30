@@ -381,8 +381,12 @@ interface GrossEntry {
         text-decoration: none;
         font-size: 1.3rem;
         font-weight: 600;
-        background: var(--accent-light);
+        background: var(--icon-bg);
         flex-shrink: 0;
+        transition: background 0.15s;
+      }
+      .back-btn:hover {
+        background: var(--icon-bg-hover);
       }
       h1 {
         font-size: 1.6rem;

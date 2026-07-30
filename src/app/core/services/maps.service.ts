@@ -52,7 +52,9 @@ export class MapsService {
   }
 
   /** Nominatim 正向地理編碼（免費，不需 API key） */
-  private async nominatimForward(query: string): Promise<{ name: string; lat: number; lng: number } | null> {
+  private async nominatimForward(
+    query: string,
+  ): Promise<{ name: string; lat: number; lng: number } | null> {
     try {
       const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=1`;
       const res = await fetch(url, {
@@ -61,7 +63,11 @@ export class MapsService {
       if (!res.ok) return null;
       const data = await res.json();
       if (!data.length) return null;
-      return { name: data[0].display_name, lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) };
+      return {
+        name: data[0].display_name,
+        lat: parseFloat(data[0].lat),
+        lng: parseFloat(data[0].lon),
+      };
     } catch (err) {
       console.error('[Maps] Nominatim forward geocoding failed', err);
       return null;
@@ -75,7 +81,9 @@ export class MapsService {
       const geocoder = new google.maps.Geocoder();
       const res = await geocoder.geocode({ location: { lat, lng } });
       if (res.results?.[0]?.formatted_address) return res.results[0].formatted_address;
-    } catch { /* fallback */ }
+    } catch {
+      /* fallback */
+    }
 
     // Fallback: Nominatim
     try {
@@ -87,7 +95,9 @@ export class MapsService {
         const data = await res.json();
         return data.display_name ?? `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
       }
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
 
     return `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
   }
@@ -112,8 +122,11 @@ export class MapsService {
     await this.ensureLoaded();
     const directionsService = new google.maps.DirectionsService();
     const origin = { lat: items[0].latitude, lng: items[0].longitude };
-    const destination = { lat: items[items.length - 1].latitude, lng: items[items.length - 1].longitude };
-    const waypoints = items.slice(1, -1).map(item => ({
+    const destination = {
+      lat: items[items.length - 1].latitude,
+      lng: items[items.length - 1].longitude,
+    };
+    const waypoints = items.slice(1, -1).map((item) => ({
       location: { lat: item.latitude, lng: item.longitude },
       stopover: true,
     }));
@@ -138,16 +151,16 @@ export class MapsService {
     to: { lat: number; lng: number },
     mode: TransportMode,
   ): Promise<number | null> {
-    const modeMap: Partial<Record<TransportMode, google.maps.TravelMode>> = {
-      walk:    google.maps.TravelMode.WALKING,
-      drive:   google.maps.TravelMode.DRIVING,
-      bike:    google.maps.TravelMode.BICYCLING,
-      transit: google.maps.TravelMode.TRANSIT,
-    };
-    const travelMode = modeMap[mode];
-    if (!travelMode) return null;
+    if (mode !== 'walk' && mode !== 'drive' && mode !== 'bike' && mode !== 'transit') return null;
     try {
       await this.ensureLoaded();
+      const modeMap: Record<'walk' | 'drive' | 'bike' | 'transit', google.maps.TravelMode> = {
+        walk: google.maps.TravelMode.WALKING,
+        drive: google.maps.TravelMode.DRIVING,
+        bike: google.maps.TravelMode.BICYCLING,
+        transit: google.maps.TravelMode.TRANSIT,
+      };
+      const travelMode = modeMap[mode];
       const svc = new google.maps.DirectionsService();
       const result = await svc.route({
         origin: from,

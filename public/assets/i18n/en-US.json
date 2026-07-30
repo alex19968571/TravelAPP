@@ -9,7 +9,8 @@
     "shopping": "Shopping List",
     "expenses": "Expenses",
     "exchange": "Exchange",
-    "settings": "Settings"
+    "settings": "Settings",
+    "collapse": "Collapse menu"
   },
   "auth": {
     "signInGoogle": "Sign in with Google",

@@ -1,5 +1,13 @@
 import {
-  Component, inject, OnInit, AfterViewInit, signal, computed, HostListener, ViewChild, ElementRef,
+  Component,
+  inject,
+  OnInit,
+  AfterViewInit,
+  signal,
+  computed,
+  HostListener,
+  ViewChild,
+  ElementRef,
 } from '@angular/core';
 import { CommonModule, DecimalPipe } from '@angular/common';
 import { TranslocoModule } from '@jsverse/transloco';
@@ -20,79 +28,79 @@ const KEYPAD_ROWS: string[][] = [
   template: `
     <div class="page-container">
       <div class="scale-wrap" #scaleWrap>
-      <h1>{{ 'exchange.title' | transloco }}</h1>
+        <h1>{{ 'exchange.title' | transloco }}</h1>
 
-      <!-- 上方：左右兩塊國家/金額 + 中間轉換按鈕 -->
-      <div class="converter-card card">
-        <div class="side">
-          <div class="country-picker" [class.open]="showLeftPicker()">
-            <button class="country-trigger" (click)="toggleLeftPicker($event)">
-              <span class="fi fi-{{ leftCountry().code.toLowerCase() }}"></span>
-              <span class="cname">{{ leftCountry().nativeName }}</span>
-              <span class="caret" [class.flipped]="showLeftPicker()">▾</span>
-            </button>
-            <div class="country-dropdown">
-              @for (c of countries; track c.code) {
-                <button
-                  class="country-option"
-                  [class.selected]="c.code === leftCountry().code"
-                  (click)="selectLeft(c)"
-                >
-                  <span class="fi fi-{{ c.code.toLowerCase() }}"></span>
-                  <span>{{ c.nativeName }}</span>
-                  <span class="currency-badge">{{ c.currency }}</span>
-                </button>
-              }
+        <!-- 上方：左右兩塊國家/金額 + 中間轉換按鈕 -->
+        <div class="converter-card card">
+          <div class="side">
+            <div class="country-picker" [class.open]="showLeftPicker()">
+              <button class="country-trigger" (click)="toggleLeftPicker($event)">
+                <span class="fi fi-{{ leftCountry().code.toLowerCase() }}"></span>
+                <span class="cname">{{ leftCountry().nativeName }}</span>
+                <span class="caret" [class.flipped]="showLeftPicker()">▾</span>
+              </button>
+              <div class="country-dropdown">
+                @for (c of countries; track c.code) {
+                  <button
+                    class="country-option"
+                    [class.selected]="c.code === leftCountry().code"
+                    (click)="selectLeft(c)"
+                  >
+                    <span class="fi fi-{{ c.code.toLowerCase() }}"></span>
+                    <span>{{ c.nativeName }}</span>
+                    <span class="currency-badge">{{ c.currency }}</span>
+                  </button>
+                }
+              </div>
             </div>
+            <div class="amount">{{ amountStr() }}</div>
+            <div class="currency-code">{{ leftCountry().currency }}</div>
           </div>
-          <div class="amount">{{ amountStr() }}</div>
-          <div class="currency-code">{{ leftCountry().currency }}</div>
+
+          <button class="swap-btn" (click)="swap()">⇄</button>
+
+          <div class="side">
+            <div class="country-picker" [class.open]="showRightPicker()">
+              <button class="country-trigger" (click)="toggleRightPicker($event)">
+                <span class="fi fi-{{ rightCountry().code.toLowerCase() }}"></span>
+                <span class="cname">{{ rightCountry().nativeName }}</span>
+                <span class="caret" [class.flipped]="showRightPicker()">▾</span>
+              </button>
+              <div class="country-dropdown">
+                @for (c of countries; track c.code) {
+                  <button
+                    class="country-option"
+                    [class.selected]="c.code === rightCountry().code"
+                    (click)="selectRight(c)"
+                  >
+                    <span class="fi fi-{{ c.code.toLowerCase() }}"></span>
+                    <span>{{ c.nativeName }}</span>
+                    <span class="currency-badge">{{ c.currency }}</span>
+                  </button>
+                }
+              </div>
+            </div>
+            <div class="amount converted">{{ convertedAmount() | number: '1.0-2' }}</div>
+            <div class="currency-code">{{ rightCountry().currency }}</div>
+          </div>
         </div>
 
-        <button class="swap-btn" (click)="swap()">⇄</button>
+        <div class="rate-hint">
+          1 {{ leftCountry().currency }} ≈ {{ rate() | number: '1.0-4' }}
+          {{ rightCountry().currency }}
+        </div>
 
-        <div class="side">
-          <div class="country-picker" [class.open]="showRightPicker()">
-            <button class="country-trigger" (click)="toggleRightPicker($event)">
-              <span class="fi fi-{{ rightCountry().code.toLowerCase() }}"></span>
-              <span class="cname">{{ rightCountry().nativeName }}</span>
-              <span class="caret" [class.flipped]="showRightPicker()">▾</span>
-            </button>
-            <div class="country-dropdown">
-              @for (c of countries; track c.code) {
-                <button
-                  class="country-option"
-                  [class.selected]="c.code === rightCountry().code"
-                  (click)="selectRight(c)"
-                >
-                  <span class="fi fi-{{ c.code.toLowerCase() }}"></span>
-                  <span>{{ c.nativeName }}</span>
-                  <span class="currency-badge">{{ c.currency }}</span>
-                </button>
+        <!-- 下方：計算機鍵盤 -->
+        <div class="keypad card">
+          @for (row of keypadRows; track $index) {
+            <div class="keypad-row">
+              @for (key of row; track key) {
+                <button class="keypad-key" (click)="onKey(key)">{{ key }}</button>
               }
             </div>
-          </div>
-          <div class="amount converted">{{ convertedAmount() | number: '1.0-2' }}</div>
-          <div class="currency-code">{{ rightCountry().currency }}</div>
+          }
+          <button class="keypad-clear" (click)="clear()">{{ 'exchange.clear' | transloco }}</button>
         </div>
-      </div>
-
-      <div class="rate-hint">
-        1 {{ leftCountry().currency }} ≈ {{ rate() | number: '1.0-4' }}
-        {{ rightCountry().currency }}
-      </div>
-
-      <!-- 下方：計算機鍵盤 -->
-      <div class="keypad card">
-        @for (row of keypadRows; track $index) {
-          <div class="keypad-row">
-            @for (key of row; track key) {
-              <button class="keypad-key" (click)="onKey(key)">{{ key }}</button>
-            }
-          </div>
-        }
-        <button class="keypad-clear" (click)="clear()">{{ 'exchange.clear' | transloco }}</button>
-      </div>
       </div>
     </div>
   `,
@@ -105,7 +113,9 @@ const KEYPAD_ROWS: string[][] = [
         background: var(--bg);
         min-height: 100vh;
       }
-      .scale-wrap { width: 100%; }
+      .scale-wrap {
+        width: 100%;
+      }
       @media (hover: hover) and (pointer: fine) {
         .page-container {
           height: calc(100dvh - 112px);
@@ -115,7 +125,9 @@ const KEYPAD_ROWS: string[][] = [
           justify-content: center;
           overflow: hidden;
         }
-        .scale-wrap { transform-origin: center center; }
+        .scale-wrap {
+          transform-origin: center center;
+        }
       }
       h1 {
         font-size: 1.6rem;
@@ -166,11 +178,15 @@ const KEYPAD_ROWS: string[][] = [
         width: 40px;
         height: 40px;
         border-radius: 50%;
-        background: var(--accent);
-        color: white;
+        background: var(--icon-bg);
+        color: var(--accent);
         border: none;
         font-size: 1.1rem;
         cursor: pointer;
+        transition: background 0.15s;
+      }
+      .swap-btn:hover {
+        background: var(--icon-bg-hover);
       }
 
       .country-picker {

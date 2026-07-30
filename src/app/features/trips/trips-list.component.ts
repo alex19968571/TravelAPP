@@ -198,19 +198,19 @@ const CURRENCY_OPTIONS = [
                 >
                 <a
                   [routerLink]="['/trips', trip.id, 'shopping']"
-                  class="nav-btn"
+                  class="nav-btn nav-btn--shopping"
                   (click)="$event.stopPropagation()"
                   >{{ 'trips.shopping' | transloco }}</a
                 >
                 <a
                   [routerLink]="['/trips', trip.id, 'expenses']"
-                  class="nav-btn"
+                  class="nav-btn nav-btn--expenses"
                   (click)="$event.stopPropagation()"
                   >{{ 'trips.expenses' | transloco }}</a
                 >
                 <a
                   [routerLink]="['/trips', trip.id, 'members']"
-                  class="nav-btn"
+                  class="nav-btn nav-btn--members"
                   (click)="$event.stopPropagation()"
                   >{{ 'tripDetail.members' | transloco }}</a
                 >
@@ -317,20 +317,22 @@ const CURRENCY_OPTIONS = [
       }
 
       .btn-icon {
-        background: var(--accent);
-        color: white;
+        background: var(--icon-bg);
+        color: var(--accent);
         border: none;
-        border-radius: 10px;
-        padding: 0.5rem 0.875rem;
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
         cursor: pointer;
-        font-size: 0.95rem;
+        font-size: 1.2rem;
         text-decoration: none;
         display: inline-flex;
         align-items: center;
-        transition: opacity 0.15s;
+        justify-content: center;
+        transition: background 0.15s;
       }
       .btn-icon:hover {
-        opacity: 0.85;
+        background: var(--icon-bg-hover);
       }
 
       /* ── 行程列表工具列（+ 選單） ── */
@@ -545,17 +547,17 @@ const CURRENCY_OPTIONS = [
         width: 18px;
         height: 18px;
         border-radius: 50%;
-        background: transparent;
+        background: var(--icon-bg);
         color: var(--text-secondary);
-        opacity: 0.55;
         border: none;
         font-size: 0.72rem;
         line-height: 1;
         cursor: pointer;
         padding: 0;
+        transition: background 0.15s;
       }
       .info-btn:hover {
-        opacity: 0.9;
+        background: var(--icon-bg-hover);
       }
       .trip-nav {
         display: flex;
@@ -574,6 +576,18 @@ const CURRENCY_OPTIONS = [
         text-decoration: none;
         font-size: 0.875rem;
         display: inline-block;
+      }
+      .nav-btn--shopping {
+        background: rgba(239, 68, 68, 0.12);
+        color: #ef4444;
+      }
+      .nav-btn--expenses {
+        background: rgba(34, 197, 94, 0.14);
+        color: #22c55e;
+      }
+      .nav-btn--members {
+        background: rgba(234, 179, 8, 0.16);
+        color: #ca8a04;
       }
 
       @media (hover: none) and (pointer: coarse) {

@@ -220,8 +220,12 @@ import { ExchangeRateService } from '../../core/services/exchange-rate.service';
         text-decoration: none;
         font-size: 1.3rem;
         font-weight: 600;
-        background: var(--accent-light);
+        background: var(--icon-bg);
         flex-shrink: 0;
+        transition: background 0.15s;
+      }
+      .back-btn:hover {
+        background: var(--icon-bg-hover);
       }
       .header-mid {
         display: flex;

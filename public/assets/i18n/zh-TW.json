@@ -9,7 +9,8 @@
     "shopping": "購物清單",
     "expenses": "記帳分帳",
     "exchange": "換匯",
-    "settings": "設定"
+    "settings": "設定",
+    "collapse": "收合選單"
   },
   "auth": {
     "signInGoogle": "以 Google 帳號登入",

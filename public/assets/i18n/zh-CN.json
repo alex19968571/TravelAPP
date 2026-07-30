@@ -9,7 +9,8 @@
     "shopping": "购物清单",
     "expenses": "记账分账",
     "exchange": "换汇",
-    "settings": "设置"
+    "settings": "设置",
+    "collapse": "收起菜单"
   },
   "auth": {
     "signInGoogle": "以 Google 账号登录",

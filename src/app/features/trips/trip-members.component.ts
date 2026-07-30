@@ -168,7 +168,11 @@ import { AuthService } from '../../core/services/auth.service';
         text-decoration: none;
         font-size: 1.3rem;
         font-weight: 600;
-        background: var(--accent-light);
+        background: var(--icon-bg);
+        transition: background 0.15s;
+      }
+      .back-btn:hover {
+        background: var(--icon-bg-hover);
       }
       h1 {
         font-size: 1.8rem;
@@ -199,8 +203,8 @@ import { AuthService } from '../../core/services/auth.service';
         position: relative;
       }
       .icon-btn {
-        background: var(--accent);
-        color: white;
+        background: var(--icon-bg);
+        color: var(--accent);
         border: none;
         border-radius: 50%;
         width: 32px;
@@ -210,6 +214,10 @@ import { AuthService } from '../../core/services/auth.service';
         display: flex;
         align-items: center;
         justify-content: center;
+        transition: background 0.15s;
+      }
+      .icon-btn:hover {
+        background: var(--icon-bg-hover);
       }
       .invite-dropdown {
         position: absolute;
