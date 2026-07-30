@@ -119,7 +119,20 @@ const DAY_COLORS = ['#667eea', '#ed8936', '#48bb78', '#f56565', '#9f7aea', '#38b
             <div class="field-group">
               <label class="field-label">加入日期</label>
               <button class="date-select-btn" type="button" (click)="showDatePicker.set(true)">
-                {{ selectedDateLabel() }} ▾
+                <span class="select-text">{{ selectedDateLabel() }}</span>
+                <svg
+                  class="select-arrow"
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2.5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <polyline points="6 9 12 15 18 9"></polyline>
+                </svg>
               </button>
             </div>
           }
@@ -250,8 +263,11 @@ const DAY_COLORS = ['#667eea', '#ed8936', '#48bb78', '#f56565', '#9f7aea', '#38b
         gap: 0.5rem;
         margin-bottom: 0.75rem;
       }
+      .search-row .btn-primary {
+        flex: 2;
+      }
       .search-row input {
-        flex: 1;
+        flex: 8;
         padding: 0.625rem 0.875rem;
         border: 1.5px solid var(--border);
         border-radius: 10px;
@@ -393,8 +409,11 @@ const DAY_COLORS = ['#667eea', '#ed8936', '#48bb78', '#f56565', '#9f7aea', '#38b
 
       .date-select-btn {
         width: 100%;
-        padding: 0.625rem 0.875rem;
-        text-align: left;
+        padding: 0.625rem 2rem;
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
         background: var(--accent-light);
         color: var(--accent);
         border: 1.5px solid var(--accent);
@@ -402,6 +421,18 @@ const DAY_COLORS = ['#667eea', '#ed8936', '#48bb78', '#f56565', '#9f7aea', '#38b
         font-size: 0.9rem;
         font-weight: 600;
         cursor: pointer;
+      }
+      .date-select-btn .select-text {
+        flex: 1;
+        text-align: center;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .date-select-btn .select-arrow {
+        position: absolute;
+        right: 0.75rem;
+        flex-shrink: 0;
       }
 
       /* ── 按鈕列 ── */

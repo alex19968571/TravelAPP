@@ -27,7 +27,19 @@ import { PreferenceService } from '../services/preference.service';
             (click)="toggleSidebar()"
             [attr.aria-label]="'nav.collapse' | transloco"
           >
-            <span [style.transform]="sidebarCollapsed() ? 'rotate(180deg)' : 'none'">◀</span>
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <rect x="3" y="4" width="18" height="16" rx="2"></rect>
+              <line x1="10" y1="4" x2="10" y2="20"></line>
+            </svg>
           </button>
 
           <a routerLink="/trips" routerLinkActive="active" class="side-tab">

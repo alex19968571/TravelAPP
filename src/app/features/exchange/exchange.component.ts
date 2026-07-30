@@ -28,8 +28,6 @@ const KEYPAD_ROWS: string[][] = [
   template: `
     <div class="page-container">
       <div class="scale-wrap" #scaleWrap>
-        <h1>{{ 'exchange.title' | transloco }}</h1>
-
         <!-- 上方：左右兩塊國家/金額 + 中間轉換按鈕 -->
         <div class="converter-card card">
           <div class="side">

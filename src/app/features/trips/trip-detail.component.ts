@@ -153,15 +153,40 @@ const TRANSPORT_OPTIONS: { mode: TransportMode; icon: string }[] = [
           <!-- 日期（切換天數） -->
           <div class="field-group">
             <label class="field-label">日期</label>
-            <div class="day-picker">
-              @for (d of dateTabs(); track d.dayNumber) {
-                <button
-                  class="day-btn"
-                  [class.active]="editDayNumber() === d.dayNumber"
-                  (click)="editDayNumber.set(d.dayNumber)"
+            <div class="date-dropdown-wrap">
+              <button
+                type="button"
+                class="date-select-btn"
+                (click)="showEditDatePicker.set(!showEditDatePicker())"
+              >
+                <span class="select-text">{{ editDateLabel() }}</span>
+                <svg
+                  class="select-arrow"
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2.5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
                 >
-                  {{ formatTabDate(d) }}
-                </button>
+                  <polyline points="6 9 12 15 18 9"></polyline>
+                </svg>
+              </button>
+              @if (showEditDatePicker()) {
+                <div class="date-dropdown-panel">
+                  @for (d of dateTabs(); track d.dayNumber) {
+                    <button
+                      type="button"
+                      class="date-dropdown-option"
+                      [class.selected]="editDayNumber() === d.dayNumber"
+                      (click)="editDayNumber.set(d.dayNumber); showEditDatePicker.set(false)"
+                    >
+                      {{ formatTabDate(d) }}
+                    </button>
+                  }
+                </div>
               }
             </div>
           </div>
@@ -200,14 +225,33 @@ const TRANSPORT_OPTIONS: { mode: TransportMode; icon: string }[] = [
 
           <!-- 交通方式下拉選單 -->
           <div class="field-group">
-            <select class="field-input" [ngModel]="tMode()" (ngModelChange)="onTModeChange($event)">
-              <option value="">{{ 'transport.pleaseSelect' | transloco }}</option>
-              @for (opt of transportOpts; track opt.mode) {
-                <option [value]="opt.mode">
-                  {{ opt.icon }} {{ 'transport.' + opt.mode | transloco }}
-                </option>
-              }
-            </select>
+            <div class="select-wrap">
+              <select
+                class="field-input"
+                [ngModel]="tMode()"
+                (ngModelChange)="onTModeChange($event)"
+              >
+                <option value="">{{ 'transport.pleaseSelect' | transloco }}</option>
+                @for (opt of transportOpts; track opt.mode) {
+                  <option [value]="opt.mode">
+                    {{ opt.icon }} {{ 'transport.' + opt.mode | transloco }}
+                  </option>
+                }
+              </select>
+              <svg
+                class="select-arrow-icon"
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <polyline points="6 9 12 15 18 9"></polyline>
+              </svg>
+            </div>
           </div>
 
           @if (tMode()) {
@@ -245,6 +289,8 @@ const TRANSPORT_OPTIONS: { mode: TransportMode; icon: string }[] = [
                       {{ 'transport.estimated' | transloco
                       }}{{ formatDurationNoPlus(tCalcResult()!) }}
                     </div>
+                  } @else if (tCalcFailed()) {
+                    <p class="no-auto-msg">{{ 'transport.calcFailed' | transloco }}</p>
                   }
                 } @else {
                   <p class="no-auto-msg">{{ 'transport.noAutoCalc' | transloco }}</p>
@@ -344,7 +390,12 @@ const TRANSPORT_OPTIONS: { mode: TransportMode; icon: string }[] = [
         color: var(--accent);
         border: none;
         font-size: 1.1rem;
+        line-height: 1;
         cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0;
         transition: background 0.15s;
       }
       .date-arrow:hover {
@@ -364,8 +415,9 @@ const TRANSPORT_OPTIONS: { mode: TransportMode; icon: string }[] = [
         display: none;
       }
       .date-tab {
-        flex-shrink: 0;
-        padding: 0.5rem 1rem;
+        flex: 1;
+        min-width: 0;
+        padding: 0.5rem 0.5rem;
         border-radius: 10px;
         border: 1.5px solid var(--border);
         background: var(--surface);
@@ -373,7 +425,10 @@ const TRANSPORT_OPTIONS: { mode: TransportMode; icon: string }[] = [
         font-weight: 600;
         font-size: 0.9rem;
         cursor: pointer;
+        text-align: center;
         white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
       }
       .date-tab.active {
         border-color: var(--accent);
@@ -642,6 +697,23 @@ const TRANSPORT_OPTIONS: { mode: TransportMode; icon: string }[] = [
         font-weight: 600;
         color: var(--text-secondary);
       }
+      .select-wrap {
+        position: relative;
+      }
+      .select-wrap .select-arrow-icon {
+        position: absolute;
+        right: 0.875rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--text-secondary);
+        pointer-events: none;
+      }
+      select.field-input {
+        appearance: none;
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        padding-right: 2.25rem;
+      }
       .field-input {
         width: 100%;
         padding: 0.6rem 0.875rem;
@@ -662,25 +734,68 @@ const TRANSPORT_OPTIONS: { mode: TransportMode; icon: string }[] = [
         font-family: inherit;
       }
 
-      .day-picker {
+      .date-dropdown-wrap {
+        position: relative;
+      }
+      .date-select-btn {
+        width: 100%;
+        padding: 0.5rem 2rem;
+        position: relative;
         display: flex;
-        gap: 0.4rem;
-        flex-wrap: wrap;
-      }
-      .day-btn {
-        padding: 0.4rem 0.8rem;
-        border-radius: 8px;
-        border: 1.5px solid var(--border);
-        background: var(--bg);
-        color: var(--text-secondary);
-        font-size: 0.85rem;
-        cursor: pointer;
-      }
-      .day-btn.active {
-        border-color: var(--accent);
+        align-items: center;
+        justify-content: center;
         background: var(--accent-light);
         color: var(--accent);
+        border: 1.5px solid var(--accent);
+        border-radius: 10px;
+        font-size: 0.9rem;
         font-weight: 600;
+        cursor: pointer;
+      }
+      .date-select-btn .select-text {
+        flex: 1;
+        text-align: center;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .date-select-btn .select-arrow {
+        position: absolute;
+        right: 0.75rem;
+        flex-shrink: 0;
+      }
+      .date-dropdown-panel {
+        position: absolute;
+        top: calc(100% + 4px);
+        left: 0;
+        right: 0;
+        z-index: 20;
+        background: var(--surface);
+        border: 1.5px solid var(--border);
+        border-radius: 10px;
+        box-shadow: 0 8px 32px var(--shadow);
+        max-height: 220px;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+      }
+      .date-dropdown-option {
+        padding: 0.6rem 0.875rem;
+        text-align: center;
+        background: none;
+        border: none;
+        border-bottom: 1px solid var(--border);
+        color: var(--text-primary);
+        font-size: 0.9rem;
+        cursor: pointer;
+      }
+      .date-dropdown-option:last-child {
+        border-bottom: none;
+      }
+      .date-dropdown-option.selected {
+        color: var(--accent);
+        font-weight: 600;
+        background: var(--accent-light);
       }
 
       .modal-actions {
@@ -829,6 +944,7 @@ export class TripDetailComponent implements OnInit {
   editName = '';
   editNotes = '';
   editDayNumber = signal(1);
+  showEditDatePicker = signal(false);
   editPhotoUrl = signal<string | null>(null);
   editUploadingPhoto = signal(false);
   editSaving = signal(false);
@@ -843,6 +959,7 @@ export class TripDetailComponent implements OnInit {
   tMins = signal(0);
   tCalcResult = signal<number | null>(null);
   tCalcing = signal(false);
+  tCalcFailed = signal(false);
   tSaving = signal(false);
 
   transportOpts = TRANSPORT_OPTIONS;
@@ -878,6 +995,11 @@ export class TripDetailComponent implements OnInit {
   formatTabDate(tab: DateTab): string {
     if (!tab.date) return `${tab.dayNumber}`;
     return `${tab.date.getMonth() + 1}/${tab.date.getDate()}`;
+  }
+
+  editDateLabel(): string {
+    const d = this.dateTabs().find((t) => t.dayNumber === this.editDayNumber());
+    return d ? this.formatTabDate(d) : '';
   }
 
   scrollDates(dir: number): void {
@@ -973,6 +1095,7 @@ export class TripDetailComponent implements OnInit {
     const mode = item.next_transport_mode ?? null;
     this.tMode.set(mode);
     this.tCalcResult.set(null);
+    this.tCalcFailed.set(false);
     const mins = item.next_transport_minutes ?? 0;
     this.tHours.set(Math.floor(mins / 60));
     this.tMins.set(mins % 60);
@@ -988,6 +1111,7 @@ export class TripDetailComponent implements OnInit {
     const mode = value ? (value as TransportMode) : null;
     this.tMode.set(mode);
     this.tCalcResult.set(null);
+    this.tCalcFailed.set(false);
     if (mode && !this.canAutoCalc(mode)) {
       this.tTimeTab.set('custom');
     }
@@ -1000,6 +1124,7 @@ export class TripDetailComponent implements OnInit {
     if (!from || !to || !mode) return;
     this.tCalcing.set(true);
     this.tCalcResult.set(null);
+    this.tCalcFailed.set(false);
     try {
       const minutes = await this.mapsService.estimateDuration(
         { lat: from.latitude, lng: from.longitude },
@@ -1007,6 +1132,7 @@ export class TripDetailComponent implements OnInit {
         mode,
       );
       this.tCalcResult.set(minutes);
+      this.tCalcFailed.set(minutes === null);
     } finally {
       this.tCalcing.set(false);
     }

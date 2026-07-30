@@ -14,7 +14,7 @@ import { AuthService } from '../../core/services/auth.service';
     <div class="page-container">
       <header class="page-header">
         <a
-          [routerLink]="['/trips', tripId]"
+          [routerLink]="['/trips']"
           class="back-btn"
           [attr.aria-label]="'itinerary.backToTrip' | transloco"
         >

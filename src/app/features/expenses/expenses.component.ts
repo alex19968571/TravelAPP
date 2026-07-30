@@ -34,7 +34,7 @@ interface GrossEntry {
     <div class="page-container">
       <header class="page-header">
         <a
-          [routerLink]="['/trips', tripId]"
+          [routerLink]="['/trips']"
           class="back-btn"
           [attr.aria-label]="'expenses.backToTrip' | transloco"
         >

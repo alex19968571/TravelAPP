@@ -58,8 +58,6 @@ const CURRENCY_OPTIONS = [
   imports: [CommonModule, RouterModule, ReactiveFormsModule, FormsModule, TranslocoModule],
   template: `
     <div class="page-container">
-      <h1 class="page-title">{{ 'trips.myTrips' | transloco }}</h1>
-
       <!-- 行程列表工具列：'+' 獨立一列，右上角 -->
       <div class="list-toolbar">
         <div class="add-menu" [class.open]="showAddMenu()">

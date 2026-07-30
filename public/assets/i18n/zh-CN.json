@@ -194,6 +194,7 @@
     "noAutoCalc": "此方式不支持自动计算，请手动输入",
     "estimated": "预计：",
     "hour": "小时",
-    "minute": "分"
+    "minute": "分",
+    "calcFailed": "查无路线信息，请改用自定义时间"
   }
 }

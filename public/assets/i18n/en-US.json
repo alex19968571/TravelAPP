@@ -194,6 +194,7 @@
     "noAutoCalc": "Auto-calc not supported, enter manually",
     "estimated": "Estimated: ",
     "hour": "h",
-    "minute": "m"
+    "minute": "m",
+    "calcFailed": "No route found. Please enter the time manually."
   }
 }

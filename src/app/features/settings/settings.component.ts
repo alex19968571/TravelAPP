@@ -15,8 +15,6 @@ import {
   imports: [CommonModule, RouterModule, TranslocoModule],
   template: `
     <div class="page-container">
-      <h1 class="page-title">{{ 'settings.title' | transloco }}</h1>
-
       <!-- 目的地國家 -->
       <div class="card">
         <h3>{{ 'settings.destCountry' | transloco }}</h3>
@@ -96,7 +94,11 @@ import {
           <button
             class="color-swatch custom-swatch"
             [class.selected]="pref.colorId() === 'custom'"
-            [style.background]="pref.colorId() === 'custom' ? pref.customColorHex() : 'conic-gradient(red,yellow,lime,cyan,blue,magenta,red)'"
+            [style.background]="
+              pref.colorId() === 'custom'
+                ? pref.customColorHex()
+                : 'conic-gradient(red,yellow,lime,cyan,blue,magenta,red)'
+            "
             title="自訂顏色"
             (click)="customColorInput.click()"
           >
@@ -387,11 +389,20 @@ import {
         color: white;
         font-size: 1.1rem;
         font-weight: 700;
-        text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
       }
-      .custom-swatch { border: 3px solid var(--border); }
-      .custom-swatch.selected { border-color: white; box-shadow: 0 0 0 3px var(--accent); }
-      .custom-icon { font-size: 1rem; color: white; text-shadow: 0 1px 2px rgba(0,0,0,0.6); }
+      .custom-swatch {
+        border: 3px solid var(--border);
+      }
+      .custom-swatch.selected {
+        border-color: white;
+        box-shadow: 0 0 0 3px var(--accent);
+      }
+      .custom-icon {
+        font-size: 1rem;
+        color: white;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+      }
       .color-labels {
         display: flex;
         gap: 0.75rem;

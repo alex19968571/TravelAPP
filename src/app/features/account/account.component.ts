@@ -26,57 +26,55 @@ import { PreferenceService, COUNTRIES, Country } from '../../core/services/prefe
   template: `
     <div class="page-container">
       <div class="scale-wrap" #scaleWrap>
-      <h1>{{ 'account.account' | transloco }}</h1>
-
-      <div class="avatar-hero">
-        <button class="avatar-big" (click)="showAvatarPicker.set(true)">
-          @if (avatarParsed().type === 'image') {
-            <img [src]="$any(avatarParsed()).src" class="avatar-img" alt="avatar" />
-          } @else if (avatarParsed().type === 'preset') {
-            <span class="avatar-preset" [style.background]="$any(avatarParsed()).bg">{{
-              $any(avatarParsed()).emoji
-            }}</span>
-          } @else {
-            <span class="avatar-fallback">👤</span>
-          }
-        </button>
-        <div class="account-name">{{ auth.user()?.email }}</div>
-      </div>
-
-      <div class="card">
-        <button class="row-item" (click)="showAvatarPicker.set(true)">
-          <span>👤 {{ 'account.changeAvatar' | transloco }}</span>
-          <span class="chevron">›</span>
-        </button>
-
-        <div class="row-item country-row" (click)="toggleHomeCountry($event)">
-          <span class="row-label">📍 {{ 'account.homeCountry' | transloco }}</span>
-          <div class="country-picker-inline" [class.open]="showHomeCountry()">
-            <div class="country-trigger">
-              <span class="fi fi-{{ pref.homeCountry().code.toLowerCase() }}"></span>
-              <span class="cname">{{ pref.homeCountry().nativeName }}</span>
-              <span class="caret" [class.flipped]="showHomeCountry()">▾</span>
-            </div>
-            <div class="country-dropdown" (click)="$event.stopPropagation()">
-              @for (c of countries; track c.code) {
-                <button
-                  class="country-option"
-                  [class.selected]="c.code === pref.homeCountryCode()"
-                  (click)="selectHomeCountry(c)"
-                >
-                  <span class="fi fi-{{ c.code.toLowerCase() }}"></span>
-                  <span>{{ c.nativeName }}</span>
-                  <span class="currency-badge">{{ c.currency }}</span>
-                </button>
-              }
-            </div>
-          </div>
+        <div class="avatar-hero">
+          <button class="avatar-big" (click)="showAvatarPicker.set(true)">
+            @if (avatarParsed().type === 'image') {
+              <img [src]="$any(avatarParsed()).src" class="avatar-img" alt="avatar" />
+            } @else if (avatarParsed().type === 'preset') {
+              <span class="avatar-preset" [style.background]="$any(avatarParsed()).bg">{{
+                $any(avatarParsed()).emoji
+              }}</span>
+            } @else {
+              <span class="avatar-fallback">👤</span>
+            }
+          </button>
+          <div class="account-name">{{ auth.user()?.email }}</div>
         </div>
 
-        <button class="row-item danger" (click)="auth.signOut()">
-          <span>→ {{ 'auth.signOut' | transloco }}</span>
-        </button>
-      </div>
+        <div class="card">
+          <button class="row-item" (click)="showAvatarPicker.set(true)">
+            <span>👤 {{ 'account.changeAvatar' | transloco }}</span>
+            <span class="chevron">›</span>
+          </button>
+
+          <div class="row-item country-row" (click)="toggleHomeCountry($event)">
+            <span class="row-label">📍 {{ 'account.homeCountry' | transloco }}</span>
+            <div class="country-picker-inline" [class.open]="showHomeCountry()">
+              <div class="country-trigger">
+                <span class="fi fi-{{ pref.homeCountry().code.toLowerCase() }}"></span>
+                <span class="cname">{{ pref.homeCountry().nativeName }}</span>
+                <span class="caret" [class.flipped]="showHomeCountry()">▾</span>
+              </div>
+              <div class="country-dropdown" (click)="$event.stopPropagation()">
+                @for (c of countries; track c.code) {
+                  <button
+                    class="country-option"
+                    [class.selected]="c.code === pref.homeCountryCode()"
+                    (click)="selectHomeCountry(c)"
+                  >
+                    <span class="fi fi-{{ c.code.toLowerCase() }}"></span>
+                    <span>{{ c.nativeName }}</span>
+                    <span class="currency-badge">{{ c.currency }}</span>
+                  </button>
+                }
+              </div>
+            </div>
+          </div>
+
+          <button class="row-item danger" (click)="auth.signOut()">
+            <span>→ {{ 'auth.signOut' | transloco }}</span>
+          </button>
+        </div>
       </div>
 
       @if (showAvatarPicker()) {
@@ -115,7 +113,9 @@ import { PreferenceService, COUNTRIES, Country } from '../../core/services/prefe
         background: var(--bg);
         min-height: 100vh;
       }
-      .scale-wrap { width: 100%; }
+      .scale-wrap {
+        width: 100%;
+      }
       @media (hover: hover) and (pointer: fine) {
         .page-container {
           height: calc(100dvh - 112px);
@@ -125,7 +125,9 @@ import { PreferenceService, COUNTRIES, Country } from '../../core/services/prefe
           justify-content: center;
           overflow: hidden;
         }
-        .scale-wrap { transform-origin: center center; }
+        .scale-wrap {
+          transform-origin: center center;
+        }
       }
       h1 {
         font-size: 1.6rem;

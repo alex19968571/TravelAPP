@@ -17,7 +17,7 @@ import { ExchangeRateService } from '../../core/services/exchange-rate.service';
     <div class="page-container">
       <header class="page-header">
         <a
-          [routerLink]="['/trips', tripId]"
+          [routerLink]="['/trips']"
           class="back-btn"
           [attr.aria-label]="'shopping.backToTrip' | transloco"
         >
