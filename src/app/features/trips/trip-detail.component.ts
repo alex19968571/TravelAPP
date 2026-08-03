@@ -28,7 +28,11 @@ const TRANSPORT_OPTIONS: { mode: TransportMode; icon: string }[] = [
   template: `
     <div class="page-container">
       <header class="page-header">
-        <a routerLink="/trips" class="icon-circle back-btn" [attr.aria-label]="'common.back' | transloco">
+        <a
+          routerLink="/trips"
+          class="icon-circle back-btn"
+          [attr.aria-label]="'common.back' | transloco"
+        >
           <svg
             width="18"
             height="18"
@@ -91,7 +95,9 @@ const TRANSPORT_OPTIONS: { mode: TransportMode; icon: string }[] = [
                       >{{ item.latitude.toFixed(4) }}, {{ item.longitude.toFixed(4) }}</span
                     >
                   </div>
-                  <button class="icon-circle remove-btn" (click)="removeItem(item.id, $event)">×</button>
+                  <button class="icon-circle remove-btn" (click)="removeItem(item.id, $event)">
+                    ×
+                  </button>
                 </div>
 
                 <!-- 景點間交通列（最後一個景點後不顯示） -->
@@ -765,29 +771,28 @@ const TRANSPORT_OPTIONS: { mode: TransportMode; icon: string }[] = [
         display: flex;
         gap: 0.75rem;
       }
-      .btn-primary {
+      .btn-primary,
+      .btn-secondary {
         flex: 1;
-        background: var(--accent);
-        color: white;
-        border: none;
         border-radius: 10px;
         padding: 0.75rem;
         font-weight: 600;
         cursor: pointer;
+      }
+      .btn-primary,
+      .btn-auto-calc {
+        background: var(--accent);
+        color: white;
+        border: none;
       }
       .btn-primary:disabled {
         opacity: 0.45;
         cursor: not-allowed;
       }
       .btn-secondary {
-        flex: 1;
         background: var(--bg);
         color: var(--text-secondary);
         border: 1.5px solid var(--border);
-        border-radius: 10px;
-        padding: 0.75rem;
-        font-weight: 600;
-        cursor: pointer;
       }
 
       .time-tabs {
@@ -830,10 +835,7 @@ const TRANSPORT_OPTIONS: { mode: TransportMode; icon: string }[] = [
       .btn-auto-calc {
         width: 100%;
         padding: 0.65rem 1rem;
-        border: none;
         border-radius: 10px;
-        background: var(--accent);
-        color: white;
         font-size: 0.9rem;
         font-weight: 600;
         cursor: pointer;
