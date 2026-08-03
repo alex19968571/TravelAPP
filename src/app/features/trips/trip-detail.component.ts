@@ -28,7 +28,7 @@ const TRANSPORT_OPTIONS: { mode: TransportMode; icon: string }[] = [
   template: `
     <div class="page-container">
       <header class="page-header">
-        <a routerLink="/trips" class="back-btn" [attr.aria-label]="'common.back' | transloco">
+        <a routerLink="/trips" class="icon-circle back-btn" [attr.aria-label]="'common.back' | transloco">
           <svg
             width="18"
             height="18"
@@ -48,7 +48,7 @@ const TRANSPORT_OPTIONS: { mode: TransportMode; icon: string }[] = [
       @if (trip(); as t) {
         <!-- 日期分頁 -->
         <div class="date-tabs-wrap">
-          <button class="date-arrow desktop-only" (click)="scrollDates(-1)">‹</button>
+          <button class="icon-circle date-arrow desktop-only" (click)="scrollDates(-1)">‹</button>
           <div class="date-tabs" #dateTabsEl>
             @for (d of dateTabs(); track $index) {
               <button
@@ -60,7 +60,7 @@ const TRANSPORT_OPTIONS: { mode: TransportMode; icon: string }[] = [
               </button>
             }
           </div>
-          <button class="date-arrow desktop-only" (click)="scrollDates(1)">›</button>
+          <button class="icon-circle date-arrow desktop-only" (click)="scrollDates(1)">›</button>
         </div>
 
         <div class="card day-content">
@@ -91,7 +91,7 @@ const TRANSPORT_OPTIONS: { mode: TransportMode; icon: string }[] = [
                       >{{ item.latitude.toFixed(4) }}, {{ item.longitude.toFixed(4) }}</span
                     >
                   </div>
-                  <button class="remove-btn" (click)="removeItem(item.id, $event)">×</button>
+                  <button class="icon-circle remove-btn" (click)="removeItem(item.id, $event)">×</button>
                 </div>
 
                 <!-- 景點間交通列（最後一個景點後不顯示） -->
@@ -111,7 +111,7 @@ const TRANSPORT_OPTIONS: { mode: TransportMode; icon: string }[] = [
         </div>
 
         <a
-          class="fab"
+          class="icon-circle fab"
           [routerLink]="['/trips', t.id, 'itinerary']"
           [queryParams]="{ day: dateTabs()[selectedDayIndex()]?.dayNumber ?? 1 }"
           [attr.aria-label]="'tripDetail.openMap' | transloco"
@@ -351,20 +351,27 @@ const TRANSPORT_OPTIONS: { mode: TransportMode; icon: string }[] = [
         gap: 1rem;
         margin-bottom: 1.5rem;
       }
-      .back-btn {
-        display: inline-flex;
+      .icon-circle {
+        display: flex;
         align-items: center;
         justify-content: center;
+        border-radius: 50%;
+        border: none;
+        background: var(--icon-bg);
+        cursor: pointer;
+        transition: background 0.15s;
+      }
+      .back-btn {
         width: 36px;
         height: 36px;
-        border-radius: 50%;
         flex-shrink: 0;
         color: var(--accent);
         text-decoration: none;
-        background: var(--icon-bg);
-        transition: background 0.15s;
       }
-      .back-btn:hover {
+      .back-btn:hover,
+      .date-arrow:hover,
+      .remove-btn:hover,
+      .fab:hover {
         background: var(--icon-bg-hover);
       }
       h1 {
@@ -374,7 +381,6 @@ const TRANSPORT_OPTIONS: { mode: TransportMode; icon: string }[] = [
         margin: 0;
       }
 
-      /* 日期分頁 */
       .date-tabs-wrap {
         display: flex;
         align-items: center;
@@ -385,21 +391,10 @@ const TRANSPORT_OPTIONS: { mode: TransportMode; icon: string }[] = [
         flex-shrink: 0;
         width: 32px;
         height: 32px;
-        border-radius: 50%;
-        background: var(--icon-bg);
         color: var(--accent);
-        border: none;
         font-size: 1.1rem;
         line-height: 1;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
         padding: 0;
-        transition: background 0.15s;
-      }
-      .date-arrow:hover {
-        background: var(--icon-bg-hover);
       }
       .date-tabs {
         flex: 1;
@@ -459,7 +454,6 @@ const TRANSPORT_OPTIONS: { mode: TransportMode; icon: string }[] = [
         gap: 0;
       }
 
-      /* ── 景點卡片 ── */
       .itinerary-item {
         display: flex;
         align-items: center;
@@ -530,27 +524,15 @@ const TRANSPORT_OPTIONS: { mode: TransportMode; icon: string }[] = [
         color: var(--text-secondary);
       }
       .remove-btn {
-        background: var(--icon-bg);
-        border: none;
         color: #e53e3e;
-        cursor: pointer;
         font-size: 1.2rem;
         padding: 0.25rem;
         flex-shrink: 0;
         line-height: 1;
         width: 28px;
         height: 28px;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        transition: background 0.15s;
-      }
-      .remove-btn:hover {
-        background: var(--icon-bg-hover);
       }
 
-      /* ── 景點間交通列 ── */
       .transport-row {
         display: flex;
         align-items: center;
@@ -577,7 +559,6 @@ const TRANSPORT_OPTIONS: { mode: TransportMode; icon: string }[] = [
         color: var(--accent);
       }
 
-      /* 浮動按鈕 */
       .fab {
         position: fixed;
         right: 1.25rem;
@@ -585,23 +566,13 @@ const TRANSPORT_OPTIONS: { mode: TransportMode; icon: string }[] = [
         z-index: 60;
         width: 52px;
         height: 52px;
-        border-radius: 50%;
-        background: var(--icon-bg);
         color: var(--accent);
         text-decoration: none;
-        display: flex;
-        align-items: center;
-        justify-content: center;
         font-size: 1.6rem;
         box-shadow: 0 6px 20px var(--shadow);
         backdrop-filter: blur(6px);
-        transition: background 0.15s;
-      }
-      .fab:hover {
-        background: var(--icon-bg-hover);
       }
 
-      /* ── Modal 共用 ── */
       .modal-backdrop {
         position: fixed;
         inset: 0;
@@ -632,9 +603,7 @@ const TRANSPORT_OPTIONS: { mode: TransportMode; icon: string }[] = [
         font-weight: 700;
       }
 
-      /* ── 圖片上傳（label 取代 button） ── */
       .photo-block {
-        display: flex;
         width: 100%;
         aspect-ratio: 4/3;
         max-height: 200px;
@@ -644,8 +613,6 @@ const TRANSPORT_OPTIONS: { mode: TransportMode; icon: string }[] = [
         cursor: pointer;
         position: relative;
         overflow: hidden;
-        align-items: center;
-        justify-content: center;
       }
       .photo-block:hover {
         border-color: var(--accent);
@@ -656,6 +623,12 @@ const TRANSPORT_OPTIONS: { mode: TransportMode; icon: string }[] = [
         object-fit: cover;
         display: block;
       }
+      .photo-block,
+      .photo-overlay {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
       .photo-overlay {
         position: absolute;
         inset: 0;
@@ -663,9 +636,6 @@ const TRANSPORT_OPTIONS: { mode: TransportMode; icon: string }[] = [
         color: white;
         font-size: 0.85rem;
         font-weight: 500;
-        display: flex;
-        align-items: center;
-        justify-content: center;
         opacity: 0;
         transition: opacity 0.2s;
       }
@@ -697,12 +667,14 @@ const TRANSPORT_OPTIONS: { mode: TransportMode; icon: string }[] = [
         font-weight: 600;
         color: var(--text-secondary);
       }
-      .select-wrap {
+      .select-wrap,
+      .date-dropdown-wrap {
         position: relative;
       }
-      .select-wrap .select-arrow-icon {
+      .select-wrap .select-arrow-icon,
+      .date-select-btn .select-arrow {
         position: absolute;
-        right: 0.875rem;
+        right: 0.75rem;
         top: 50%;
         transform: translateY(-50%);
         color: var(--text-secondary);
@@ -711,7 +683,6 @@ const TRANSPORT_OPTIONS: { mode: TransportMode; icon: string }[] = [
       select.field-input {
         appearance: none;
         -webkit-appearance: none;
-        -moz-appearance: none;
         padding-right: 2.25rem;
       }
       .field-input {
@@ -734,9 +705,6 @@ const TRANSPORT_OPTIONS: { mode: TransportMode; icon: string }[] = [
         font-family: inherit;
       }
 
-      .date-dropdown-wrap {
-        position: relative;
-      }
       .date-select-btn {
         width: 100%;
         padding: 0.5rem 2rem;
@@ -758,11 +726,6 @@ const TRANSPORT_OPTIONS: { mode: TransportMode; icon: string }[] = [
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
-      }
-      .date-select-btn .select-arrow {
-        position: absolute;
-        right: 0.75rem;
-        flex-shrink: 0;
       }
       .date-dropdown-panel {
         position: absolute;
@@ -827,7 +790,6 @@ const TRANSPORT_OPTIONS: { mode: TransportMode; icon: string }[] = [
         cursor: pointer;
       }
 
-      /* ── 交通方式 Modal 專用 ── */
       .time-tabs {
         display: flex;
         gap: 0.4rem;
