@@ -53,7 +53,16 @@ const TRANSPORT_OPTIONS: { mode: TransportMode; icon: string }[] = [
         <!-- 日期分頁 -->
         <div class="date-tabs-wrap">
           <button class="icon-circle date-arrow desktop-only" (click)="scrollDates(-1)">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
               <polyline points="15 18 9 12 15 6"></polyline>
             </svg>
           </button>
@@ -69,7 +78,16 @@ const TRANSPORT_OPTIONS: { mode: TransportMode; icon: string }[] = [
             }
           </div>
           <button class="icon-circle date-arrow desktop-only" (click)="scrollDates(1)">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
               <polyline points="9 18 15 12 9 6"></polyline>
             </svg>
           </button>
@@ -81,13 +99,34 @@ const TRANSPORT_OPTIONS: { mode: TransportMode; icon: string }[] = [
           } @else {
             <div class="item-list">
               @for (
-                item of itemsForSelectedDay();
+                item of displayList();
                 track item.id;
                 let i = $index;
                 let last = $last
               ) {
                 <!-- 景點卡片 -->
-                <div class="itinerary-item" (click)="openEdit(item)">
+                <div
+                  class="itinerary-item"
+                  [class.dragging]="draggingId() === item.id"
+                  [attr.data-item-id]="item.id"
+                  (click)="openEdit(item)"
+                >
+                  <button
+                    class="drag-handle"
+                    type="button"
+                    (pointerdown)="onDragStart($event, item)"
+                    (click)="$event.stopPropagation()"
+                    [attr.aria-label]="'tripDetail.reorder' | transloco"
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                      <circle cx="8" cy="6" r="1.5"></circle>
+                      <circle cx="16" cy="6" r="1.5"></circle>
+                      <circle cx="8" cy="12" r="1.5"></circle>
+                      <circle cx="16" cy="12" r="1.5"></circle>
+                      <circle cx="8" cy="18" r="1.5"></circle>
+                      <circle cx="16" cy="18" r="1.5"></circle>
+                    </svg>
+                  </button>
                   <span class="order-badge">{{ i + 1 }}</span>
                   @if (item.image_url) {
                     <img [src]="item.image_url" class="item-thumb" alt="" />
@@ -103,9 +142,7 @@ const TRANSPORT_OPTIONS: { mode: TransportMode; icon: string }[] = [
                       >{{ item.latitude.toFixed(4) }}, {{ item.longitude.toFixed(4) }}</span
                     >
                   </div>
-                  <button class="remove-btn" (click)="removeItem(item.id, $event)">
-                    ×
-                  </button>
+                  <button class="remove-btn" (click)="removeItem(item.id, $event)">×</button>
                 </div>
 
                 <!-- 景點間交通列（最後一個景點後不顯示） -->
@@ -113,7 +150,7 @@ const TRANSPORT_OPTIONS: { mode: TransportMode; icon: string }[] = [
                   <div class="transport-row">
                     <button
                       class="transport-label"
-                      (click)="openTransportModal(item, itemsForSelectedDay()[i + 1], $event)"
+                      (click)="openTransportModal(item, displayList()[i + 1], $event)"
                     >
                       {{ getTransportText(item) }}
                     </button>
@@ -466,6 +503,24 @@ const TRANSPORT_OPTIONS: { mode: TransportMode; icon: string }[] = [
       .itinerary-item:hover {
         opacity: 0.85;
       }
+      .itinerary-item.dragging {
+        opacity: 0.4;
+      }
+      .drag-handle {
+        flex-shrink: 0;
+        width: 24px;
+        height: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: none;
+        border: none;
+        color: var(--text-secondary);
+        cursor: grab;
+        touch-action: none;
+        -webkit-user-select: none;
+        user-select: none;
+      }
       .order-badge {
         width: 28px;
         height: 28px;
@@ -721,11 +776,15 @@ const TRANSPORT_OPTIONS: { mode: TransportMode; icon: string }[] = [
         cursor: pointer;
       }
       .btn-primary,
-      .btn-secondary,
       .btn-auto-calc {
         background: var(--accent);
         color: white;
         border: none;
+      }
+      .btn-secondary {
+        background: none;
+        color: var(--accent);
+        border: 1.5px solid var(--accent);
       }
       .btn-primary:disabled {
         opacity: 0.45;
@@ -892,11 +951,15 @@ export class TripDetailComponent implements OnInit {
       .sort((a, b) => a.order_index - b.order_index);
   });
 
+  // ── 拖曳排序 ──
+  draggingId = signal<string | null>(null);
+  workingOrder = signal<ItineraryItem[] | null>(null);
+  displayList = computed(() => this.workingOrder() ?? this.itemsForSelectedDay());
+
   formatTabDate(tab: DateTab): string {
     if (!tab.date) return `${tab.dayNumber}`;
     return `${tab.date.getMonth() + 1}/${tab.date.getDate()}`;
   }
-
 
   scrollDates(dir: number): void {
     this.dateTabsEl?.nativeElement.scrollBy({ left: dir * 140, behavior: 'smooth' });
@@ -913,6 +976,56 @@ export class TripDetailComponent implements OnInit {
     await this.tripService.removeItineraryItem(itemId);
     this.items.set(await this.tripService.getItinerary(this.trip()!.id));
   }
+
+  // ── 拖曳排序 ──────────────────────────────────────────────────
+  onDragStart(ev: PointerEvent, item: ItineraryItem): void {
+    ev.preventDefault();
+    this.workingOrder.set([...this.itemsForSelectedDay()]);
+    this.draggingId.set(item.id);
+    window.addEventListener('pointermove', this.onDragMove);
+    window.addEventListener('pointerup', this.onDragEnd);
+  }
+
+  private onDragMove = (ev: PointerEvent): void => {
+    const id = this.draggingId();
+    const list = this.workingOrder();
+    if (!id || !list) return;
+    const el = (document.elementFromPoint(ev.clientX, ev.clientY) as HTMLElement | null)?.closest(
+      '.itinerary-item',
+    );
+    const targetId = el?.getAttribute('data-item-id');
+    if (!targetId || targetId === id) return;
+    const fromIdx = list.findIndex((i) => i.id === id);
+    const toIdx = list.findIndex((i) => i.id === targetId);
+    if (fromIdx === -1 || toIdx === -1 || fromIdx === toIdx) return;
+    const next = [...list];
+    const [moved] = next.splice(fromIdx, 1);
+    next.splice(toIdx, 0, moved);
+    this.workingOrder.set(next);
+  };
+
+  private onDragEnd = async (): Promise<void> => {
+    window.removeEventListener('pointermove', this.onDragMove);
+    window.removeEventListener('pointerup', this.onDragEnd);
+    const list = this.workingOrder();
+    this.draggingId.set(null);
+    this.workingOrder.set(null);
+    if (!list) return;
+    const original = this.itemsForSelectedDay();
+    const changed = list.some((it, idx) => it.id !== original[idx]?.id);
+    if (!changed) return;
+    await this.tripService.updateItineraryOrder(list);
+    // 順序改變後，景點間交通方式與時間回到預設（未設定）
+    for (const it of list) {
+      if (it.next_transport_mode || it.next_transport_minutes) {
+        await this.tripService.updateItineraryItem(it.id, {
+          next_transport_mode: null,
+          next_transport_minutes: null,
+        });
+      }
+    }
+    this.items.set(await this.tripService.getItinerary(this.trip()!.id));
+  };
 
   // ── 編輯景點 Modal ──────────────────────────────────────────────
   openEdit(item: ItineraryItem): void {

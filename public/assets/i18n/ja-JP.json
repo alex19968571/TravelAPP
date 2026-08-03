@@ -83,7 +83,8 @@
     "copied": "コピーしました！",
     "inviteLinkLabel": "招待リンク",
     "notScheduled": "まだ予定がありません",
-    "openMap": "地図でスポットを追加"
+    "openMap": "地図でスポットを追加",
+    "reorder": "ドラッグして並べ替え"
   },
   "itinerary": {
     "backToTrip": "旅程に戻る",

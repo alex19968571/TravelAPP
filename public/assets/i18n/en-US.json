@@ -83,7 +83,8 @@
     "copied": "Copied!",
     "inviteLinkLabel": "Invite Link",
     "notScheduled": "Not scheduled yet",
-    "openMap": "Add a spot on the map"
+    "openMap": "Add a spot on the map",
+    "reorder": "Drag to reorder"
   },
   "itinerary": {
     "backToTrip": "Back to Trip",

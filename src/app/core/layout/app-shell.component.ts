@@ -12,10 +12,10 @@ import { PreferenceService } from '../services/preference.service';
   template: `
     <div class="shell" [class.sidebar-collapsed]="sidebarCollapsed()">
       <div class="top-bar">
-        <div class="logo">
+        <a routerLink="/trips" class="logo">
           <span class="logo-icon">🧳</span>
           <span class="logo-text">Tt</span>
-        </div>
+        </a>
         <div class="clock">{{ pref.clockDisplay() }}</div>
       </div>
 
@@ -132,6 +132,9 @@ import { PreferenceService } from '../services/preference.service';
         display: flex;
         align-items: center;
         gap: 0.3rem;
+        text-decoration: none;
+        color: inherit;
+        cursor: pointer;
       }
       .logo-icon {
         font-size: 1.2rem;

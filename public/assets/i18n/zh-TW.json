@@ -83,7 +83,8 @@
     "copied": "已複製！",
     "inviteLinkLabel": "邀請連結",
     "notScheduled": "尚未安排",
-    "openMap": "在地圖上新增景點"
+    "openMap": "在地圖上新增景點",
+    "reorder": "拖曳調整順序"
   },
   "itinerary": {
     "backToTrip": "返回行程",

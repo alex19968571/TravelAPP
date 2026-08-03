@@ -118,37 +118,30 @@ const DAY_COLORS = ['#667eea', '#ed8936', '#48bb78', '#f56565', '#9f7aea', '#38b
           @if (!editingItemId()) {
             <div class="field-group">
               <label class="field-label">加入日期</label>
-              <div class="date-dropdown-wrap">
-                <button class="date-select-btn" type="button" (click)="showDatePicker.set(!showDatePicker())">
-                  <span class="select-text">{{ selectedDateLabel() }}</span>
-                  <svg
-                    class="select-arrow"
-                    width="14"
-                    height="14"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2.5"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                  >
-                    <polyline points="6 9 12 15 18 9"></polyline>
-                  </svg>
-                </button>
-                @if (showDatePicker()) {
-                  <div class="date-dropdown-panel">
-                    @for (d of dateTabs(); track $index) {
-                      <button
-                        type="button"
-                        class="date-dropdown-option"
-                        [class.selected]="selectedDate()?.dayNumber === d.dayNumber"
-                        (click)="chooseDate(d)"
-                      >
-                        {{ formatTabDate(d) }}
-                      </button>
-                    }
-                  </div>
-                }
+              <div class="select-wrap">
+                <select
+                  class="field-input"
+                  [ngModel]="selectedDate()?.dayNumber ?? null"
+                  (ngModelChange)="chooseDateByDay($event)"
+                  name="stagingDate"
+                >
+                  @for (d of dateTabs(); track d.dayNumber) {
+                    <option [value]="d.dayNumber">{{ formatTabDate(d) }}</option>
+                  }
+                </select>
+                <svg
+                  class="select-arrow-icon"
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2.5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <polyline points="6 9 12 15 18 9"></polyline>
+                </svg>
               </div>
             </div>
           }
@@ -403,70 +396,23 @@ const DAY_COLORS = ['#667eea', '#ed8936', '#48bb78', '#f56565', '#9f7aea', '#38b
         font-family: inherit;
       }
 
-      .date-select-btn {
-        width: 100%;
-        padding: 0.625rem 2rem;
+      .select-wrap {
         position: relative;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        background: var(--accent-light);
-        color: var(--accent);
-        border: 1.5px solid var(--accent);
-        border-radius: 10px;
-        font-size: 0.9rem;
-        font-weight: 600;
-        cursor: pointer;
       }
-      .date-select-btn .select-text {
-        flex: 1;
-        text-align: center;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-      }
-      .date-select-btn .select-arrow {
+      .select-wrap .select-arrow-icon {
         position: absolute;
         right: 0.75rem;
-        flex-shrink: 0;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--text-secondary);
+        pointer-events: none;
       }
-      .date-dropdown-wrap {
-        position: relative;
-      }
-      .date-dropdown-panel {
-        position: absolute;
-        top: calc(100% + 4px);
-        left: 0;
-        right: 0;
-        z-index: 20;
-        background: var(--surface);
-        border: 1.5px solid var(--border);
-        border-radius: 10px;
-        box-shadow: 0 8px 32px var(--shadow);
-        max-height: 220px;
-        overflow-y: auto;
-      }
-      .date-dropdown-option {
-        width: 100%;
-        padding: 0.6rem 0.875rem;
+      select.field-input {
+        appearance: none;
+        -webkit-appearance: none;
+        padding-right: 2.25rem;
         text-align: center;
-        background: none;
-        border: none;
-        border-bottom: 1px solid var(--border);
-        color: var(--text-primary);
-        font-size: 0.9rem;
-        cursor: pointer;
-      }
-      .date-dropdown-option:last-child {
-        border-bottom: none;
-      }
-      .date-dropdown-option:hover {
-        background: var(--accent-light);
-      }
-      .date-dropdown-option.selected {
-        color: var(--accent);
-        font-weight: 600;
-        background: var(--accent-light);
+        text-align-last: center;
       }
 
       /* ── 按鈕列 ── */
@@ -477,18 +423,25 @@ const DAY_COLORS = ['#667eea', '#ed8936', '#48bb78', '#f56565', '#9f7aea', '#38b
       .btn-primary,
       .btn-secondary {
         flex: 1;
-        background: var(--accent);
-        color: white;
-        border: none;
         border-radius: 10px;
         padding: 0.75rem 1.25rem;
         font-weight: 600;
         cursor: pointer;
         font-size: 0.95rem;
       }
+      .btn-primary {
+        background: var(--accent);
+        color: white;
+        border: none;
+      }
       .btn-primary:disabled {
         opacity: 0.45;
         cursor: not-allowed;
+      }
+      .btn-secondary {
+        background: none;
+        color: var(--accent);
+        border: 1.5px solid var(--accent);
       }
       .full-width {
         width: 100%;
@@ -579,7 +532,6 @@ export class ItineraryComponent implements OnInit, AfterViewInit {
     () => this.stagingLat() !== null || this.editingItemId() !== null,
   );
 
-  showDatePicker = signal(false);
   showPositionPicker = signal(false);
   selectedDate = signal<DateTab | null>(null);
   selectedPosition = signal(0);
@@ -612,11 +564,6 @@ export class ItineraryComponent implements OnInit, AfterViewInit {
     }
     const maxDay = Math.max(1, ...this.items().map((i) => i.day_number));
     return Array.from({ length: maxDay }, (_, i) => ({ date: null, dayNumber: i + 1 }));
-  });
-
-  selectedDateLabel = computed(() => {
-    const d = this.selectedDate();
-    return d ? this.formatTabDate(d) : this.transloco.translate('itinerary.chooseDate');
   });
 
   positionOptions = computed(() => {
@@ -863,6 +810,9 @@ export class ItineraryComponent implements OnInit, AfterViewInit {
     this.stagingLng.set(r.lng);
     this.revokeLocalPhoto();
     this.stagingPhotoUrl.set(null);
+    if (!this.selectedDate() && this.dateTabs().length) {
+      this.selectedDate.set(this.dateTabs()[0]);
+    }
     if (this.infoWindow) this.infoWindow.close();
   }
 
@@ -918,13 +868,9 @@ export class ItineraryComponent implements OnInit, AfterViewInit {
     }
   }
 
-  // 新增模式「確認」：未選日期則先開日期選單
   onStagingConfirm(): void {
     const d = this.selectedDate();
-    if (!d) {
-      this.showDatePicker.set(true);
-      return;
-    }
+    if (!d) return;
     const count = this.items().filter((i) => i.day_number === d.dayNumber).length;
     this.selectedPosition.set(count);
     this.showPositionPicker.set(true);
@@ -945,9 +891,13 @@ export class ItineraryComponent implements OnInit, AfterViewInit {
   }
 
   // ── 日期 / 順序 Modal ────────────────────────────────────────
+  chooseDateByDay(dayNumber: number): void {
+    const d = this.dateTabs().find((t) => t.dayNumber === +dayNumber);
+    if (d) this.chooseDate(d);
+  }
+
   chooseDate(d: DateTab): void {
     this.selectedDate.set(d);
-    this.showDatePicker.set(false);
     // 選完日期後自動進入順序選擇
     const count = this.items().filter((i) => i.day_number === d.dayNumber).length;
     this.selectedPosition.set(count); // 預設放到最後
