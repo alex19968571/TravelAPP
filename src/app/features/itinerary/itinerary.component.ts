@@ -118,22 +118,38 @@ const DAY_COLORS = ['#667eea', '#ed8936', '#48bb78', '#f56565', '#9f7aea', '#38b
           @if (!editingItemId()) {
             <div class="field-group">
               <label class="field-label">加入日期</label>
-              <button class="date-select-btn" type="button" (click)="showDatePicker.set(true)">
-                <span class="select-text">{{ selectedDateLabel() }}</span>
-                <svg
-                  class="select-arrow"
-                  width="14"
-                  height="14"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2.5"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                >
-                  <polyline points="6 9 12 15 18 9"></polyline>
-                </svg>
-              </button>
+              <div class="date-dropdown-wrap">
+                <button class="date-select-btn" type="button" (click)="showDatePicker.set(!showDatePicker())">
+                  <span class="select-text">{{ selectedDateLabel() }}</span>
+                  <svg
+                    class="select-arrow"
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2.5"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <polyline points="6 9 12 15 18 9"></polyline>
+                  </svg>
+                </button>
+                @if (showDatePicker()) {
+                  <div class="date-dropdown-panel">
+                    @for (d of dateTabs(); track $index) {
+                      <button
+                        type="button"
+                        class="date-dropdown-option"
+                        [class.selected]="selectedDate()?.dayNumber === d.dayNumber"
+                        (click)="chooseDate(d)"
+                      >
+                        {{ formatTabDate(d) }}
+                      </button>
+                    }
+                  </div>
+                }
+              </div>
             </div>
           }
 
@@ -171,26 +187,6 @@ const DAY_COLORS = ['#667eea', '#ed8936', '#48bb78', '#f56565', '#9f7aea', '#38b
                 確認
               </button>
             }
-          </div>
-        </div>
-      }
-
-      <!-- 日期選單 Modal -->
-      @if (showDatePicker()) {
-        <div class="modal-backdrop" (click)="showDatePicker.set(false)">
-          <div class="modal-card" (click)="$event.stopPropagation()">
-            <h3>{{ 'itinerary.chooseDate' | transloco }}</h3>
-            <div class="picker-list">
-              @for (d of dateTabs(); track $index) {
-                <button
-                  class="picker-option"
-                  [class.selected]="selectedDate()?.dayNumber === d.dayNumber"
-                  (click)="chooseDate(d)"
-                >
-                  {{ formatTabDate(d) }}
-                </button>
-              }
-            </div>
           </div>
         </div>
       }
@@ -434,13 +430,52 @@ const DAY_COLORS = ['#667eea', '#ed8936', '#48bb78', '#f56565', '#9f7aea', '#38b
         right: 0.75rem;
         flex-shrink: 0;
       }
+      .date-dropdown-wrap {
+        position: relative;
+      }
+      .date-dropdown-panel {
+        position: absolute;
+        top: calc(100% + 4px);
+        left: 0;
+        right: 0;
+        z-index: 20;
+        background: var(--surface);
+        border: 1.5px solid var(--border);
+        border-radius: 10px;
+        box-shadow: 0 8px 32px var(--shadow);
+        max-height: 220px;
+        overflow-y: auto;
+      }
+      .date-dropdown-option {
+        width: 100%;
+        padding: 0.6rem 0.875rem;
+        text-align: center;
+        background: none;
+        border: none;
+        border-bottom: 1px solid var(--border);
+        color: var(--text-primary);
+        font-size: 0.9rem;
+        cursor: pointer;
+      }
+      .date-dropdown-option:last-child {
+        border-bottom: none;
+      }
+      .date-dropdown-option:hover {
+        background: var(--accent-light);
+      }
+      .date-dropdown-option.selected {
+        color: var(--accent);
+        font-weight: 600;
+        background: var(--accent-light);
+      }
 
       /* ── 按鈕列 ── */
       .panel-actions {
         display: flex;
         gap: 0.75rem;
       }
-      .btn-primary {
+      .btn-primary,
+      .btn-secondary {
         flex: 1;
         background: var(--accent);
         color: white;
@@ -454,17 +489,6 @@ const DAY_COLORS = ['#667eea', '#ed8936', '#48bb78', '#f56565', '#9f7aea', '#38b
       .btn-primary:disabled {
         opacity: 0.45;
         cursor: not-allowed;
-      }
-      .btn-secondary {
-        flex: 1;
-        background: var(--bg);
-        color: var(--text-secondary);
-        border: 1.5px solid var(--border);
-        border-radius: 10px;
-        padding: 0.75rem 1.25rem;
-        font-weight: 600;
-        cursor: pointer;
-        font-size: 0.95rem;
       }
       .full-width {
         width: 100%;

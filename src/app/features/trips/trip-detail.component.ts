@@ -52,7 +52,11 @@ const TRANSPORT_OPTIONS: { mode: TransportMode; icon: string }[] = [
       @if (trip(); as t) {
         <!-- 日期分頁 -->
         <div class="date-tabs-wrap">
-          <button class="icon-circle date-arrow desktop-only" (click)="scrollDates(-1)">‹</button>
+          <button class="icon-circle date-arrow desktop-only" (click)="scrollDates(-1)">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="15 18 9 12 15 6"></polyline>
+            </svg>
+          </button>
           <div class="date-tabs" #dateTabsEl>
             @for (d of dateTabs(); track $index) {
               <button
@@ -64,7 +68,11 @@ const TRANSPORT_OPTIONS: { mode: TransportMode; icon: string }[] = [
               </button>
             }
           </div>
-          <button class="icon-circle date-arrow desktop-only" (click)="scrollDates(1)">›</button>
+          <button class="icon-circle date-arrow desktop-only" (click)="scrollDates(1)">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="9 18 15 12 9 6"></polyline>
+            </svg>
+          </button>
         </div>
 
         <div class="card day-content">
@@ -95,7 +103,7 @@ const TRANSPORT_OPTIONS: { mode: TransportMode; icon: string }[] = [
                       >{{ item.latitude.toFixed(4) }}, {{ item.longitude.toFixed(4) }}</span
                     >
                   </div>
-                  <button class="icon-circle remove-btn" (click)="removeItem(item.id, $event)">
+                  <button class="remove-btn" (click)="removeItem(item.id, $event)">
                     ×
                   </button>
                 </div>
@@ -159,41 +167,29 @@ const TRANSPORT_OPTIONS: { mode: TransportMode; icon: string }[] = [
           <!-- 日期（切換天數） -->
           <div class="field-group">
             <label class="field-label">日期</label>
-            <div class="date-dropdown-wrap">
-              <button
-                type="button"
-                class="date-select-btn"
-                (click)="showEditDatePicker.set(!showEditDatePicker())"
+            <div class="select-wrap">
+              <select
+                class="field-input"
+                [ngModel]="editDayNumber()"
+                (ngModelChange)="editDayNumber.set(+$event)"
               >
-                <span class="select-text">{{ editDateLabel() }}</span>
-                <svg
-                  class="select-arrow"
-                  width="14"
-                  height="14"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2.5"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                >
-                  <polyline points="6 9 12 15 18 9"></polyline>
-                </svg>
-              </button>
-              @if (showEditDatePicker()) {
-                <div class="date-dropdown-panel">
-                  @for (d of dateTabs(); track d.dayNumber) {
-                    <button
-                      type="button"
-                      class="date-dropdown-option"
-                      [class.selected]="editDayNumber() === d.dayNumber"
-                      (click)="editDayNumber.set(d.dayNumber); showEditDatePicker.set(false)"
-                    >
-                      {{ formatTabDate(d) }}
-                    </button>
-                  }
-                </div>
-              }
+                @for (d of dateTabs(); track d.dayNumber) {
+                  <option [value]="d.dayNumber">{{ formatTabDate(d) }}</option>
+                }
+              </select>
+              <svg
+                class="select-arrow-icon"
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <polyline points="6 9 12 15 18 9"></polyline>
+              </svg>
             </div>
           </div>
 
@@ -376,7 +372,6 @@ const TRANSPORT_OPTIONS: { mode: TransportMode; icon: string }[] = [
       }
       .back-btn:hover,
       .date-arrow:hover,
-      .remove-btn:hover,
       .fab:hover {
         background: var(--icon-bg-hover);
       }
@@ -398,8 +393,6 @@ const TRANSPORT_OPTIONS: { mode: TransportMode; icon: string }[] = [
         width: 32px;
         height: 32px;
         color: var(--accent);
-        font-size: 1.1rem;
-        line-height: 1;
         padding: 0;
       }
       .date-tabs {
@@ -530,6 +523,12 @@ const TRANSPORT_OPTIONS: { mode: TransportMode; icon: string }[] = [
         color: var(--text-secondary);
       }
       .remove-btn {
+        background: none;
+        border: none;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
         color: #e53e3e;
         font-size: 1.2rem;
         padding: 0.25rem;
@@ -673,12 +672,10 @@ const TRANSPORT_OPTIONS: { mode: TransportMode; icon: string }[] = [
         font-weight: 600;
         color: var(--text-secondary);
       }
-      .select-wrap,
-      .date-dropdown-wrap {
+      .select-wrap {
         position: relative;
       }
-      .select-wrap .select-arrow-icon,
-      .date-select-btn .select-arrow {
+      .select-wrap .select-arrow-icon {
         position: absolute;
         right: 0.75rem;
         top: 50%;
@@ -711,62 +708,6 @@ const TRANSPORT_OPTIONS: { mode: TransportMode; icon: string }[] = [
         font-family: inherit;
       }
 
-      .date-select-btn {
-        width: 100%;
-        padding: 0.5rem 2rem;
-        position: relative;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        background: var(--accent-light);
-        color: var(--accent);
-        border: 1.5px solid var(--accent);
-        border-radius: 10px;
-        font-size: 0.9rem;
-        font-weight: 600;
-        cursor: pointer;
-      }
-      .date-select-btn .select-text {
-        flex: 1;
-        text-align: center;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-      }
-      .date-dropdown-panel {
-        position: absolute;
-        top: calc(100% + 4px);
-        left: 0;
-        right: 0;
-        z-index: 20;
-        background: var(--surface);
-        border: 1.5px solid var(--border);
-        border-radius: 10px;
-        box-shadow: 0 8px 32px var(--shadow);
-        max-height: 220px;
-        overflow-y: auto;
-        display: flex;
-        flex-direction: column;
-      }
-      .date-dropdown-option {
-        padding: 0.6rem 0.875rem;
-        text-align: center;
-        background: none;
-        border: none;
-        border-bottom: 1px solid var(--border);
-        color: var(--text-primary);
-        font-size: 0.9rem;
-        cursor: pointer;
-      }
-      .date-dropdown-option:last-child {
-        border-bottom: none;
-      }
-      .date-dropdown-option.selected {
-        color: var(--accent);
-        font-weight: 600;
-        background: var(--accent-light);
-      }
-
       .modal-actions {
         display: flex;
         gap: 0.75rem;
@@ -780,6 +721,7 @@ const TRANSPORT_OPTIONS: { mode: TransportMode; icon: string }[] = [
         cursor: pointer;
       }
       .btn-primary,
+      .btn-secondary,
       .btn-auto-calc {
         background: var(--accent);
         color: white;
@@ -788,11 +730,6 @@ const TRANSPORT_OPTIONS: { mode: TransportMode; icon: string }[] = [
       .btn-primary:disabled {
         opacity: 0.45;
         cursor: not-allowed;
-      }
-      .btn-secondary {
-        background: var(--bg);
-        color: var(--text-secondary);
-        border: 1.5px solid var(--border);
       }
 
       .time-tabs {
@@ -908,7 +845,6 @@ export class TripDetailComponent implements OnInit {
   editName = '';
   editNotes = '';
   editDayNumber = signal(1);
-  showEditDatePicker = signal(false);
   editPhotoUrl = signal<string | null>(null);
   editUploadingPhoto = signal(false);
   editSaving = signal(false);
@@ -961,10 +897,6 @@ export class TripDetailComponent implements OnInit {
     return `${tab.date.getMonth() + 1}/${tab.date.getDate()}`;
   }
 
-  editDateLabel(): string {
-    const d = this.dateTabs().find((t) => t.dayNumber === this.editDayNumber());
-    return d ? this.formatTabDate(d) : '';
-  }
 
   scrollDates(dir: number): void {
     this.dateTabsEl?.nativeElement.scrollBy({ left: dir * 140, behavior: 'smooth' });
