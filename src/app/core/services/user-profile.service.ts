@@ -66,6 +66,21 @@ export class UserProfileService {
     this.avatarUrl.set(data?.['avatar_url'] ?? null);
   }
 
+  /** 批次查詢多個帳號（不限自己）的頭像，供行程成員清單顯示使用 */
+  async getAvatarUrls(userIds: string[]): Promise<Record<string, string | null>> {
+    const ids = [...new Set(userIds)].filter(Boolean);
+    if (ids.length === 0) return {};
+    const { data } = await this.supabase
+      .from('user_profiles')
+      .select('id, avatar_url')
+      .in('id', ids);
+    const map: Record<string, string | null> = {};
+    for (const row of data ?? []) {
+      map[row['id']] = row['avatar_url'] ?? null;
+    }
+    return map;
+  }
+
   async uploadAvatar(file: File): Promise<void> {
     const user = this.auth.user();
     if (!user) return;

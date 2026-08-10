@@ -5,6 +5,11 @@ import { TranslocoModule } from '@jsverse/transloco';
 import { Trip, TripMember } from '../../core/models';
 import { TripService } from '../../core/services/trip.service';
 import { AuthService } from '../../core/services/auth.service';
+import {
+  UserProfileService,
+  parseAvatar,
+  ParsedAvatar,
+} from '../../core/services/user-profile.service';
 
 @Component({
   selector: 'app-trip-members',
@@ -63,7 +68,16 @@ import { AuthService } from '../../core/services/auth.service';
                 (touchmove)="onTouchMove($event)"
                 (touchend)="onTouchEnd($event, m)"
               >
-                <span class="member-avatar">{{ m.display_name.charAt(0) }}</span>
+                @let avatar = memberAvatar(m);
+                @if (avatar.type === 'image') {
+                  <img class="member-avatar member-avatar-img" [src]="avatar.src" alt="" />
+                } @else if (avatar.type === 'preset') {
+                  <span class="member-avatar" [style.background]="avatar.bg">{{
+                    avatar.emoji
+                  }}</span>
+                } @else {
+                  <span class="member-avatar">{{ m.display_name.charAt(0) }}</span>
+                }
                 <span class="member-name">{{ m.display_name }}</span>
                 <span class="member-role badge">{{ m.role }}</span>
                 @if (canRemove(m)) {
@@ -299,6 +313,9 @@ import { AuthService } from '../../core/services/auth.service';
         font-size: 0.9rem;
         flex-shrink: 0;
       }
+      .member-avatar-img {
+        object-fit: cover;
+      }
       .member-name {
         flex: 1;
         font-weight: 500;
@@ -423,10 +440,12 @@ export class TripMembersComponent implements OnInit {
   private route = inject(ActivatedRoute);
   private tripService = inject(TripService);
   private auth = inject(AuthService);
+  private userProfile = inject(UserProfileService);
 
   tripId!: string;
   trip = signal<Trip | undefined>(undefined);
   members = signal<TripMember[]>([]);
+  private avatarMap = signal<Record<string, string | null>>({});
   copied = signal<string | null>(null);
   showInviteMenu = signal(false);
   inviteModalRole = signal<'EDITOR' | 'VIEWER' | null>(null);
@@ -440,7 +459,18 @@ export class TripMembersComponent implements OnInit {
   async ngOnInit(): Promise<void> {
     this.tripId = this.route.snapshot.paramMap.get('id')!;
     this.trip.set(await this.tripService.getById(this.tripId));
-    this.members.set(await this.tripService.getMembers(this.tripId));
+    await this.loadMembers();
+  }
+
+  private async loadMembers(): Promise<void> {
+    const members = await this.tripService.getMembers(this.tripId);
+    this.members.set(members);
+    const userIds = members.map((m) => m.user_id).filter((id): id is string => !!id);
+    this.avatarMap.set(await this.userProfile.getAvatarUrls(userIds));
+  }
+
+  memberAvatar(m: TripMember): ParsedAvatar {
+    return parseAvatar(m.user_id ? (this.avatarMap()[m.user_id] ?? null) : null);
   }
 
   canRemove(m: TripMember): boolean {
@@ -500,6 +530,6 @@ export class TripMembersComponent implements OnInit {
   async removeMember(memberId: string): Promise<void> {
     this.swipedId.set(null);
     await this.tripService.removeMember(memberId);
-    this.members.set(await this.tripService.getMembers(this.tripId));
+    await this.loadMembers();
   }
 }

@@ -18,6 +18,7 @@ import { PreferenceService } from '../services/preference.service';
         </a>
         <div class="top-right">
           <div class="dest-indicator">
+            <span class="dest-label">{{ 'common.destination' | transloco }}</span>
             <span class="fi fi-{{ pref.country().code.toLowerCase() }}"></span>
             <span class="dest-code">{{ pref.country().code }}</span>
           </div>
@@ -165,6 +166,11 @@ import { PreferenceService } from '../services/preference.service';
         font-weight: 600;
         color: var(--text-secondary);
         white-space: nowrap;
+      }
+      .dest-label {
+        font-size: 0.72rem;
+        font-weight: 500;
+        color: var(--text-secondary);
       }
       .dest-indicator .fi {
         width: 1.15em;

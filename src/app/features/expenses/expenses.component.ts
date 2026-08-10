@@ -137,9 +137,12 @@ interface GrossEntry {
                       step="any"
                       class="amount-input-lg"
                     />
-                    <span class="amount-currency-suffix">{{
-                      form.get('currency_code')?.value
-                    }}</span>
+                    <app-dropdown-select
+                      class="amount-currency-badge"
+                      variant="badge"
+                      [options]="currencyDropdownOptions"
+                      formControlName="currency_code"
+                    ></app-dropdown-select>
                   </div>
                   @if (amountConverted() !== null) {
                     <div class="amount-hint">
@@ -552,24 +555,33 @@ interface GrossEntry {
 
       /* 金額換算提示 */
       .amount-input-wrap {
-        position: relative;
-      }
-      .amount-input-lg {
-        width: 100%;
-        font-size: 1.6rem;
-        font-weight: 700;
-        padding: 0.75rem 4.2rem 0.75rem 0.875rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        border: 1.5px solid var(--border);
+        border-radius: 10px;
+        padding: 0 0.5rem 0 0.875rem;
         box-sizing: border-box;
       }
-      .amount-currency-suffix {
-        position: absolute;
-        right: 1rem;
-        top: 50%;
-        transform: translateY(-50%);
-        font-size: 1.05rem;
+      .amount-input-wrap:focus-within {
+        border-color: var(--accent);
+      }
+      input.amount-input-lg {
+        flex: 1;
+        min-width: 0;
+        width: auto;
+        border: none;
+        background: transparent;
+        font-size: 1.6rem;
         font-weight: 700;
-        color: var(--accent);
-        pointer-events: none;
+        padding: 0.75rem 0;
+        box-sizing: border-box;
+      }
+      input.amount-input-lg:focus {
+        outline: none;
+      }
+      .amount-currency-badge {
+        flex-shrink: 0;
       }
       .amount-hint {
         margin-top: 0.4rem;
@@ -981,6 +993,20 @@ export class ExpensesComponent implements OnInit {
   ocrLoading = signal(false);
   submitting = signal(false);
   showAddModal = signal(false);
+
+  readonly currencyDropdownOptions = [
+    'TWD',
+    'JPY',
+    'USD',
+    'EUR',
+    'THB',
+    'KRW',
+    'HKD',
+    'SGD',
+    'MYR',
+    'AUD',
+    'GBP',
+  ].map((c) => ({ value: c, label: c }));
 
   payerDropdownOptions(): { value: string; label: string }[] {
     return this.members().map((m) => ({ value: m.id, label: m.display_name }));

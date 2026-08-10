@@ -171,6 +171,7 @@
   },
   "common": {
     "save": "Save",
+    "destination": "Destination",
     "cancel": "Cancel",
     "delete": "Delete",
     "back": "Back",

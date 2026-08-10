@@ -75,13 +75,8 @@ import { ExchangeRateService } from '../../core/services/exchange-rate.service';
                   [placeholder]="'shopping.itemNamePlaceholder' | transloco"
                 />
               </div>
-              <div class="form-row">
-                <label>{{ 'shopping.quantity' | transloco }}</label>
-                <input formControlName="quantity" type="number" min="1" />
-              </div>
-
               <!-- 雙欄單價 -->
-              <div class="form-row">
+              <div class="form-row span-2">
                 <label>{{ 'shopping.unitPrice' | transloco }}</label>
                 <div class="dual-price-row">
                   <div class="price-col">
@@ -113,6 +108,11 @@ import { ExchangeRateService } from '../../core/services/exchange-rate.service';
                     </div>
                   }
                 </div>
+              </div>
+
+              <div class="form-row">
+                <label>{{ 'shopping.quantity' | transloco }}</label>
+                <input formControlName="quantity" type="number" min="1" />
               </div>
 
               <div class="form-row span-2">

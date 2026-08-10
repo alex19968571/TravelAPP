@@ -584,6 +584,18 @@ const CURRENCY_OPTIONS = [
         overflow: hidden;
         border-radius: 16px;
       }
+      .trip-card-wrap::after {
+        content: '';
+        position: absolute;
+        right: -10px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        background: var(--bg);
+        z-index: 2;
+      }
       .swipe-delete {
         position: absolute;
         top: 0;

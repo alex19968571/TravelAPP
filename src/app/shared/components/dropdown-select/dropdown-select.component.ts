@@ -34,7 +34,7 @@ export interface DropdownOption {
     },
   ],
   template: `
-    <div class="dropdown-picker" [class.open]="open()">
+    <div class="dropdown-picker" [class.open]="open()" [class.badge]="variant === 'badge'">
       <button type="button" class="dropdown-trigger" (click)="toggle()">
         <span class="dropdown-label">{{ selectedLabel() }}</span>
         <span class="caret" [class.flipped]="open()">▾</span>
@@ -76,6 +76,23 @@ export interface DropdownOption {
       .dropdown-trigger:hover,
       .dropdown-picker.open .dropdown-trigger {
         border-color: var(--accent);
+      }
+      .dropdown-picker.badge {
+        width: auto;
+      }
+      .dropdown-picker.badge .dropdown-trigger {
+        width: auto;
+        background: transparent;
+        border: none;
+        padding: 0.15rem 0.3rem;
+        font-size: 1.05rem;
+        font-weight: 700;
+        color: var(--accent);
+      }
+      .dropdown-picker.badge .dropdown-menu {
+        left: auto;
+        right: 0;
+        min-width: 110px;
       }
       .dropdown-label {
         min-width: 0;
@@ -139,6 +156,7 @@ export class DropdownSelectComponent implements ControlValueAccessor, OnDestroy 
 
   @Input() options: DropdownOption[] = [];
   @Input() placeholder = '';
+  @Input() variant: 'default' | 'badge' = 'default';
   @Output() selectionChange = new EventEmitter<unknown>();
 
   value: unknown = null;

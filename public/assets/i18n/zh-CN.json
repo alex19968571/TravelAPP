@@ -171,6 +171,7 @@
   },
   "common": {
     "save": "保存",
+    "destination": "目的地",
     "cancel": "取消",
     "delete": "删除",
     "back": "返回",

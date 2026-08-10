@@ -171,6 +171,7 @@
   },
   "common": {
     "save": "保存",
+    "destination": "目的地",
     "cancel": "キャンセル",
     "delete": "削除",
     "back": "戻る",
