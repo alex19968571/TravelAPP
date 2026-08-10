@@ -432,15 +432,20 @@ import { ExchangeRateService } from '../../core/services/exchange-rate.service';
         flex-shrink: 0;
       }
       .qty {
+        font-family: var(--font-mono);
         font-size: 0.875rem;
         color: var(--text-secondary);
       }
       .amount {
+        font-family: var(--font-mono);
+        font-variant-numeric: tabular-nums;
         font-weight: 700;
         color: var(--text-primary);
         font-size: 1.05rem;
       }
       .amount-converted {
+        font-family: var(--font-mono);
+        font-variant-numeric: tabular-nums;
         font-size: 0.78rem;
         color: #48bb78;
         margin-top: 0.15rem;

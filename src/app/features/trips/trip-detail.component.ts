@@ -490,13 +490,15 @@ const TRANSPORT_OPTIONS: { mode: TransportMode; icon: string }[] = [
         align-items: center;
         gap: 0.875rem;
         padding: 0.75rem;
-        background: var(--accent-light);
+        background: var(--surface);
+        border: 1px solid var(--border);
         border-radius: 10px;
         cursor: pointer;
-        transition: opacity 0.15s;
+        transition: border-color 0.15s, box-shadow 0.15s;
       }
       .itinerary-item:hover {
-        opacity: 0.85;
+        border-color: var(--accent);
+        box-shadow: 0 4px 14px var(--shadow);
       }
       .itinerary-item.dragging {
         opacity: 0.4;
@@ -525,6 +527,7 @@ const TRANSPORT_OPTIONS: { mode: TransportMode; icon: string }[] = [
         display: flex;
         align-items: center;
         justify-content: center;
+        font-family: var(--font-mono);
         font-size: 0.8rem;
         font-weight: 600;
         flex-shrink: 0;

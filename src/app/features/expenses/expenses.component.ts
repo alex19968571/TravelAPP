@@ -660,6 +660,8 @@ interface GrossEntry {
         color: var(--text-primary);
       }
       .expense-meta {
+        font-family: var(--font-mono);
+        font-variant-numeric: tabular-nums;
         font-size: 0.875rem;
         color: var(--text-secondary);
       }

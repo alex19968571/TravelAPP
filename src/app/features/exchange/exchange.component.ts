@@ -293,27 +293,36 @@ const KEYPAD_ROWS: string[][] = [
         gap: 0.6rem;
       }
       .keypad-key {
-        padding: 0.9rem 0;
-        border-radius: 12px;
+        aspect-ratio: 1;
+        border-radius: 50%;
         border: none;
-        background: var(--bg);
+        background: var(--surface);
         color: var(--text-primary);
-        font-size: 1.25rem;
+        font-family: var(--font-mono);
+        font-size: 1.3rem;
         font-weight: 600;
         cursor: pointer;
+        box-shadow: 0 2px 6px var(--shadow);
+        transition: transform 0.1s ease, background 0.1s ease;
       }
       .keypad-key:active {
         background: var(--accent-light);
+        transform: scale(0.94);
       }
       .keypad-clear {
-        padding: 0.75rem 0;
-        border-radius: 12px;
+        padding: 0.8rem 0;
+        border-radius: 999px;
         border: none;
-        background: var(--accent-light);
-        color: var(--accent);
-        font-size: 1rem;
-        font-weight: 600;
+        background: var(--accent);
+        color: white;
+        font-size: 0.95rem;
+        font-weight: 700;
+        letter-spacing: 0.02em;
         cursor: pointer;
+        transition: opacity 0.1s ease;
+      }
+      .keypad-clear:active {
+        opacity: 0.85;
       }
 
       @media (max-width: 420px) {
