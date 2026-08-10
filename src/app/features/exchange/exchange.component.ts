@@ -18,7 +18,6 @@ const KEYPAD_ROWS: string[][] = [
   ['7', '8', '9'],
   ['4', '5', '6'],
   ['1', '2', '3'],
-  ['.', '0', '⌫'],
 ];
 
 @Component({
@@ -90,6 +89,10 @@ const KEYPAD_ROWS: string[][] = [
 
         <!-- 下方：計算機鍵盤 -->
         <div class="keypad card">
+          <div class="keypad-row keypad-row--fn">
+            <button class="keypad-key keypad-key--fn" (click)="clear()">AC</button>
+            <button class="keypad-key keypad-key--fn" (click)="onKey('⌫')">⌫</button>
+          </div>
           @for (row of keypadRows; track $index) {
             <div class="keypad-row">
               @for (key of row; track key) {
@@ -97,7 +100,10 @@ const KEYPAD_ROWS: string[][] = [
               }
             </div>
           }
-          <button class="keypad-clear" (click)="clear()">{{ 'exchange.clear' | transloco }}</button>
+          <div class="keypad-row keypad-row--last">
+            <button class="keypad-key keypad-key--wide" (click)="onKey('0')">0</button>
+            <button class="keypad-key" (click)="onKey('.')">.</button>
+          </div>
         </div>
       </div>
     </div>
@@ -313,20 +319,25 @@ const KEYPAD_ROWS: string[][] = [
         background: #48484a;
         transform: scale(0.94);
       }
-      .keypad-clear {
-        padding: 0.85rem 0;
-        border-radius: 999px;
-        border: none;
-        background: var(--accent);
-        color: white;
-        font-size: 0.95rem;
-        font-weight: 700;
-        letter-spacing: 0.02em;
-        cursor: pointer;
-        transition: opacity 0.1s ease;
+      .keypad-row--fn {
+        grid-template-columns: repeat(2, 1fr);
       }
-      .keypad-clear:active {
-        opacity: 0.85;
+      .keypad-key--fn {
+        background: #a5a5a5;
+        color: #1c1c1e;
+        font-size: 1.1rem;
+      }
+      .keypad-key--fn:active {
+        background: #d4d4d4;
+      }
+      .keypad-row--last {
+        grid-template-columns: 2fr 1fr;
+      }
+      .keypad-key--wide {
+        aspect-ratio: unset;
+        border-radius: 999px;
+        text-align: left;
+        padding-left: 1.4rem;
       }
 
       @media (max-width: 420px) {

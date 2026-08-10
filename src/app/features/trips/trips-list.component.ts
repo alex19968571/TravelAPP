@@ -59,8 +59,62 @@ const CURRENCY_OPTIONS = [
   imports: [CommonModule, RouterModule, ReactiveFormsModule, FormsModule, TranslocoModule],
   template: `
     <div class="page-container">
-      <!-- 行程列表工具列：'+' 獨立一列，右上角 -->
+      <!-- 篩選列（左）+ '+' 選單（右） -->
       <div class="list-toolbar">
+        <div class="filter-bar">
+          <div class="select-wrap filter-year">
+            <select
+              [ngModel]="filterYear()"
+              (ngModelChange)="filterYear.set($event)"
+              name="filterYear"
+            >
+              <option value="">{{ 'trips.filterAllYears' | transloco }}</option>
+              @for (y of availableYears(); track y) {
+                <option [value]="y">{{ y }}</option>
+              }
+            </select>
+            <span class="select-caret">▾</span>
+          </div>
+          <div class="select-wrap filter-month">
+            <select
+              [ngModel]="filterMonth()"
+              (ngModelChange)="filterMonth.set($event)"
+              name="filterMonth"
+            >
+              <option value="">{{ 'trips.filterAllMonths' | transloco }}</option>
+              @for (mo of [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]; track mo) {
+                <option [value]="mo">{{ mo }}</option>
+              }
+            </select>
+            <span class="select-caret">▾</span>
+          </div>
+          <div class="country-picker filter-country" [class.open]="showCountryPicker()">
+            <button class="country-trigger" type="button" (click)="showCountryPicker.set(!showCountryPicker())">
+              @if (filterCountryCode()) {
+                <span class="fi fi-{{ filterCountryCode().toLowerCase() }}"></span>
+              }
+              <span class="cname">{{
+                filterCountryLabel() || ('trips.filterAllCountries' | transloco)
+              }}</span>
+              <span class="caret" [class.flipped]="showCountryPicker()">▾</span>
+            </button>
+            <div class="country-dropdown">
+              <button class="country-option" [class.selected]="!filterCountryCode()" (click)="filterCountryCode.set(''); showCountryPicker.set(false)">
+                <span>{{ 'trips.filterAllCountries' | transloco }}</span>
+              </button>
+              @for (c of countries; track c.code) {
+                <button
+                  class="country-option"
+                  [class.selected]="c.code === filterCountryCode()"
+                  (click)="filterCountryCode.set(c.code); showCountryPicker.set(false)"
+                >
+                  <span class="fi fi-{{ c.code.toLowerCase() }}"></span>
+                  <span>{{ c.nativeName }}</span>
+                </button>
+              }
+            </div>
+          </div>
+        </div>
         <div class="add-menu" [class.open]="showAddMenu()">
           <button class="btn-icon" (click)="toggleAddMenu($event)">＋</button>
           <div class="add-dropdown">
@@ -71,32 +125,6 @@ const CURRENCY_OPTIONS = [
               🗺️ {{ 'trips.create' | transloco }}
             </button>
           </div>
-        </div>
-      </div>
-
-      <!-- 篩選列：年/年月 + 國家 -->
-      <div class="filter-bar">
-        <input
-          class="filter-date"
-          type="text"
-          inputmode="numeric"
-          [ngModel]="filterDateText()"
-          (ngModelChange)="filterDateText.set($event)"
-          name="filterDateText"
-          [placeholder]="'trips.filterDatePlaceholder' | transloco"
-        />
-        <div class="select-wrap filter-country">
-          <select
-            [ngModel]="filterCountryCode()"
-            (ngModelChange)="filterCountryCode.set($event)"
-            name="filterCountryCode"
-          >
-            <option value="">{{ 'trips.filterAllCountries' | transloco }}</option>
-            @for (c of countries; track c.code) {
-              <option [value]="c.code">{{ c.flag }} {{ c.nativeName }}</option>
-            }
-          </select>
-          <span class="select-caret">▾</span>
         </div>
       </div>
 
@@ -220,7 +248,7 @@ const CURRENCY_OPTIONS = [
               <div class="trip-nav">
                 <a
                   [routerLink]="['/trips', trip.id]"
-                  class="nav-btn nav-btn--active"
+                  class="nav-btn"
                   (click)="$event.stopPropagation()"
                   >{{ 'trips.itinerary' | transloco }}</a
                 >
@@ -366,40 +394,107 @@ const CURRENCY_OPTIONS = [
       /* ── 行程列表工具列（+ 選單） ── */
       .list-toolbar {
         display: flex;
-        justify-content: flex-end;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 0.6rem;
         margin-bottom: 0.75rem;
       }
       .filter-bar {
         display: flex;
-        gap: 0.6rem;
-        margin-bottom: 1rem;
-      }
-      .filter-date {
+        gap: 0.5rem;
         flex: 1;
         min-width: 0;
-        padding: 0.55rem 0.75rem;
+      }
+      .filter-year select,
+      .filter-month select {
+        padding: 0.5rem 1.75rem 0.5rem 0.6rem;
         border: 1.5px solid var(--border);
         border-radius: 10px;
-        font-size: 0.85rem;
-        box-sizing: border-box;
-        background: var(--input-bg);
-        color: var(--text-primary);
-      }
-      .filter-country {
-        flex-shrink: 0;
-        width: 40%;
-      }
-      .filter-country select {
-        width: 100%;
-        padding: 0.55rem 2rem 0.55rem 0.75rem;
-        border: 1.5px solid var(--border);
-        border-radius: 10px;
-        font-size: 0.85rem;
+        font-size: 0.8rem;
         box-sizing: border-box;
         background: var(--input-bg);
         color: var(--text-primary);
         appearance: none;
         -webkit-appearance: none;
+      }
+      .filter-year { width: 78px; }
+      .filter-month { width: 64px; }
+      .filter-country {
+        flex: 1;
+        min-width: 0;
+        position: relative;
+      }
+      .filter-country .country-trigger {
+        width: 100%;
+      }
+      .country-trigger {
+        display: flex;
+        align-items: center;
+        gap: 0.35rem;
+        background: var(--input-bg);
+        color: var(--text-primary);
+        border: 1.5px solid var(--border);
+        border-radius: 10px;
+        padding: 0.5rem 0.6rem;
+        cursor: pointer;
+        font-size: 0.8rem;
+        white-space: nowrap;
+      }
+      .country-trigger:hover,
+      .country-picker.open .country-trigger {
+        border-color: var(--accent);
+      }
+      .fi {
+        width: 1.2em;
+        flex-shrink: 0;
+        border-radius: 2px;
+      }
+      .cname {
+        flex: 1;
+        min-width: 0;
+        font-weight: 500;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .caret {
+        font-size: 0.65rem;
+        color: var(--text-secondary);
+        transition: transform 0.2s;
+        flex-shrink: 0;
+      }
+      .caret.flipped {
+        transform: rotate(180deg);
+      }
+      .country-dropdown {
+        position: absolute;
+        top: calc(100% + 6px);
+        left: 0;
+        right: 0;
+        background: var(--surface);
+        border: 1.5px solid var(--border);
+        border-radius: 12px;
+        box-shadow: 0 8px 32px var(--shadow);
+        max-height: 260px;
+        overflow-y: auto;
+        z-index: 100;
+        display: none;
+      }
+      .country-picker.open .country-dropdown {
+        display: block;
+      }
+      .country-option {
+        gap: 0.6rem;
+        padding: 0.625rem 1rem;
+        font-size: 0.85rem;
+      }
+      .country-option:hover {
+        background: var(--accent-light);
+      }
+      .country-option.selected {
+        background: var(--accent-light);
+        color: var(--accent);
+        font-weight: 600;
       }
       .add-menu {
         position: relative;
@@ -420,17 +515,20 @@ const CURRENCY_OPTIONS = [
       .add-menu.open .add-dropdown {
         display: block;
       }
-      .add-option {
+      .add-option,
+      .country-option {
         display: flex;
         align-items: center;
-        gap: 0.5rem;
         width: 100%;
-        padding: 0.625rem 0.75rem;
         border: none;
         background: transparent;
         cursor: pointer;
         text-align: left;
         color: var(--text-primary);
+      }
+      .add-option {
+        gap: 0.5rem;
+        padding: 0.625rem 0.75rem;
         font-size: 0.875rem;
         border-radius: 8px;
       }
@@ -511,14 +609,17 @@ const CURRENCY_OPTIONS = [
         gap: 0.75rem;
         justify-content: flex-end;
       }
-      .btn-primary {
-        background: var(--accent);
-        color: white;
+      .btn-primary,
+      .btn-secondary {
         border: none;
         border-radius: 10px;
         padding: 0.625rem 1.5rem;
-        font-weight: 600;
         cursor: pointer;
+      }
+      .btn-primary {
+        background: var(--accent);
+        color: white;
+        font-weight: 600;
       }
       .btn-primary:disabled {
         opacity: 0.5;
@@ -527,10 +628,6 @@ const CURRENCY_OPTIONS = [
       .btn-secondary {
         background: var(--accent-light);
         color: var(--text-secondary);
-        border: none;
-        border-radius: 10px;
-        padding: 0.625rem 1.5rem;
-        cursor: pointer;
       }
       .empty-state {
         text-align: center;
@@ -572,7 +669,9 @@ const CURRENCY_OPTIONS = [
         position: relative;
         display: flex;
         flex-direction: column;
-        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        transition:
+          transform 0.2s ease,
+          box-shadow 0.2s ease;
         overflow: hidden;
       }
       .trip-card.card:hover,
@@ -627,8 +726,12 @@ const CURRENCY_OPTIONS = [
         background: var(--bg);
         border: 1px solid var(--border);
       }
-      .trip-perf-h::before { left: -7px; }
-      .trip-perf-h::after { right: -7px; }
+      .trip-perf-h::before {
+        left: -7px;
+      }
+      .trip-perf-h::after {
+        right: -7px;
+      }
       .trip-stub {
         display: flex;
         flex-direction: column;
@@ -686,7 +789,8 @@ const CURRENCY_OPTIONS = [
         text-decoration: none;
         font-size: 0.78rem;
       }
-      .nav-btn--active {
+      .nav-btn:hover,
+      .nav-btn:active {
         color: var(--accent);
       }
 
@@ -803,8 +907,22 @@ export class TripsListComponent implements OnInit {
 
   trips = signal<Trip[]>([]);
   countries = COUNTRIES;
-  filterDateText = signal('');
+  filterYear = signal('');
+  filterMonth = signal('');
   filterCountryCode = signal('');
+  showCountryPicker = signal(false);
+
+  availableYears = computed(() => {
+    const years = new Set<number>();
+    for (const t of this.trips()) {
+      if (t.start_date_utc) years.add(new Date(t.start_date_utc).getFullYear());
+    }
+    return [...years].sort((a, b) => b - a);
+  });
+
+  filterCountryLabel = computed(
+    () => this.countries.find((c) => c.code === this.filterCountryCode())?.nativeName ?? '',
+  );
 
   tripCountry(trip: Trip): (typeof COUNTRIES)[number] | undefined {
     return (
@@ -814,14 +932,12 @@ export class TripsListComponent implements OnInit {
   }
 
   filteredTrips = computed(() => {
-    const dateText = this.filterDateText().trim();
+    const year = this.filterYear() ? +this.filterYear() : null;
+    const month = this.filterMonth() ? +this.filterMonth() : null;
     const countryCode = this.filterCountryCode();
-    const m = dateText.match(/^(\d{4})(?:-(\d{1,2}))?$/);
 
     return this.trips().filter((t) => {
-      if (dateText && m) {
-        const year = +m[1];
-        const month = m[2] ? +m[2] : null;
+      if (year) {
         const start = t.start_date_utc ? new Date(t.start_date_utc) : null;
         if (!start) return false;
         const end = t.end_date_utc ? new Date(t.end_date_utc) : start;

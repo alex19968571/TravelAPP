@@ -111,23 +111,16 @@ import { PreferenceService, COUNTRIES, Country } from '../../core/services/prefe
         margin: 0 auto;
         padding: 1.5rem;
         background: var(--bg);
-        min-height: 100vh;
+        height: calc(100dvh - 112px);
+        min-height: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
       }
       .scale-wrap {
         width: 100%;
-      }
-      @media (hover: hover) and (pointer: fine) {
-        .page-container {
-          height: calc(100dvh - 112px);
-          min-height: 0;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          overflow: hidden;
-        }
-        .scale-wrap {
-          transform-origin: center center;
-        }
+        transform-origin: center center;
       }
       h1 {
         font-size: 1.6rem;

@@ -30,6 +30,8 @@
     "noTrips": "No trips yet. Tap ＋ to start planning!",
     "filterDatePlaceholder": "Filter by year or year-month, e.g. 2026 or 2026-11",
     "filterAllCountries": "All countries",
+    "filterAllYears": "All years",
+    "filterAllMonths": "All months",
     "deleteConfirm": "Delete this trip? All shopping items and expenses will also be deleted.",
     "timezone": "Timezone",
     "currency": "Currency",

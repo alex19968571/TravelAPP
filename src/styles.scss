@@ -101,7 +101,8 @@ body {
 }
 
 /* 讓 accent 色 class 跟著 CSS variable 走 */
-[data-theme='dark'] .nav-btn--active {
+[data-theme='dark'] .nav-btn:hover,
+[data-theme='dark'] .nav-btn:active {
   color: var(--accent) !important;
 }
 
