@@ -109,18 +109,24 @@ import { PreferenceService, COUNTRIES, Country } from '../../core/services/prefe
       .page-container {
         max-width: 500px;
         margin: 0 auto;
-        padding: 1.5rem;
+        padding: 6.5rem 1.5rem 1.5rem;
         background: var(--bg);
         height: calc(100dvh - 112px);
         min-height: 0;
         display: flex;
-        align-items: center;
+        align-items: flex-start;
         justify-content: center;
         overflow: hidden;
       }
       .scale-wrap {
         width: 100%;
         transform-origin: center center;
+      }
+      @media (hover: hover) and (pointer: fine) {
+        .page-container {
+          padding-top: 1.5rem;
+          align-items: center;
+        }
       }
       h1 {
         font-size: 1.6rem;
@@ -395,12 +401,16 @@ export class AccountComponent implements AfterViewInit {
   @HostListener('window:resize')
   applyScale(): void {
     const el = this.scaleWrap?.nativeElement;
-    if (!el || !el.parentElement) return;
+    const parent = el?.parentElement;
+    if (!el || !parent) return;
     el.style.transform = 'none';
     const contentH = el.scrollHeight;
     const contentW = el.scrollWidth;
-    const availH = el.parentElement.clientHeight;
-    const availW = el.parentElement.clientWidth;
+    const cs = getComputedStyle(parent);
+    const padY = parseFloat(cs.paddingTop) + parseFloat(cs.paddingBottom);
+    const padX = parseFloat(cs.paddingLeft) + parseFloat(cs.paddingRight);
+    const availH = parent.clientHeight - padY;
+    const availW = parent.clientWidth - padX;
     if (!contentH || !contentW) return;
     const scale = Math.min(1, availH / contentH, availW / contentW);
     el.style.transform = scale < 1 ? `scale(${scale})` : 'none';

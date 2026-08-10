@@ -87,22 +87,26 @@ const KEYPAD_ROWS: string[][] = [
           {{ rightCountry().currency }}
         </div>
 
-        <!-- 下方：計算機鍵盤 -->
+        <!-- 下方：計算機鍵盤（iPhone 計算機版面） -->
         <div class="keypad card">
-          <div class="keypad-row keypad-row--fn">
+          <div class="keypad-row">
             <button class="keypad-key keypad-key--fn" (click)="clear()">AC</button>
-            <button class="keypad-key keypad-key--fn" (click)="onKey('⌫')">⌫</button>
+            <button class="keypad-key keypad-key--fn">+/-</button>
+            <button class="keypad-key keypad-key--fn">%</button>
+            <button class="keypad-key keypad-key--op">÷</button>
           </div>
-          @for (row of keypadRows; track $index) {
+          @for (row of keypadRows; track $index; let ri = $index) {
             <div class="keypad-row">
               @for (key of row; track key) {
                 <button class="keypad-key" (click)="onKey(key)">{{ key }}</button>
               }
+              <button class="keypad-key keypad-key--op">{{ opSymbols[ri] }}</button>
             </div>
           }
           <div class="keypad-row keypad-row--last">
             <button class="keypad-key keypad-key--wide" (click)="onKey('0')">0</button>
             <button class="keypad-key" (click)="onKey('.')">.</button>
+            <button class="keypad-key keypad-key--op">=</button>
           </div>
         </div>
       </div>
@@ -298,7 +302,7 @@ const KEYPAD_ROWS: string[][] = [
       }
       .keypad-row {
         display: grid;
-        grid-template-columns: repeat(3, 1fr);
+        grid-template-columns: repeat(4, 1fr);
         gap: 0.7rem;
       }
       .keypad-key {
@@ -319,9 +323,6 @@ const KEYPAD_ROWS: string[][] = [
         background: #48484a;
         transform: scale(0.94);
       }
-      .keypad-row--fn {
-        grid-template-columns: repeat(2, 1fr);
-      }
       .keypad-key--fn {
         background: #a5a5a5;
         color: #1c1c1e;
@@ -330,8 +331,16 @@ const KEYPAD_ROWS: string[][] = [
       .keypad-key--fn:active {
         background: #d4d4d4;
       }
+      .keypad-key--op {
+        background: var(--accent);
+        color: #ffffff;
+        font-size: 1.5rem;
+      }
+      .keypad-key--op:active {
+        opacity: 0.8;
+      }
       .keypad-row--last {
-        grid-template-columns: 2fr 1fr;
+        grid-template-columns: 2fr 1fr 1fr;
       }
       .keypad-key--wide {
         aspect-ratio: unset;
@@ -356,6 +365,7 @@ export class ExchangeComponent implements OnInit, AfterViewInit {
 
   countries = COUNTRIES;
   keypadRows = KEYPAD_ROWS;
+  opSymbols = ['×', '−', '+'];
 
   leftCountry = signal<Country>(this.pref.country());
   rightCountry = signal<Country>(this.pref.homeCountry());

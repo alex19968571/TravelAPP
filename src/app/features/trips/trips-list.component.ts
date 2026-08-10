@@ -89,7 +89,11 @@ const CURRENCY_OPTIONS = [
             <span class="select-caret">▾</span>
           </div>
           <div class="country-picker filter-country" [class.open]="showCountryPicker()">
-            <button class="country-trigger" type="button" (click)="showCountryPicker.set(!showCountryPicker())">
+            <button
+              class="country-trigger"
+              type="button"
+              (click)="showCountryPicker.set(!showCountryPicker())"
+            >
               @if (filterCountryCode()) {
                 <span class="fi fi-{{ filterCountryCode().toLowerCase() }}"></span>
               }
@@ -99,7 +103,11 @@ const CURRENCY_OPTIONS = [
               <span class="caret" [class.flipped]="showCountryPicker()">▾</span>
             </button>
             <div class="country-dropdown">
-              <button class="country-option" [class.selected]="!filterCountryCode()" (click)="filterCountryCode.set(''); showCountryPicker.set(false)">
+              <button
+                class="country-option"
+                [class.selected]="!filterCountryCode()"
+                (click)="filterCountryCode.set(''); showCountryPicker.set(false)"
+              >
                 <span>{{ 'trips.filterAllCountries' | transloco }}</span>
               </button>
               @for (c of countries; track c.code) {
@@ -227,7 +235,7 @@ const CURRENCY_OPTIONS = [
               (click)="onCardClick(trip)"
             >
               <button
-                class="info-btn desktop-only"
+                class="info-btn"
                 (click)="openEditTrip(trip); $event.stopPropagation()"
               >
                 ⓘ
@@ -276,27 +284,6 @@ const CURRENCY_OPTIONS = [
         }
       </div>
 
-      @if (actionMenuTrip(); as amt) {
-        <div class="modal-backdrop" (click)="actionMenuTrip.set(null)">
-          <div class="modal-card action-sheet" (click)="$event.stopPropagation()">
-            <button class="action-item" (click)="openEditTrip(amt); actionMenuTrip.set(null)">
-              ✏️ {{ 'trips.edit' | transloco }}
-            </button>
-            <button class="action-item" (click)="goTo(['/trips', amt.id])">
-              🗺️ {{ 'trips.itinerary' | transloco }}
-            </button>
-            <button class="action-item" (click)="goTo(['/trips', amt.id, 'shopping'])">
-              🛍️ {{ 'trips.shopping' | transloco }}
-            </button>
-            <button class="action-item" (click)="goTo(['/trips', amt.id, 'expenses'])">
-              💰 {{ 'trips.expenses' | transloco }}
-            </button>
-            <button class="action-item" (click)="goTo(['/trips', amt.id, 'members'])">
-              👥 {{ 'tripDetail.members' | transloco }}
-            </button>
-          </div>
-        </div>
-      }
 
       @if (editingTrip(); as et) {
         <div class="modal-backdrop" (click)="closeEditTrip()">
@@ -417,8 +404,12 @@ const CURRENCY_OPTIONS = [
         appearance: none;
         -webkit-appearance: none;
       }
-      .filter-year { width: 78px; }
-      .filter-month { width: 64px; }
+      .filter-year {
+        width: 78px;
+      }
+      .filter-month {
+        width: 64px;
+      }
       .filter-country {
         flex: 1;
         min-width: 0;
@@ -962,7 +953,6 @@ export class TripsListComponent implements OnInit {
   joinError = signal(false);
   joining = signal(false);
   swipedTripId = signal<string | null>(null);
-  actionMenuTrip = signal<Trip | null>(null);
   editingTrip = signal<Trip | null>(null);
 
   private touchStartX = 0;
@@ -1058,13 +1048,7 @@ export class TripsListComponent implements OnInit {
 
   // ── 卡片互動 ──────────────────────────────────────────
   onCardClick(trip: Trip): void {
-    if (this.isTouch) return; // 觸控裝置改由 onTouchEnd 處理（開啟選單）
     this.router.navigate(['/trips', trip.id]);
-  }
-
-  goTo(commands: any[]): void {
-    this.actionMenuTrip.set(null);
-    this.router.navigate(commands);
   }
 
   onTouchStart(e: TouchEvent): void {
@@ -1086,11 +1070,6 @@ export class TripsListComponent implements OnInit {
       e.preventDefault();
       this.swipedTripId.set(null);
       return;
-    }
-    if (Math.abs(this.touchDeltaX) < 10) {
-      // 阻止 300ms 後補發的合成 click 事件落在剛開啟的選單/背景上而誤觸關閉
-      e.preventDefault();
-      this.actionMenuTrip.set(trip);
     }
   }
 
@@ -1115,7 +1094,6 @@ export class TripsListComponent implements OnInit {
   }
 
   openEditTrip(trip: Trip): void {
-    this.actionMenuTrip.set(null);
     this.editForm.reset({
       title: trip.title,
       start_date_local: this.toLocalInput(trip.start_date_utc),
@@ -1150,7 +1128,6 @@ export class TripsListComponent implements OnInit {
     await this.tripService.delete(trip.id);
     this.swipedTripId.set(null);
     this.editingTrip.set(null);
-    this.actionMenuTrip.set(null);
     await this.loadTrips();
   }
 }

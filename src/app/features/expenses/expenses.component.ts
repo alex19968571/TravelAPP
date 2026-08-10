@@ -52,8 +52,12 @@ interface GrossEntry {
           </svg>
         </a>
         <h1>💰 {{ 'expenses.title' | transloco }}</h1>
+        <button class="add-trigger" type="button" (click)="showAddModal.set(true)">＋</button>
       </header>
 
+      @if (showAddModal()) {
+      <div class="modal-backdrop" (click)="closeAddModal()">
+      <div class="modal-card" (click)="$event.stopPropagation()">
       <!-- OCR 收據掃描 -->
       <div class="card ocr-card">
         <h3>📷 {{ 'expenses.scan' | transloco }}</h3>
@@ -228,16 +232,24 @@ interface GrossEntry {
           }
         </div>
 
-        <button
-          type="submit"
-          class="btn-primary"
-          [disabled]="
-            form.invalid || submitting() || (splitType() === 'SHARES' && shareWeightSum() !== 100)
-          "
-        >
-          {{ submitting() ? ('expenses.saving' | transloco) : ('expenses.add' | transloco) }}
-        </button>
+        <div class="form-actions">
+          <button type="button" class="btn-secondary" (click)="closeAddModal()">
+            {{ 'expenses.cancel' | transloco }}
+          </button>
+          <button
+            type="submit"
+            class="btn-primary"
+            [disabled]="
+              form.invalid || submitting() || (splitType() === 'SHARES' && shareWeightSum() !== 100)
+            "
+          >
+            {{ submitting() ? ('expenses.saving' | transloco) : ('expenses.add' | transloco) }}
+          </button>
+        </div>
       </form>
+      </div>
+      </div>
+      }
 
       <!-- 費用清單 -->
       <div class="expenses-list">
@@ -389,6 +401,7 @@ interface GrossEntry {
         background: var(--icon-bg-hover);
       }
       h1 {
+        flex: 1;
         font-size: 1.6rem;
         font-weight: 700;
         color: var(--text-primary);
@@ -633,6 +646,46 @@ interface GrossEntry {
       .btn-primary:disabled {
         opacity: 0.5;
       }
+      .btn-secondary {
+        background: var(--accent-light);
+        color: var(--text-secondary);
+        border: none;
+        border-radius: 10px;
+        padding: 0.625rem 1.5rem;
+        cursor: pointer;
+      }
+      .form-actions {
+        display: flex;
+        gap: 0.75rem;
+        justify-content: flex-end;
+      }
+      .add-trigger {
+        flex-shrink: 0;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        border: none;
+        background: var(--icon-bg);
+        color: var(--accent);
+        font-size: 1.2rem;
+        cursor: pointer;
+      }
+      .modal-backdrop {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.45);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 200;
+        padding: 1rem;
+      }
+      .modal-card {
+        max-width: 460px;
+        width: 100%;
+        max-height: 90vh;
+        overflow-y: auto;
+      }
 
       /* ── 費用清單 ── */
       .expenses-list {
@@ -850,6 +903,11 @@ export class ExpensesComponent implements OnInit {
   ocrResult = signal<{ amount: number | null; date: string | null } | null>(null);
   ocrLoading = signal(false);
   submitting = signal(false);
+  showAddModal = signal(false);
+
+  closeAddModal(): void {
+    this.showAddModal.set(false);
+  }
 
   readonly grossReceivable = computed(() =>
     this.grossSettlement().receivable.filter((e) => e.convertedTotal > 0.001),
@@ -1139,6 +1197,7 @@ export class ExpensesComponent implements OnInit {
       this._amountConverted.set(null);
       this.splitType.set('EQUAL');
       this.shareRows.set([]);
+      this.showAddModal.set(false);
       await this.loadExpenses();
     } finally {
       this.submitting.set(false);

@@ -54,10 +54,24 @@ import { ExchangeRateService } from '../../core/services/exchange-rate.service';
             </div>
           }
         </div>
+        <button class="btn-icon add-trigger" type="button" (click)="showAddModal.set(true)">＋</button>
       </header>
 
-      <!-- 新增表單 -->
-      <form [formGroup]="form" (ngSubmit)="addItem()" class="card add-form">
+      <!-- 新增彈窗 -->
+      @if (showAddModal()) {
+      <div class="modal-backdrop" (click)="closeAddModal()">
+      <form [formGroup]="form" (ngSubmit)="addItem()" class="card add-form modal-card" (click)="$event.stopPropagation()">
+        <label class="photo-block">
+          @if (stagingPhotoUrl()) {
+            <img [src]="stagingPhotoUrl()!" class="photo-img" alt="" />
+          } @else {
+            <div class="photo-placeholder">
+              <span class="photo-plus">＋</span>
+              <span class="photo-hint">{{ 'shopping.addPhoto' | transloco }}</span>
+            </div>
+          }
+          <input type="file" accept="image/*" hidden (change)="onStagingPhotoSelected($event)" />
+        </label>
         <div class="form-grid">
           <div class="form-row span-2">
             <label>{{ 'shopping.itemName' | transloco }} *</label>
@@ -131,10 +145,17 @@ import { ExchangeRateService } from '../../core/services/exchange-rate.service';
             >
           }
         </div>
-        <button type="submit" class="btn-primary" [disabled]="form.invalid">
-          {{ 'shopping.addItem' | transloco }}
-        </button>
+        <div class="form-actions">
+          <button type="button" class="btn-secondary" (click)="closeAddModal()">
+            {{ 'shopping.cancel' | transloco }}
+          </button>
+          <button type="submit" class="btn-primary" [disabled]="form.invalid">
+            {{ 'shopping.addItem' | transloco }}
+          </button>
+        </div>
       </form>
+      </div>
+      }
 
       <!-- 清單 -->
       <div class="items-list">
@@ -379,6 +400,81 @@ import { ExchangeRateService } from '../../core/services/exchange-rate.service';
       .btn-primary:disabled {
         opacity: 0.5;
       }
+      .btn-secondary {
+        background: var(--accent-light);
+        color: var(--text-secondary);
+        border: none;
+        border-radius: 10px;
+        padding: 0.625rem 1.5rem;
+        cursor: pointer;
+      }
+      .form-actions {
+        display: flex;
+        gap: 0.75rem;
+        justify-content: flex-end;
+      }
+      .add-trigger {
+        flex-shrink: 0;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        border: none;
+        background: var(--icon-bg);
+        color: var(--accent);
+        font-size: 1.2rem;
+        cursor: pointer;
+      }
+      .modal-backdrop {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.45);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 200;
+        padding: 1rem;
+      }
+      .modal-card {
+        max-width: 460px;
+        width: 100%;
+        max-height: 90vh;
+        overflow-y: auto;
+      }
+      .photo-block {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        aspect-ratio: 16/9;
+        max-height: 160px;
+        background: var(--bg);
+        border: 2px dashed var(--border);
+        border-radius: 12px;
+        cursor: pointer;
+        overflow: hidden;
+        margin-bottom: 1rem;
+      }
+      .photo-block:hover {
+        border-color: var(--accent);
+      }
+      .photo-img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+      .photo-placeholder {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.3rem;
+        color: var(--text-secondary);
+      }
+      .photo-plus {
+        font-size: 1.6rem;
+      }
+      .photo-hint {
+        font-size: 0.8rem;
+      }
 
       /* ── 清單項目 ── */
       .items-list {
@@ -517,6 +613,10 @@ export class ShoppingListComponent implements OnInit {
     item_url: [''],
   });
 
+  showAddModal = signal(false);
+  stagingPhotoUrl = signal<string | null>(null);
+  private stagingPhotoFile: File | null = null;
+
   async ngOnInit(): Promise<void> {
     this.tripId = this.route.snapshot.paramMap.get('id')!;
     await Promise.all([this.loadItems(), this.loadConvRate()]);
@@ -542,12 +642,27 @@ export class ShoppingListComponent implements OnInit {
     this.items.set(await this.shoppingService.getByTrip(this.tripId));
   }
 
+  onStagingPhotoSelected(event: Event): void {
+    const file = (event.target as HTMLInputElement).files?.[0];
+    if (!file) return;
+    this.stagingPhotoFile = file;
+    this.stagingPhotoUrl.set(URL.createObjectURL(file));
+  }
+
+  closeAddModal(): void {
+    this.showAddModal.set(false);
+    this.form.reset({ quantity: 1, unit_price: 0 });
+    this._unitPriceHome.set(null);
+    this.stagingPhotoFile = null;
+    this.stagingPhotoUrl.set(null);
+  }
+
   async addItem(): Promise<void> {
     if (this.form.invalid) return;
     const { title, quantity, unit_price, description, item_url } = this.form.value;
     const qty = quantity!;
     const price = unit_price!;
-    await this.shoppingService.create({
+    const created = await this.shoppingService.create({
       trip_id: this.tripId,
       title: title!,
       quantity: qty,
@@ -557,8 +672,11 @@ export class ShoppingListComponent implements OnInit {
       item_url: item_url || undefined,
       is_bought: false,
     });
-    this.form.reset({ quantity: 1, unit_price: 0 });
-    this._unitPriceHome.set(null);
+    if (this.stagingPhotoFile) {
+      await this.shoppingService.handleImageUpload(this.stagingPhotoFile, created.client_record_id);
+      await this.syncEngine.syncUp();
+    }
+    this.closeAddModal();
     await this.loadItems();
   }
 
