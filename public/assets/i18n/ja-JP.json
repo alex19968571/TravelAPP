@@ -28,6 +28,8 @@
     "myTrips": "マイ旅程",
     "create": "旅程を追加",
     "noTrips": "旅程がまだありません。右上の「＋」から計画を始めましょう！",
+    "filterDatePlaceholder": "年または年月で絞り込み（例：2026 または 2026-11）",
+    "filterAllCountries": "すべての国",
     "deleteConfirm": "この旅程を削除しますか？関連する買い物リストと経費も削除されます。",
     "timezone": "タイムゾーン",
     "currency": "通貨",

@@ -101,23 +101,8 @@ body {
 }
 
 /* 讓 accent 色 class 跟著 CSS variable 走 */
-[data-theme='dark'] .nav-btn {
-  background: var(--accent-light) !important;
+[data-theme='dark'] .nav-btn--active {
   color: var(--accent) !important;
-}
-
-/* 購物清單/記帳分帳/行程成員 導覽按鈕：暗色主題下仍維持各自顏色 */
-[data-theme='dark'] .nav-btn--shopping {
-  background: rgba(239, 68, 68, 0.18) !important;
-  color: #f87171 !important;
-}
-[data-theme='dark'] .nav-btn--expenses {
-  background: rgba(34, 197, 94, 0.18) !important;
-  color: #4ade80 !important;
-}
-[data-theme='dark'] .nav-btn--members {
-  background: rgba(234, 179, 8, 0.2) !important;
-  color: #facc15 !important;
 }
 
 [data-theme='dark'] .badge {

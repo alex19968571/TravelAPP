@@ -285,32 +285,36 @@ const KEYPAD_ROWS: string[][] = [
       .keypad {
         display: flex;
         flex-direction: column;
-        gap: 0.6rem;
+        gap: 0.7rem;
+        background: #1c1c1e;
+        border-radius: 22px;
+        padding: 1.1rem;
       }
       .keypad-row {
         display: grid;
         grid-template-columns: repeat(3, 1fr);
-        gap: 0.6rem;
+        gap: 0.7rem;
       }
       .keypad-key {
         aspect-ratio: 1;
         border-radius: 50%;
         border: none;
-        background: var(--surface);
-        color: var(--text-primary);
+        background: #333336;
+        color: #ffffff;
         font-family: var(--font-mono);
-        font-size: 1.3rem;
-        font-weight: 600;
+        font-size: 1.4rem;
+        font-weight: 500;
         cursor: pointer;
-        box-shadow: 0 2px 6px var(--shadow);
-        transition: transform 0.1s ease, background 0.1s ease;
+        transition:
+          transform 0.1s ease,
+          background 0.1s ease;
       }
       .keypad-key:active {
-        background: var(--accent-light);
+        background: #48484a;
         transform: scale(0.94);
       }
       .keypad-clear {
-        padding: 0.8rem 0;
+        padding: 0.85rem 0;
         border-radius: 999px;
         border: none;
         background: var(--accent);

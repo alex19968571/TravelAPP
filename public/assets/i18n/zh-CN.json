@@ -28,6 +28,8 @@
     "myTrips": "我的行程",
     "create": "新增行程",
     "noTrips": "尚无行程，点击右上角「＋」开始规划吧！",
+    "filterDatePlaceholder": "筛选年份或年月，例如 2026 或 2026-11",
+    "filterAllCountries": "所有国家",
     "deleteConfirm": "确定删除此行程？相关购物清单与记账也会一并删除。",
     "timezone": "时区",
     "currency": "货币",

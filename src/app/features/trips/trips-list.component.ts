@@ -3,6 +3,7 @@ import {
   inject,
   OnInit,
   signal,
+  computed,
   HostListener,
   ViewChild,
   ElementRef,
@@ -13,7 +14,7 @@ import { ReactiveFormsModule, FormsModule, FormBuilder, Validators } from '@angu
 import { TranslocoModule } from '@jsverse/transloco';
 import { Trip } from '../../core/models';
 import { TripService } from '../../core/services/trip.service';
-import { PreferenceService } from '../../core/services/preference.service';
+import { PreferenceService, COUNTRIES } from '../../core/services/preference.service';
 
 const TIMEZONE_OPTIONS = [
   { value: 'Asia/Taipei', label: '台北 (UTC+8)' },
@@ -70,6 +71,32 @@ const CURRENCY_OPTIONS = [
               🗺️ {{ 'trips.create' | transloco }}
             </button>
           </div>
+        </div>
+      </div>
+
+      <!-- 篩選列：年/年月 + 國家 -->
+      <div class="filter-bar">
+        <input
+          class="filter-date"
+          type="text"
+          inputmode="numeric"
+          [ngModel]="filterDateText()"
+          (ngModelChange)="filterDateText.set($event)"
+          name="filterDateText"
+          [placeholder]="'trips.filterDatePlaceholder' | transloco"
+        />
+        <div class="select-wrap filter-country">
+          <select
+            [ngModel]="filterCountryCode()"
+            (ngModelChange)="filterCountryCode.set($event)"
+            name="filterCountryCode"
+          >
+            <option value="">{{ 'trips.filterAllCountries' | transloco }}</option>
+            @for (c of countries; track c.code) {
+              <option [value]="c.code">{{ c.flag }} {{ c.nativeName }}</option>
+            }
+          </select>
+          <span class="select-caret">▾</span>
         </div>
       </div>
 
@@ -150,7 +177,7 @@ const CURRENCY_OPTIONS = [
         </form>
       }
 
-      @if (trips().length === 0) {
+      @if (filteredTrips().length === 0) {
         <div class="empty-state">
           <p>🗺️</p>
           <p>{{ 'trips.noTrips' | transloco }}</p>
@@ -158,7 +185,7 @@ const CURRENCY_OPTIONS = [
       }
 
       <div class="trips-grid">
-        @for (trip of trips(); track trip.id) {
+        @for (trip of filteredTrips(); track trip.id) {
           <div class="trip-card-wrap">
             <button class="swipe-delete" (click)="confirmDeleteTrip(trip)">
               {{ 'trips.delete' | transloco }}
@@ -182,7 +209,6 @@ const CURRENCY_OPTIONS = [
                   <div class="trip-route">{{ trip.target_timezone }}</div>
                   <h3>{{ trip.title }}</h3>
                 </div>
-                <div class="trip-perf"></div>
                 <div class="trip-stub">
                   @if (formatDateRange(trip); as range) {
                     <div class="trip-dates">{{ range }}</div>
@@ -190,28 +216,29 @@ const CURRENCY_OPTIONS = [
                   <div class="trip-currency">{{ trip.base_currency }}</div>
                 </div>
               </div>
-              <div class="trip-nav desktop-only">
+              <div class="trip-perf-h"></div>
+              <div class="trip-nav">
                 <a
                   [routerLink]="['/trips', trip.id]"
-                  class="nav-btn"
+                  class="nav-btn nav-btn--active"
                   (click)="$event.stopPropagation()"
                   >{{ 'trips.itinerary' | transloco }}</a
                 >
                 <a
                   [routerLink]="['/trips', trip.id, 'shopping']"
-                  class="nav-btn nav-btn--shopping"
+                  class="nav-btn"
                   (click)="$event.stopPropagation()"
                   >{{ 'trips.shopping' | transloco }}</a
                 >
                 <a
                   [routerLink]="['/trips', trip.id, 'expenses']"
-                  class="nav-btn nav-btn--expenses"
+                  class="nav-btn"
                   (click)="$event.stopPropagation()"
                   >{{ 'trips.expenses' | transloco }}</a
                 >
                 <a
                   [routerLink]="['/trips', trip.id, 'members']"
-                  class="nav-btn nav-btn--members"
+                  class="nav-btn"
                   (click)="$event.stopPropagation()"
                   >{{ 'tripDetail.members' | transloco }}</a
                 >
@@ -341,6 +368,38 @@ const CURRENCY_OPTIONS = [
         display: flex;
         justify-content: flex-end;
         margin-bottom: 0.75rem;
+      }
+      .filter-bar {
+        display: flex;
+        gap: 0.6rem;
+        margin-bottom: 1rem;
+      }
+      .filter-date {
+        flex: 1;
+        min-width: 0;
+        padding: 0.55rem 0.75rem;
+        border: 1.5px solid var(--border);
+        border-radius: 10px;
+        font-size: 0.85rem;
+        box-sizing: border-box;
+        background: var(--input-bg);
+        color: var(--text-primary);
+      }
+      .filter-country {
+        flex-shrink: 0;
+        width: 40%;
+      }
+      .filter-country select {
+        width: 100%;
+        padding: 0.55rem 2rem 0.55rem 0.75rem;
+        border: 1.5px solid var(--border);
+        border-radius: 10px;
+        font-size: 0.85rem;
+        box-sizing: border-box;
+        background: var(--input-bg);
+        color: var(--text-primary);
+        appearance: none;
+        -webkit-appearance: none;
       }
       .add-menu {
         position: relative;
@@ -516,86 +575,81 @@ const CURRENCY_OPTIONS = [
         transition: transform 0.2s ease, box-shadow 0.2s ease;
         overflow: hidden;
       }
-      .trip-card.card:hover {
-        box-shadow: 0 12px 28px var(--shadow);
+      .trip-card.card:hover,
+      .trip-card.card:active {
+        transform: translateY(-4px);
+        box-shadow: 0 18px 36px var(--shadow);
       }
       .trip-card-body {
         display: flex;
-        align-items: stretch;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        gap: 0.6rem;
+        padding: 1.35rem 1.25rem 1.5rem;
+        cursor: pointer;
       }
       .trip-info {
-        flex: 1;
-        cursor: pointer;
         min-width: 0;
-        padding: 1.1rem 1.1rem 1rem 1.25rem;
+        width: 100%;
       }
       .trip-route {
         font-family: var(--font-mono);
         font-size: 0.68rem;
         letter-spacing: 0.08em;
         text-transform: uppercase;
-        color: var(--accent);
-        margin-bottom: 0.3rem;
+        color: var(--text-secondary);
+        margin-bottom: 0.35rem;
       }
       .trip-info h3 {
-        font-size: 1.15rem;
-        font-weight: 400;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans TC', sans-serif;
+        font-size: 1.25rem;
+        font-weight: 700;
         margin: 0;
         color: var(--text-primary);
-        padding-right: 1.5rem;
       }
-      .trip-perf {
+      .trip-perf-h {
         position: relative;
-        width: 1px;
-        flex-shrink: 0;
-        background-image: linear-gradient(var(--border) 60%, transparent 0%);
-        background-size: 1px 8px;
-        background-repeat: repeat-y;
+        height: 1px;
+        margin: 0 1.25rem;
+        background-image: linear-gradient(90deg, var(--border) 60%, transparent 0%);
+        background-size: 8px 1px;
+        background-repeat: repeat-x;
       }
-      .trip-perf::before,
-      .trip-perf::after {
+      .trip-perf-h::before,
+      .trip-perf-h::after {
         content: '';
         position: absolute;
-        left: -7px;
+        top: -7px;
         width: 14px;
         height: 14px;
         border-radius: 50%;
         background: var(--bg);
         border: 1px solid var(--border);
       }
-      .trip-perf::before { top: -7px; }
-      .trip-perf::after { bottom: -7px; }
+      .trip-perf-h::before { left: -7px; }
+      .trip-perf-h::after { right: -7px; }
       .trip-stub {
-        flex-shrink: 0;
         display: flex;
         flex-direction: column;
         align-items: center;
-        justify-content: center;
-        gap: 0.2rem;
-        padding: 1rem 1.25rem;
-        min-width: 84px;
-        cursor: pointer;
+        gap: 0.15rem;
+        padding-top: 0.3rem;
       }
       .trip-dates {
         font-family: var(--font-mono);
         font-variant-numeric: tabular-nums;
         color: var(--text-primary);
-        font-size: 0.82rem;
-        font-weight: 600;
+        font-size: 1.15rem;
+        font-weight: 700;
         white-space: nowrap;
       }
       .trip-currency {
         font-family: var(--font-mono);
-        font-size: 0.68rem;
+        font-size: 0.72rem;
         color: var(--accent);
         font-weight: 700;
         letter-spacing: 0.04em;
-      }
-      .trip-meta {
-        display: flex;
-        gap: 1rem;
-        color: var(--text-secondary);
-        font-size: 0.9rem;
       }
       .info-btn {
         position: absolute;
@@ -619,33 +673,21 @@ const CURRENCY_OPTIONS = [
       }
       .trip-nav {
         display: flex;
-        gap: 0.5rem;
-        flex-wrap: wrap;
-        flex-shrink: 0;
       }
       .nav-btn {
-        padding: 0.4rem 1rem;
-        border-radius: 8px;
+        flex: 1;
+        text-align: center;
+        padding: 0.75rem 0.4rem;
         border: none;
         cursor: pointer;
-        background: var(--accent-light);
-        color: var(--accent);
-        font-weight: 500;
+        background: none;
+        color: var(--text-secondary);
+        font-weight: 600;
         text-decoration: none;
-        font-size: 0.875rem;
-        display: inline-block;
+        font-size: 0.78rem;
       }
-      .nav-btn--shopping {
-        background: rgba(239, 68, 68, 0.12);
-        color: #ef4444;
-      }
-      .nav-btn--expenses {
-        background: rgba(34, 197, 94, 0.14);
-        color: #22c55e;
-      }
-      .nav-btn--members {
-        background: rgba(234, 179, 8, 0.16);
-        color: #ca8a04;
+      .nav-btn--active {
+        color: var(--accent);
       }
 
       @media (hover: none) and (pointer: coarse) {
@@ -760,6 +802,43 @@ export class TripsListComponent implements OnInit {
     window.matchMedia('(hover: none) and (pointer: coarse)').matches;
 
   trips = signal<Trip[]>([]);
+  countries = COUNTRIES;
+  filterDateText = signal('');
+  filterCountryCode = signal('');
+
+  tripCountry(trip: Trip): (typeof COUNTRIES)[number] | undefined {
+    return (
+      COUNTRIES.find((c) => c.timezone === trip.target_timezone) ??
+      COUNTRIES.find((c) => c.currency === trip.base_currency)
+    );
+  }
+
+  filteredTrips = computed(() => {
+    const dateText = this.filterDateText().trim();
+    const countryCode = this.filterCountryCode();
+    const m = dateText.match(/^(\d{4})(?:-(\d{1,2}))?$/);
+
+    return this.trips().filter((t) => {
+      if (dateText && m) {
+        const year = +m[1];
+        const month = m[2] ? +m[2] : null;
+        const start = t.start_date_utc ? new Date(t.start_date_utc) : null;
+        if (!start) return false;
+        const end = t.end_date_utc ? new Date(t.end_date_utc) : start;
+        const rangeStart = month ? new Date(year, month - 1, 1) : new Date(year, 0, 1);
+        const rangeEnd = month
+          ? new Date(year, month, 0, 23, 59, 59)
+          : new Date(year, 11, 31, 23, 59, 59);
+        if (end < rangeStart || start > rangeEnd) return false;
+      }
+      if (countryCode) {
+        const c = this.tripCountry(t);
+        if (!c || c.code !== countryCode) return false;
+      }
+      return true;
+    });
+  });
+
   showForm = signal(false);
   showAddMenu = signal(false);
   showJoin = signal(false);

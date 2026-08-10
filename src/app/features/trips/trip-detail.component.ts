@@ -494,7 +494,9 @@ const TRANSPORT_OPTIONS: { mode: TransportMode; icon: string }[] = [
         border: 1px solid var(--border);
         border-radius: 10px;
         cursor: pointer;
-        transition: border-color 0.15s, box-shadow 0.15s;
+        transition:
+          border-color 0.15s,
+          box-shadow 0.15s;
       }
       .itinerary-item:hover {
         border-color: var(--accent);
