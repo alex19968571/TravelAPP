@@ -54,107 +54,119 @@ import { ExchangeRateService } from '../../core/services/exchange-rate.service';
             </div>
           }
         </div>
-        <button class="btn-icon add-trigger" type="button" (click)="showAddModal.set(true)">＋</button>
+        <button class="btn-icon add-trigger" type="button" (click)="showAddModal.set(true)">
+          ＋
+        </button>
       </header>
 
       <!-- 新增彈窗 -->
       @if (showAddModal()) {
-      <div class="modal-backdrop" (click)="closeAddModal()">
-      <form [formGroup]="form" (ngSubmit)="addItem()" class="card add-form modal-card" (click)="$event.stopPropagation()">
-        <label class="photo-block">
-          @if (stagingPhotoUrl()) {
-            <img [src]="stagingPhotoUrl()!" class="photo-img" alt="" />
-          } @else {
-            <div class="photo-placeholder">
-              <span class="photo-plus">＋</span>
-              <span class="photo-hint">{{ 'shopping.addPhoto' | transloco }}</span>
-            </div>
-          }
-          <input type="file" accept="image/*" hidden (change)="onStagingPhotoSelected($event)" />
-        </label>
-        <div class="form-grid">
-          <div class="form-row span-2">
-            <label>{{ 'shopping.itemName' | transloco }} *</label>
-            <input
-              formControlName="title"
-              [placeholder]="'shopping.itemNamePlaceholder' | transloco"
-            />
-          </div>
-          <div class="form-row">
-            <label>{{ 'shopping.quantity' | transloco }}</label>
-            <input formControlName="quantity" type="number" min="1" />
-          </div>
-
-          <!-- 雙欄單價 -->
-          <div class="form-row">
-            <label>{{ 'shopping.unitPrice' | transloco }}</label>
-            <div class="dual-price-row">
-              <div class="price-col">
-                <span class="currency-label">{{ destCurrency() }}</span>
-                <input formControlName="unit_price" type="number" min="0" step="any" />
-              </div>
-              @if (showConversion()) {
-                <button
-                  type="button"
-                  class="convert-btn"
-                  (click)="convertUnitPrice()"
-                  title="換算成 {{ homeCurrency() }}"
-                >
-                  ⇄
-                </button>
-                <div class="price-col">
-                  <span class="currency-label">{{ homeCurrency() }}</span>
-                  <input
-                    type="number"
-                    [value]="unitPriceHome() ?? ''"
-                    readonly
-                    class="readonly-input"
-                    placeholder="—"
-                  />
+        <div class="modal-backdrop" (click)="closeAddModal()">
+          <form
+            [formGroup]="form"
+            (ngSubmit)="addItem()"
+            class="card add-form modal-card"
+            (click)="$event.stopPropagation()"
+          >
+            <label class="photo-block">
+              @if (stagingPhotoUrl()) {
+                <img [src]="stagingPhotoUrl()!" class="photo-img" alt="" />
+              } @else {
+                <div class="photo-placeholder">
+                  <span class="photo-plus">＋</span>
+                  <span class="photo-hint">{{ 'shopping.addPhoto' | transloco }}</span>
                 </div>
               }
+              <input
+                type="file"
+                accept="image/*"
+                hidden
+                (change)="onStagingPhotoSelected($event)"
+              />
+            </label>
+            <div class="form-grid">
+              <div class="form-row span-2">
+                <label>{{ 'shopping.itemName' | transloco }} *</label>
+                <input
+                  formControlName="title"
+                  [placeholder]="'shopping.itemNamePlaceholder' | transloco"
+                />
+              </div>
+              <div class="form-row">
+                <label>{{ 'shopping.quantity' | transloco }}</label>
+                <input formControlName="quantity" type="number" min="1" />
+              </div>
+
+              <!-- 雙欄單價 -->
+              <div class="form-row">
+                <label>{{ 'shopping.unitPrice' | transloco }}</label>
+                <div class="dual-price-row">
+                  <div class="price-col">
+                    <span class="currency-label">{{ destCurrency() }}</span>
+                    <input formControlName="unit_price" type="number" min="0" step="any" />
+                  </div>
+                  @if (showConversion()) {
+                    <button
+                      type="button"
+                      class="convert-btn"
+                      (click)="convertUnitPrice()"
+                      title="換算成 {{ homeCurrency() }}"
+                    >
+                      ⇄
+                    </button>
+                    <div class="price-col">
+                      <span class="currency-label">{{ homeCurrency() }}</span>
+                      <input
+                        type="number"
+                        [value]="unitPriceHome() ?? ''"
+                        readonly
+                        class="readonly-input"
+                        placeholder="—"
+                      />
+                    </div>
+                  }
+                </div>
+              </div>
+
+              <div class="form-row span-2">
+                <label>{{ 'shopping.note' | transloco }}</label>
+                <input
+                  formControlName="description"
+                  [placeholder]="'shopping.notePlaceholder' | transloco"
+                />
+              </div>
+              <div class="form-row span-2">
+                <label>{{ 'shopping.link' | transloco }}</label>
+                <input
+                  formControlName="item_url"
+                  [placeholder]="'shopping.linkPlaceholder' | transloco"
+                />
+              </div>
             </div>
-          </div>
 
-          <div class="form-row span-2">
-            <label>{{ 'shopping.note' | transloco }}</label>
-            <input
-              formControlName="description"
-              [placeholder]="'shopping.notePlaceholder' | transloco"
-            />
-          </div>
-          <div class="form-row span-2">
-            <label>{{ 'shopping.link' | transloco }}</label>
-            <input
-              formControlName="item_url"
-              [placeholder]="'shopping.linkPlaceholder' | transloco"
-            />
-          </div>
+            <div class="form-total">
+              <span
+                >{{ 'shopping.subtotal' | transloco }}：<strong>{{
+                  formTotal() | number: '1.0-0'
+                }}</strong>
+                {{ destCurrency() }}</span
+              >
+              @if (showConversion() && formTotal() > 0) {
+                <span class="sub-converted"
+                  >≈ {{ formTotal() * convRate() | number: '1.0-0' }} {{ homeCurrency() }}</span
+                >
+              }
+            </div>
+            <div class="form-actions">
+              <button type="button" class="btn-secondary" (click)="closeAddModal()">
+                {{ 'common.cancel' | transloco }}
+              </button>
+              <button type="submit" class="btn-primary" [disabled]="form.invalid">
+                {{ 'shopping.addItem' | transloco }}
+              </button>
+            </div>
+          </form>
         </div>
-
-        <div class="form-total">
-          <span
-            >{{ 'shopping.subtotal' | transloco }}：<strong>{{
-              formTotal() | number: '1.0-0'
-            }}</strong>
-            {{ destCurrency() }}</span
-          >
-          @if (showConversion() && formTotal() > 0) {
-            <span class="sub-converted"
-              >≈ {{ formTotal() * convRate() | number: '1.0-0' }} {{ homeCurrency() }}</span
-            >
-          }
-        </div>
-        <div class="form-actions">
-          <button type="button" class="btn-secondary" (click)="closeAddModal()">
-            {{ 'shopping.cancel' | transloco }}
-          </button>
-          <button type="submit" class="btn-primary" [disabled]="form.invalid">
-            {{ 'shopping.addItem' | transloco }}
-          </button>
-        </div>
-      </form>
-      </div>
       }
 
       <!-- 清單 -->

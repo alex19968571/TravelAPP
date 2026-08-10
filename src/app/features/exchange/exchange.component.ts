@@ -87,26 +87,39 @@ const KEYPAD_ROWS: string[][] = [
           {{ rightCountry().currency }}
         </div>
 
-        <!-- 下方：計算機鍵盤（iPhone 計算機版面） -->
+        <!-- 下方：計算機鍵盤（iPhone 計算機版面，支援四則運算並即時換匯） -->
         <div class="keypad card">
           <div class="keypad-row">
+            <button class="keypad-key keypad-key--fn" (click)="onKey('⌫')">⌫</button>
             <button class="keypad-key keypad-key--fn" (click)="clear()">AC</button>
-            <button class="keypad-key keypad-key--fn">+/-</button>
-            <button class="keypad-key keypad-key--fn">%</button>
-            <button class="keypad-key keypad-key--op">÷</button>
+            <button class="keypad-key keypad-key--fn" (click)="percent()">%</button>
+            <button
+              class="keypad-key keypad-key--op"
+              [class.active]="isActiveOp('÷')"
+              (click)="onOperator('÷')"
+            >
+              ÷
+            </button>
           </div>
           @for (row of keypadRows; track $index; let ri = $index) {
             <div class="keypad-row">
               @for (key of row; track key) {
                 <button class="keypad-key" (click)="onKey(key)">{{ key }}</button>
               }
-              <button class="keypad-key keypad-key--op">{{ opSymbols[ri] }}</button>
+              <button
+                class="keypad-key keypad-key--op"
+                [class.active]="isActiveOp(opSymbols[ri])"
+                (click)="onOperator(opSymbols[ri])"
+              >
+                {{ opSymbols[ri] }}
+              </button>
             </div>
           }
-          <div class="keypad-row keypad-row--last">
-            <button class="keypad-key keypad-key--wide" (click)="onKey('0')">0</button>
+          <div class="keypad-row">
+            <button class="keypad-key keypad-key--fn" (click)="toggleSign()">+/-</button>
+            <button class="keypad-key" (click)="onKey('0')">0</button>
             <button class="keypad-key" (click)="onKey('.')">.</button>
-            <button class="keypad-key keypad-key--op">=</button>
+            <button class="keypad-key keypad-key--op" (click)="equals()">=</button>
           </div>
         </div>
       </div>
@@ -296,7 +309,7 @@ const KEYPAD_ROWS: string[][] = [
         display: flex;
         flex-direction: column;
         gap: 0.7rem;
-        background: #1c1c1e;
+        background: var(--keypad-bg);
         border-radius: 22px;
         padding: 1.1rem;
       }
@@ -309,8 +322,8 @@ const KEYPAD_ROWS: string[][] = [
         aspect-ratio: 1;
         border-radius: 50%;
         border: none;
-        background: #333336;
-        color: #ffffff;
+        background: var(--keypad-key-bg);
+        color: var(--keypad-key-color);
         font-family: var(--font-mono);
         font-size: 1.4rem;
         font-weight: 500;
@@ -320,33 +333,25 @@ const KEYPAD_ROWS: string[][] = [
           background 0.1s ease;
       }
       .keypad-key:active {
-        background: #48484a;
+        background: var(--keypad-key-active-bg);
         transform: scale(0.94);
       }
       .keypad-key--fn {
-        background: #a5a5a5;
-        color: #1c1c1e;
+        background: var(--keypad-fn-bg);
+        color: var(--keypad-fn-color);
         font-size: 1.1rem;
       }
       .keypad-key--fn:active {
-        background: #d4d4d4;
+        background: var(--keypad-fn-active-bg);
       }
       .keypad-key--op {
         background: var(--accent);
         color: #ffffff;
         font-size: 1.5rem;
       }
-      .keypad-key--op:active {
+      .keypad-key--op:active,
+      .keypad-key--op.active {
         opacity: 0.8;
-      }
-      .keypad-row--last {
-        grid-template-columns: 2fr 1fr 1fr;
-      }
-      .keypad-key--wide {
-        aspect-ratio: unset;
-        border-radius: 999px;
-        text-align: left;
-        padding-left: 1.4rem;
       }
 
       @media (max-width: 420px) {
@@ -374,6 +379,10 @@ export class ExchangeComponent implements OnInit, AfterViewInit {
 
   showLeftPicker = signal(false);
   showRightPicker = signal(false);
+
+  private pendingValue = signal<number | null>(null);
+  private pendingOp = signal<string | null>(null);
+  private awaitingOperand = signal(false);
 
   convertedAmount = computed(() => (parseFloat(this.amountStr()) || 0) * this.rate());
 
@@ -453,10 +462,14 @@ export class ExchangeComponent implements OnInit, AfterViewInit {
   onKey(key: string): void {
     if (key === '⌫') {
       const next = this.amountStr().slice(0, -1);
-      this.amountStr.set(next === '' ? '0' : next);
+      this.amountStr.set(next === '' || next === '-' ? '0' : next);
       return;
     }
-    const current = this.amountStr();
+    let current = this.amountStr();
+    if (this.awaitingOperand()) {
+      current = '0';
+      this.awaitingOperand.set(false);
+    }
     if (key === '.') {
       if (current.includes('.')) return;
       this.amountStr.set(`${current}.`);
@@ -471,5 +484,67 @@ export class ExchangeComponent implements OnInit, AfterViewInit {
 
   clear(): void {
     this.amountStr.set('0');
+    this.pendingValue.set(null);
+    this.pendingOp.set(null);
+    this.awaitingOperand.set(false);
+  }
+
+  isActiveOp(op: string): boolean {
+    return this.pendingOp() === op && this.awaitingOperand();
+  }
+
+  onOperator(op: string): void {
+    const current = parseFloat(this.amountStr()) || 0;
+    if (this.pendingOp() !== null && !this.awaitingOperand()) {
+      const result = this.calculate(this.pendingValue()!, current, this.pendingOp()!);
+      this.amountStr.set(this.formatResult(result));
+      this.pendingValue.set(result);
+    } else {
+      this.pendingValue.set(current);
+    }
+    this.pendingOp.set(op);
+    this.awaitingOperand.set(true);
+  }
+
+  equals(): void {
+    const op = this.pendingOp();
+    if (op === null || this.pendingValue() === null) return;
+    const current = parseFloat(this.amountStr()) || 0;
+    const result = this.calculate(this.pendingValue()!, current, op);
+    this.amountStr.set(this.formatResult(result));
+    this.pendingValue.set(null);
+    this.pendingOp.set(null);
+    this.awaitingOperand.set(false);
+  }
+
+  percent(): void {
+    const current = parseFloat(this.amountStr()) || 0;
+    this.amountStr.set(this.formatResult(current / 100));
+  }
+
+  toggleSign(): void {
+    const current = parseFloat(this.amountStr()) || 0;
+    this.amountStr.set(this.formatResult(-current));
+  }
+
+  private calculate(a: number, b: number, op: string): number {
+    switch (op) {
+      case '+':
+        return a + b;
+      case '−':
+        return a - b;
+      case '×':
+        return a * b;
+      case '÷':
+        return b === 0 ? 0 : a / b;
+      default:
+        return b;
+    }
+  }
+
+  private formatResult(n: number): string {
+    if (!isFinite(n)) return '0';
+    const rounded = Math.round(n * 1e10) / 1e10;
+    return String(rounded);
   }
 }

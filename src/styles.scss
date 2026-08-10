@@ -17,6 +17,15 @@
   --header-bg:       #ffffff;
   --icon-bg:         rgba(120, 120, 140, 0.14);
   --icon-bg-hover:   rgba(120, 120, 140, 0.26);
+
+  /* 計算機鍵盤 */
+  --keypad-bg:            #e2ded3;
+  --keypad-key-bg:        #ffffff;
+  --keypad-key-color:     #14213d;
+  --keypad-key-active-bg: #ececec;
+  --keypad-fn-bg:         #c8c3b6;
+  --keypad-fn-color:      #14213d;
+  --keypad-fn-active-bg:  #d8d4c8;
 }
 
 [data-theme='dark'] {
@@ -30,6 +39,15 @@
   --header-bg:       #12141e;
   --icon-bg:         rgba(184, 135, 74, 0.16);
   --icon-bg-hover:   rgba(184, 135, 74, 0.3);
+
+  /* 計算機鍵盤（沿用 iPhone 深色計算機配色） */
+  --keypad-bg:            #1c1c1e;
+  --keypad-key-bg:        #333336;
+  --keypad-key-color:     #ffffff;
+  --keypad-key-active-bg: #48484a;
+  --keypad-fn-bg:         #a5a5a5;
+  --keypad-fn-color:      #1c1c1e;
+  --keypad-fn-active-bg:  #d4d4d4;
 }
 
 /* ── 標題統一改用襯線字體，帶出旅行雜誌質感 ── */

@@ -6,6 +6,7 @@ import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
 import { Trip, ItineraryItem, TransportMode } from '../../core/models';
 import { TripService } from '../../core/services/trip.service';
 import { MapsService } from '../../core/services/maps.service';
+import { DropdownSelectComponent } from '../../shared/components/dropdown-select/dropdown-select.component';
 
 interface DateTab {
   date: Date | null;
@@ -24,7 +25,7 @@ const TRANSPORT_OPTIONS: { mode: TransportMode; icon: string }[] = [
 @Component({
   selector: 'app-trip-detail',
   standalone: true,
-  imports: [CommonModule, RouterModule, FormsModule, TranslocoModule],
+  imports: [CommonModule, RouterModule, FormsModule, TranslocoModule, DropdownSelectComponent],
   template: `
     <div class="page-container">
       <header class="page-header">
@@ -199,30 +200,11 @@ const TRANSPORT_OPTIONS: { mode: TransportMode; icon: string }[] = [
           <!-- 日期（切換天數） -->
           <div class="field-group">
             <label class="field-label">日期</label>
-            <div class="select-wrap">
-              <select
-                class="field-input"
-                [ngModel]="editDayNumber()"
-                (ngModelChange)="editDayNumber.set(+$event)"
-              >
-                @for (d of dateTabs(); track d.dayNumber) {
-                  <option [value]="d.dayNumber">{{ formatTabDate(d) }}</option>
-                }
-              </select>
-              <svg
-                class="select-arrow-icon"
-                width="14"
-                height="14"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2.5"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              >
-                <polyline points="6 9 12 15 18 9"></polyline>
-              </svg>
-            </div>
+            <app-dropdown-select
+              [options]="dateOptions()"
+              [ngModel]="editDayNumber()"
+              (ngModelChange)="editDayNumber.set(+$event)"
+            ></app-dropdown-select>
           </div>
 
           <!-- 筆記 -->
@@ -238,7 +220,9 @@ const TRANSPORT_OPTIONS: { mode: TransportMode; icon: string }[] = [
 
           <!-- 按鈕 -->
           <div class="modal-actions">
-            <button class="btn-secondary" (click)="closeEdit()">取消</button>
+            <button class="btn-secondary" (click)="closeEdit()">
+              {{ 'common.cancel' | transloco }}
+            </button>
             <button
               class="btn-primary"
               [disabled]="!editName.trim() || editSaving()"
@@ -259,33 +243,12 @@ const TRANSPORT_OPTIONS: { mode: TransportMode; icon: string }[] = [
 
           <!-- 交通方式下拉選單 -->
           <div class="field-group">
-            <div class="select-wrap">
-              <select
-                class="field-input"
-                [ngModel]="tMode()"
-                (ngModelChange)="onTModeChange($event)"
-              >
-                <option value="">{{ 'transport.pleaseSelect' | transloco }}</option>
-                @for (opt of transportOpts; track opt.mode) {
-                  <option [value]="opt.mode">
-                    {{ opt.icon }} {{ 'transport.' + opt.mode | transloco }}
-                  </option>
-                }
-              </select>
-              <svg
-                class="select-arrow-icon"
-                width="14"
-                height="14"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2.5"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              >
-                <polyline points="6 9 12 15 18 9"></polyline>
-              </svg>
-            </div>
+            <app-dropdown-select
+              [options]="transportOptions()"
+              [placeholder]="'transport.pleaseSelect' | transloco"
+              [ngModel]="tMode()"
+              (ngModelChange)="onTModeChange($event)"
+            ></app-dropdown-select>
           </div>
 
           @if (tMode()) {
@@ -727,22 +690,6 @@ const TRANSPORT_OPTIONS: { mode: TransportMode; icon: string }[] = [
         font-weight: 600;
         color: var(--text-secondary);
       }
-      .select-wrap {
-        position: relative;
-      }
-      .select-wrap .select-arrow-icon {
-        position: absolute;
-        right: 0.75rem;
-        top: 50%;
-        transform: translateY(-50%);
-        color: var(--text-secondary);
-        pointer-events: none;
-      }
-      select.field-input {
-        appearance: none;
-        -webkit-appearance: none;
-        padding-right: 2.25rem;
-      }
       .field-input {
         width: 100%;
         padding: 0.6rem 0.875rem;
@@ -959,6 +906,17 @@ export class TripDetailComponent implements OnInit {
   formatTabDate(tab: DateTab): string {
     if (!tab.date) return `${tab.dayNumber}`;
     return `${tab.date.getMonth() + 1}/${tab.date.getDate()}`;
+  }
+
+  dateOptions(): { value: number; label: string }[] {
+    return this.dateTabs().map((d) => ({ value: d.dayNumber, label: this.formatTabDate(d) }));
+  }
+
+  transportOptions(): { value: TransportMode; label: string }[] {
+    return this.transportOpts.map((opt) => ({
+      value: opt.mode,
+      label: `${opt.icon} ${this.transloco.translate('transport.' + opt.mode)}`,
+    }));
   }
 
   scrollDates(dir: number): void {

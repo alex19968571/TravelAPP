@@ -16,6 +16,7 @@ import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
 import { ItineraryItem, Trip } from '../../core/models';
 import { TripService } from '../../core/services/trip.service';
 import { MapsService } from '../../core/services/maps.service';
+import { DropdownSelectComponent } from '../../shared/components/dropdown-select/dropdown-select.component';
 
 interface DateTab {
   date: Date | null;
@@ -32,7 +33,7 @@ const DAY_COLORS = ['#667eea', '#ed8936', '#48bb78', '#f56565', '#9f7aea', '#38b
 @Component({
   selector: 'app-itinerary',
   standalone: true,
-  imports: [CommonModule, RouterModule, FormsModule, TranslocoModule],
+  imports: [CommonModule, RouterModule, FormsModule, TranslocoModule, DropdownSelectComponent],
   template: `
     <div class="page-container">
       <header class="page-header">
@@ -118,31 +119,12 @@ const DAY_COLORS = ['#667eea', '#ed8936', '#48bb78', '#f56565', '#9f7aea', '#38b
           @if (!editingItemId()) {
             <div class="field-group">
               <label class="field-label">加入日期</label>
-              <div class="select-wrap">
-                <select
-                  class="field-input"
-                  [ngModel]="selectedDate()?.dayNumber ?? null"
-                  (ngModelChange)="chooseDateByDay($event)"
-                  name="stagingDate"
-                >
-                  @for (d of dateTabs(); track d.dayNumber) {
-                    <option [value]="d.dayNumber">{{ formatTabDate(d) }}</option>
-                  }
-                </select>
-                <svg
-                  class="select-arrow-icon"
-                  width="14"
-                  height="14"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2.5"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                >
-                  <polyline points="6 9 12 15 18 9"></polyline>
-                </svg>
-              </div>
+              <app-dropdown-select
+                [options]="dateOptions()"
+                [ngModel]="selectedDate()?.dayNumber ?? null"
+                (ngModelChange)="chooseDateByDay($event)"
+                name="stagingDate"
+              ></app-dropdown-select>
             </div>
           }
 
@@ -160,7 +142,9 @@ const DAY_COLORS = ['#667eea', '#ed8936', '#48bb78', '#f56565', '#9f7aea', '#38b
 
           <!-- 按鈕列 -->
           <div class="panel-actions">
-            <button class="btn-secondary" type="button" (click)="closePanel()">取消</button>
+            <button class="btn-secondary" type="button" (click)="closePanel()">
+              {{ 'common.cancel' | transloco }}
+            </button>
             @if (editingItemId()) {
               <button
                 class="btn-primary"
@@ -396,24 +380,6 @@ const DAY_COLORS = ['#667eea', '#ed8936', '#48bb78', '#f56565', '#9f7aea', '#38b
         font-family: inherit;
       }
 
-      .select-wrap {
-        position: relative;
-      }
-      .select-wrap .select-arrow-icon {
-        position: absolute;
-        right: 0.75rem;
-        top: 50%;
-        transform: translateY(-50%);
-        color: var(--text-secondary);
-        pointer-events: none;
-      }
-      select.field-input {
-        appearance: none;
-        -webkit-appearance: none;
-        padding-right: 2.25rem;
-        text-align: center;
-        text-align-last: center;
-      }
 
       /* ── 按鈕列 ── */
       .panel-actions {
@@ -937,6 +903,10 @@ export class ItineraryComponent implements OnInit, AfterViewInit {
   formatTabDate(tab: DateTab): string {
     if (!tab.date) return `第 ${tab.dayNumber} 天`;
     return `第 ${tab.dayNumber} 天（${tab.date.getMonth() + 1}/${tab.date.getDate()}）`;
+  }
+
+  dateOptions(): { value: number; label: string }[] {
+    return this.dateTabs().map((d) => ({ value: d.dayNumber, label: this.formatTabDate(d) }));
   }
 
   positionLabel(p: number): string {

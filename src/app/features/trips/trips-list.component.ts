@@ -11,10 +11,11 @@ import {
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
 import { ReactiveFormsModule, FormsModule, FormBuilder, Validators } from '@angular/forms';
-import { TranslocoModule } from '@jsverse/transloco';
+import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
 import { Trip } from '../../core/models';
 import { TripService } from '../../core/services/trip.service';
 import { PreferenceService, COUNTRIES } from '../../core/services/preference.service';
+import { DropdownSelectComponent } from '../../shared/components/dropdown-select/dropdown-select.component';
 
 const TIMEZONE_OPTIONS = [
   { value: 'Asia/Taipei', label: '台北 (UTC+8)' },
@@ -56,38 +57,33 @@ const CURRENCY_OPTIONS = [
 @Component({
   selector: 'app-trips-list',
   standalone: true,
-  imports: [CommonModule, RouterModule, ReactiveFormsModule, FormsModule, TranslocoModule],
+  imports: [
+    CommonModule,
+    RouterModule,
+    ReactiveFormsModule,
+    FormsModule,
+    TranslocoModule,
+    DropdownSelectComponent,
+  ],
   template: `
     <div class="page-container">
       <!-- 篩選列（左）+ '+' 選單（右） -->
       <div class="list-toolbar">
         <div class="filter-bar">
-          <div class="select-wrap filter-year">
-            <select
-              [ngModel]="filterYear()"
-              (ngModelChange)="filterYear.set($event)"
-              name="filterYear"
-            >
-              <option value="">{{ 'trips.filterAllYears' | transloco }}</option>
-              @for (y of availableYears(); track y) {
-                <option [value]="y">{{ y }}</option>
-              }
-            </select>
-            <span class="select-caret">▾</span>
-          </div>
-          <div class="select-wrap filter-month">
-            <select
-              [ngModel]="filterMonth()"
-              (ngModelChange)="filterMonth.set($event)"
-              name="filterMonth"
-            >
-              <option value="">{{ 'trips.filterAllMonths' | transloco }}</option>
-              @for (mo of [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]; track mo) {
-                <option [value]="mo">{{ mo }}</option>
-              }
-            </select>
-            <span class="select-caret">▾</span>
-          </div>
+          <app-dropdown-select
+            class="filter-year"
+            [options]="yearOptions()"
+            [ngModel]="filterYear()"
+            (ngModelChange)="filterYear.set($event)"
+            name="filterYear"
+          ></app-dropdown-select>
+          <app-dropdown-select
+            class="filter-month"
+            [options]="monthOptions()"
+            [ngModel]="filterMonth()"
+            (ngModelChange)="filterMonth.set($event)"
+            name="filterMonth"
+          ></app-dropdown-select>
           <div class="country-picker filter-country" [class.open]="showCountryPicker()">
             <button
               class="country-trigger"
@@ -154,7 +150,7 @@ const CURRENCY_OPTIONS = [
           }
           <div class="form-actions">
             <button type="button" class="btn-secondary" (click)="showJoin.set(false)">
-              {{ 'trips.cancel' | transloco }}
+              {{ 'common.cancel' | transloco }}
             </button>
             <button type="submit" class="btn-primary" [disabled]="!joinCode().trim() || joining()">
               {{ (joining() ? 'trips.joining' : 'trips.join') | transloco }}
@@ -204,7 +200,7 @@ const CURRENCY_OPTIONS = [
           </div>
           <div class="form-actions">
             <button type="button" class="btn-secondary" (click)="showForm.set(false)">
-              {{ 'trips.cancel' | transloco }}
+              {{ 'common.cancel' | transloco }}
             </button>
             <button type="submit" class="btn-primary" [disabled]="form.invalid">
               {{ 'trips.submit' | transloco }}
@@ -234,10 +230,7 @@ const CURRENCY_OPTIONS = [
               (touchend)="onTouchEnd($event, trip)"
               (click)="onCardClick(trip)"
             >
-              <button
-                class="info-btn"
-                (click)="openEditTrip(trip); $event.stopPropagation()"
-              >
+              <button class="info-btn" (click)="openEditTrip(trip); $event.stopPropagation()">
                 ⓘ
               </button>
               <div class="trip-card-body">
@@ -283,7 +276,6 @@ const CURRENCY_OPTIONS = [
           </div>
         }
       </div>
-
 
       @if (editingTrip(); as et) {
         <div class="modal-backdrop" (click)="closeEditTrip()">
@@ -331,7 +323,7 @@ const CURRENCY_OPTIONS = [
               </div>
               <div class="form-actions">
                 <button type="button" class="btn-secondary" (click)="closeEditTrip()">
-                  {{ 'trips.cancel' | transloco }}
+                  {{ 'common.cancel' | transloco }}
                 </button>
                 <button type="submit" class="btn-primary" [disabled]="editForm.invalid">
                   {{ 'common.save' | transloco }}
@@ -392,23 +384,13 @@ const CURRENCY_OPTIONS = [
         flex: 1;
         min-width: 0;
       }
-      .filter-year select,
-      .filter-month select {
-        padding: 0.5rem 1.75rem 0.5rem 0.6rem;
-        border: 1.5px solid var(--border);
-        border-radius: 10px;
-        font-size: 0.8rem;
-        box-sizing: border-box;
-        background: var(--input-bg);
-        color: var(--text-primary);
-        appearance: none;
-        -webkit-appearance: none;
-      }
       .filter-year {
         width: 78px;
+        flex-shrink: 0;
       }
       .filter-month {
         width: 64px;
+        flex-shrink: 0;
       }
       .filter-country {
         flex: 1;
@@ -888,6 +870,7 @@ export class TripsListComponent implements OnInit {
   pref = inject(PreferenceService);
   fb = inject(FormBuilder);
   private router = inject(Router);
+  private transloco = inject(TranslocoService);
 
   timezoneOptions = TIMEZONE_OPTIONS;
   currencyOptions = CURRENCY_OPTIONS;
@@ -910,6 +893,23 @@ export class TripsListComponent implements OnInit {
     }
     return [...years].sort((a, b) => b - a);
   });
+
+  yearOptions(): { value: string; label: string }[] {
+    return [
+      { value: '', label: this.transloco.translate('trips.filterAllYears') },
+      ...this.availableYears().map((y) => ({ value: String(y), label: String(y) })),
+    ];
+  }
+
+  monthOptions(): { value: string; label: string }[] {
+    return [
+      { value: '', label: this.transloco.translate('trips.filterAllMonths') },
+      ...Array.from({ length: 12 }, (_, i) => {
+        const mo = i + 1;
+        return { value: String(mo), label: String(mo) };
+      }),
+    ];
+  }
 
   filterCountryLabel = computed(
     () => this.countries.find((c) => c.code === this.filterCountryCode())?.nativeName ?? '',

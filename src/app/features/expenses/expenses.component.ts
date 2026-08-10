@@ -56,199 +56,206 @@ interface GrossEntry {
       </header>
 
       @if (showAddModal()) {
-      <div class="modal-backdrop" (click)="closeAddModal()">
-      <div class="modal-card" (click)="$event.stopPropagation()">
-      <!-- OCR 收據掃描 -->
-      <div class="card ocr-card">
-        <h3>📷 {{ 'expenses.scan' | transloco }}</h3>
-        <label class="upload-btn">
-          {{ 'expenses.selectImage' | transloco }}
-          <input type="file" accept="image/*" hidden (change)="scanReceipt($event)" />
-        </label>
-        @if (ocrLoading()) {
-          <div class="ocr-loading">⏳ {{ 'expenses.recognizing' | transloco }}</div>
-        }
-        @if (ocrResult()) {
-          <div class="ocr-result">
-            <p>🔍 {{ 'expenses.recognizedResult' | transloco }}</p>
-            <div class="ocr-fields">
-              <span
-                >{{ 'expenses.amount' | transloco }}：<strong>{{
-                  ocrResult()!.amount ?? ('expenses.notRecognized' | transloco)
-                }}</strong></span
-              >
-              <span
-                >{{ 'expenses.date' | transloco }}：<strong>{{
-                  ocrResult()!.date ?? ('expenses.notRecognized' | transloco)
-                }}</strong></span
-              >
-            </div>
-            <button class="btn-sm" (click)="applyOcr()">
-              {{ 'expenses.applyOcr' | transloco }}
-            </button>
-          </div>
-        }
-      </div>
-
-      <!-- 新增記帳 -->
-      <form [formGroup]="form" (ngSubmit)="addExpense()" class="card">
-        <h3>{{ 'expenses.newExpense' | transloco }}</h3>
-        <div class="form-grid">
-          <div class="form-row span-2">
-            <label>{{ 'expenses.itemName' | transloco }} *</label>
-            <input
-              formControlName="title"
-              [placeholder]="'expenses.itemNamePlaceholder' | transloco"
-            />
-          </div>
-          <div class="form-row">
-            <label>{{ 'expenses.amount' | transloco }} *</label>
-            <input formControlName="amount" type="number" min="0" step="any" />
-            @if (amountConverted() !== null) {
-              <div class="amount-hint">
-                ≈ <strong>{{ amountConverted()! | number: '1.0-0' }}</strong> {{ homeCurrency() }}
-              </div>
-            }
-          </div>
-          <div class="form-row">
-            <label>{{ 'expenses.currency' | transloco }}</label>
-            <select formControlName="currency_code">
-              <option value="TWD">TWD</option>
-              <option value="JPY">JPY</option>
-              <option value="USD">USD</option>
-              <option value="EUR">EUR</option>
-              <option value="THB">THB</option>
-              <option value="KRW">KRW</option>
-              <option value="HKD">HKD</option>
-              <option value="SGD">SGD</option>
-              <option value="MYR">MYR</option>
-              <option value="AUD">AUD</option>
-              <option value="GBP">GBP</option>
-            </select>
-          </div>
-          <div class="form-row">
-            <label>{{ 'expenses.expenseDate' | transloco }} *</label>
-            <input formControlName="expense_date" type="date" />
-          </div>
-          <div class="form-row">
-            <label>{{ 'expenses.payer' | transloco }} *</label>
-            <select formControlName="payer_member_id">
-              @for (m of members(); track m.id) {
-                <option [value]="m.id">{{ m.display_name }}</option>
+        <div class="modal-backdrop" (click)="closeAddModal()">
+          <div class="modal-card" (click)="$event.stopPropagation()">
+            <!-- OCR 收據掃描 -->
+            <div class="card ocr-card">
+              <h3>📷 {{ 'expenses.scan' | transloco }}</h3>
+              <label class="upload-btn">
+                {{ 'expenses.selectImage' | transloco }}
+                <input type="file" accept="image/*" hidden (change)="scanReceipt($event)" />
+              </label>
+              @if (ocrLoading()) {
+                <div class="ocr-loading">⏳ {{ 'expenses.recognizing' | transloco }}</div>
               }
-            </select>
-          </div>
-          <div class="form-row span-2">
-            <label>{{ 'expenses.splitMethod' | transloco }}</label>
-            <div class="split-ctrl-row">
-              <select formControlName="split_type" (change)="onSplitTypeChange()">
-                <option value="EQUAL">{{ 'expenses.splitEqual' | transloco }}</option>
-                <option value="SHARES">{{ 'expenses.splitShares' | transloco }}</option>
-              </select>
-              <div class="person-count-wrap">
-                <span class="person-label">{{ 'expenses.personCount' | transloco }}</span>
-                <input
-                  type="number"
-                  min="1"
-                  max="20"
-                  [value]="personCount()"
-                  (input)="onPersonCountInput($event)"
-                  class="count-input"
-                />
-              </div>
-            </div>
-          </div>
-
-          <!-- 平均分攤預覽 -->
-          @if (splitType() === 'EQUAL' && (form.get('amount')?.value ?? 0) > 0) {
-            <div class="form-row span-2">
-              <div class="per-person-box">
-                {{ 'expenses.perPerson' | transloco }}
-                <strong>{{
-                  (form.get('amount')?.value ?? 0) / personCount() | number: '1.0-2'
-                }}</strong>
-                {{ form.get('currency_code')?.value }}
-                @if (amountConverted() !== null) {
-                  <span class="per-person-conv">
-                    ≈ {{ amountConverted()! / personCount() | number: '1.0-0' }}
-                    {{ homeCurrency() }}
-                  </span>
-                }
-              </div>
-            </div>
-          }
-
-          <!-- 依比例分帳表：只有切換回 EQUAL 才隱藏 -->
-          @if (splitType() === 'SHARES') {
-            <div class="form-row span-2">
-              @if (shareRows().length === 0) {
-                <div class="shares-empty">請先選擇分帳方式或設定人數</div>
-              } @else {
-                <div class="shares-table">
-                  @for (row of shareRows(); track $index; let i = $index) {
-                    <div class="share-row">
-                      <input
-                        class="share-name-input"
-                        [value]="row.name"
-                        (input)="updateShareRowName(i, $any($event.target).value)"
-                        [placeholder]="'expenses.memberNamePlaceholder' | transloco"
-                      />
-                      <div class="share-weight-cell">
-                        <input
-                          type="number"
-                          min="0"
-                          max="100"
-                          [value]="row.weight"
-                          (input)="updateShareRowWeight(i, +$any($event.target).value)"
-                          class="weight-input"
-                        />
-                        <span class="pct-sign">%</span>
-                      </div>
-                      @if ((form.get('amount')?.value ?? 0) > 0) {
-                        <span class="share-amount-cell">
-                          {{
-                            ((form.get('amount')?.value ?? 0) * row.weight) / 100 | number: '1.0-2'
-                          }}
-                          {{ form.get('currency_code')?.value }}
-                          @if (amountConverted() !== null) {
-                            <span class="share-conv"
-                              >≈ {{ (amountConverted()! * row.weight) / 100 | number: '1.0-0' }}
-                              {{ homeCurrency() }}</span
-                            >
-                          }
-                        </span>
-                      }
-                    </div>
-                  }
-                  <div class="weight-sum" [class.bad]="shareWeightSum() !== 100">
-                    {{ sumLabel() }}
-                    @if (shareWeightSum() !== 100) {
-                      <span class="weight-warn">{{ 'expenses.needs100' | transloco }}</span>
-                    }
+              @if (ocrResult()) {
+                <div class="ocr-result">
+                  <p>🔍 {{ 'expenses.recognizedResult' | transloco }}</p>
+                  <div class="ocr-fields">
+                    <span
+                      >{{ 'expenses.amount' | transloco }}：<strong>{{
+                        ocrResult()!.amount ?? ('expenses.notRecognized' | transloco)
+                      }}</strong></span
+                    >
+                    <span
+                      >{{ 'expenses.date' | transloco }}：<strong>{{
+                        ocrResult()!.date ?? ('expenses.notRecognized' | transloco)
+                      }}</strong></span
+                    >
                   </div>
+                  <button class="btn-sm" (click)="applyOcr()">
+                    {{ 'expenses.applyOcr' | transloco }}
+                  </button>
                 </div>
               }
             </div>
-          }
-        </div>
 
-        <div class="form-actions">
-          <button type="button" class="btn-secondary" (click)="closeAddModal()">
-            {{ 'expenses.cancel' | transloco }}
-          </button>
-          <button
-            type="submit"
-            class="btn-primary"
-            [disabled]="
-              form.invalid || submitting() || (splitType() === 'SHARES' && shareWeightSum() !== 100)
-            "
-          >
-            {{ submitting() ? ('expenses.saving' | transloco) : ('expenses.add' | transloco) }}
-          </button>
+            <!-- 新增記帳 -->
+            <form [formGroup]="form" (ngSubmit)="addExpense()" class="card">
+              <h3>{{ 'expenses.newExpense' | transloco }}</h3>
+              <div class="form-grid">
+                <div class="form-row span-2">
+                  <label>{{ 'expenses.itemName' | transloco }} *</label>
+                  <input
+                    formControlName="title"
+                    [placeholder]="'expenses.itemNamePlaceholder' | transloco"
+                  />
+                </div>
+                <div class="form-row">
+                  <label>{{ 'expenses.amount' | transloco }} *</label>
+                  <input formControlName="amount" type="number" min="0" step="any" />
+                  @if (amountConverted() !== null) {
+                    <div class="amount-hint">
+                      ≈ <strong>{{ amountConverted()! | number: '1.0-0' }}</strong>
+                      {{ homeCurrency() }}
+                    </div>
+                  }
+                </div>
+                <div class="form-row">
+                  <label>{{ 'expenses.currency' | transloco }}</label>
+                  <select formControlName="currency_code">
+                    <option value="TWD">TWD</option>
+                    <option value="JPY">JPY</option>
+                    <option value="USD">USD</option>
+                    <option value="EUR">EUR</option>
+                    <option value="THB">THB</option>
+                    <option value="KRW">KRW</option>
+                    <option value="HKD">HKD</option>
+                    <option value="SGD">SGD</option>
+                    <option value="MYR">MYR</option>
+                    <option value="AUD">AUD</option>
+                    <option value="GBP">GBP</option>
+                  </select>
+                </div>
+                <div class="form-row">
+                  <label>{{ 'expenses.expenseDate' | transloco }} *</label>
+                  <input formControlName="expense_date" type="date" />
+                </div>
+                <div class="form-row">
+                  <label>{{ 'expenses.payer' | transloco }} *</label>
+                  <select formControlName="payer_member_id">
+                    @for (m of members(); track m.id) {
+                      <option [value]="m.id">{{ m.display_name }}</option>
+                    }
+                  </select>
+                </div>
+                <div class="form-row span-2">
+                  <label>{{ 'expenses.splitMethod' | transloco }}</label>
+                  <div class="split-ctrl-row">
+                    <select formControlName="split_type" (change)="onSplitTypeChange()">
+                      <option value="EQUAL">{{ 'expenses.splitEqual' | transloco }}</option>
+                      <option value="SHARES">{{ 'expenses.splitShares' | transloco }}</option>
+                    </select>
+                    <div class="person-count-wrap">
+                      <span class="person-label">{{ 'expenses.personCount' | transloco }}</span>
+                      <input
+                        type="number"
+                        min="1"
+                        max="20"
+                        [value]="personCount()"
+                        (input)="onPersonCountInput($event)"
+                        class="count-input"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <!-- 平均分攤預覽 -->
+                @if (splitType() === 'EQUAL' && (form.get('amount')?.value ?? 0) > 0) {
+                  <div class="form-row span-2">
+                    <div class="per-person-box">
+                      {{ 'expenses.perPerson' | transloco }}
+                      <strong>{{
+                        (form.get('amount')?.value ?? 0) / personCount() | number: '1.0-2'
+                      }}</strong>
+                      {{ form.get('currency_code')?.value }}
+                      @if (amountConverted() !== null) {
+                        <span class="per-person-conv">
+                          ≈ {{ amountConverted()! / personCount() | number: '1.0-0' }}
+                          {{ homeCurrency() }}
+                        </span>
+                      }
+                    </div>
+                  </div>
+                }
+
+                <!-- 依比例分帳表：只有切換回 EQUAL 才隱藏 -->
+                @if (splitType() === 'SHARES') {
+                  <div class="form-row span-2">
+                    @if (shareRows().length === 0) {
+                      <div class="shares-empty">請先選擇分帳方式或設定人數</div>
+                    } @else {
+                      <div class="shares-table">
+                        @for (row of shareRows(); track $index; let i = $index) {
+                          <div class="share-row">
+                            <input
+                              class="share-name-input"
+                              [value]="row.name"
+                              (input)="updateShareRowName(i, $any($event.target).value)"
+                              [placeholder]="'expenses.memberNamePlaceholder' | transloco"
+                            />
+                            <div class="share-weight-cell">
+                              <input
+                                type="number"
+                                min="0"
+                                max="100"
+                                [value]="row.weight"
+                                (input)="updateShareRowWeight(i, +$any($event.target).value)"
+                                class="weight-input"
+                              />
+                              <span class="pct-sign">%</span>
+                            </div>
+                            @if ((form.get('amount')?.value ?? 0) > 0) {
+                              <span class="share-amount-cell">
+                                {{
+                                  ((form.get('amount')?.value ?? 0) * row.weight) / 100
+                                    | number: '1.0-2'
+                                }}
+                                {{ form.get('currency_code')?.value }}
+                                @if (amountConverted() !== null) {
+                                  <span class="share-conv"
+                                    >≈
+                                    {{ (amountConverted()! * row.weight) / 100 | number: '1.0-0' }}
+                                    {{ homeCurrency() }}</span
+                                  >
+                                }
+                              </span>
+                            }
+                          </div>
+                        }
+                        <div class="weight-sum" [class.bad]="shareWeightSum() !== 100">
+                          {{ sumLabel() }}
+                          @if (shareWeightSum() !== 100) {
+                            <span class="weight-warn">{{ 'expenses.needs100' | transloco }}</span>
+                          }
+                        </div>
+                      </div>
+                    }
+                  </div>
+                }
+              </div>
+
+              <div class="form-actions">
+                <button type="button" class="btn-secondary" (click)="closeAddModal()">
+                  {{ 'common.cancel' | transloco }}
+                </button>
+                <button
+                  type="submit"
+                  class="btn-primary"
+                  [disabled]="
+                    form.invalid ||
+                    submitting() ||
+                    (splitType() === 'SHARES' && shareWeightSum() !== 100)
+                  "
+                >
+                  {{
+                    submitting() ? ('expenses.saving' | transloco) : ('expenses.add' | transloco)
+                  }}
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
-      </form>
-      </div>
-      </div>
       }
 
       <!-- 費用清單 -->
