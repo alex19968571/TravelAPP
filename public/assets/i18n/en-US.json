@@ -32,6 +32,8 @@
     "filterAllCountries": "All countries",
     "filterAllYears": "Year",
     "filterAllMonths": "Month",
+    "filterYearShort": "Yr",
+    "filterMonthShort": "Mo",
     "deleteConfirm": "Delete this trip? All shopping items and expenses will also be deleted.",
     "timezone": "Timezone",
     "currency": "Currency",

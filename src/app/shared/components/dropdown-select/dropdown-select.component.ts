@@ -78,6 +78,7 @@ export interface DropdownOption {
         border-color: var(--accent);
       }
       .dropdown-label {
+        min-width: 0;
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;

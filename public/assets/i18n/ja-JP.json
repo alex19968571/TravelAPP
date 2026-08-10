@@ -32,6 +32,8 @@
     "filterAllCountries": "すべての国",
     "filterAllYears": "年",
     "filterAllMonths": "月",
+    "filterYearShort": "年",
+    "filterMonthShort": "月",
     "deleteConfirm": "この旅程を削除しますか？関連する買い物リストと経費も削除されます。",
     "timezone": "タイムゾーン",
     "currency": "通貨",

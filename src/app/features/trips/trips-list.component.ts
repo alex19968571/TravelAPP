@@ -858,16 +858,27 @@ export class TripsListComponent implements OnInit {
     return [...years].sort((a, b) => b - a);
   });
 
+  /** 窄螢幕（手機版）用縮寫文字，避免年份/月份篩選欄位被壓縮成兩行 */
+  private isNarrowScreen(): boolean {
+    return typeof window !== 'undefined' && window.innerWidth <= 480;
+  }
+
   yearOptions(): { value: string; label: string }[] {
+    const allLabel = this.transloco.translate(
+      this.isNarrowScreen() ? 'trips.filterYearShort' : 'trips.filterAllYears',
+    );
     return [
-      { value: '', label: this.transloco.translate('trips.filterAllYears') },
+      { value: '', label: allLabel },
       ...this.availableYears().map((y) => ({ value: String(y), label: String(y) })),
     ];
   }
 
   monthOptions(): { value: string; label: string }[] {
+    const allLabel = this.transloco.translate(
+      this.isNarrowScreen() ? 'trips.filterMonthShort' : 'trips.filterAllMonths',
+    );
     return [
-      { value: '', label: this.transloco.translate('trips.filterAllMonths') },
+      { value: '', label: allLabel },
       ...Array.from({ length: 12 }, (_, i) => {
         const mo = i + 1;
         return { value: String(mo), label: String(mo) };

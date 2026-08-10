@@ -32,6 +32,8 @@
     "filterAllCountries": "所有国家",
     "filterAllYears": "年份",
     "filterAllMonths": "月份",
+    "filterYearShort": "年",
+    "filterMonthShort": "月",
     "deleteConfirm": "确定删除此行程？相关购物清单与记账也会一并删除。",
     "timezone": "时区",
     "currency": "货币",
