@@ -6,7 +6,7 @@ import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
 import { Expense, ExpenseSplit, TripMember } from '../../core/models';
 import { ExpenseService } from '../../core/services/expense.service';
 import { ExchangeRateService } from '../../core/services/exchange-rate.service';
-import { OcrService } from '../../core/services/ocr.service';
+import { OcrService, OcrItem } from '../../core/services/ocr.service';
 import { TripService } from '../../core/services/trip.service';
 import { PreferenceService } from '../../core/services/preference.service';
 import { generateId } from '../../core/utils/uuid.util';
@@ -75,21 +75,36 @@ interface GrossEntry {
               @if (ocrLoading()) {
                 <div class="ocr-loading">⏳ {{ 'expenses.recognizing' | transloco }}</div>
               }
-              @if (ocrResult()) {
-                <div class="ocr-result">
-                  <p>🔍 {{ 'expenses.recognizedResult' | transloco }}</p>
+              @if (ocrResult(); as ocr) {
+                <div class="ocr-result" [class.ocr-result--warning]="!ocr.isReceipt">
+                  @if (!ocr.isReceipt) {
+                    <p class="ocr-warning">⚠️ {{ 'expenses.notReceipt' | transloco }}</p>
+                  } @else {
+                    <p>🔍 {{ 'expenses.recognizedResult' | transloco }}</p>
+                  }
                   <div class="ocr-fields">
                     <span
                       >{{ 'expenses.amount' | transloco }}：<strong>{{
-                        ocrResult()!.amount ?? ('expenses.notRecognized' | transloco)
+                        ocr.amount ?? ('expenses.notRecognized' | transloco)
                       }}</strong></span
                     >
                     <span
                       >{{ 'expenses.date' | transloco }}：<strong>{{
-                        ocrResult()!.date ?? ('expenses.notRecognized' | transloco)
+                        ocr.date ?? ('expenses.notRecognized' | transloco)
                       }}</strong></span
                     >
                   </div>
+                  @if (ocr.items.length > 0) {
+                    <div class="ocr-items">
+                      <p class="ocr-items-title">{{ 'expenses.detectedItems' | transloco }}</p>
+                      @for (item of ocr.items; track $index) {
+                        <div class="ocr-item-row">
+                          <span class="ocr-item-name">{{ item.name }}</span>
+                          <span class="ocr-item-price">{{ item.price }}</span>
+                        </div>
+                      }
+                    </div>
+                  }
                   <button class="btn-sm" (click)="applyOcr()">
                     {{ 'expenses.applyOcr' | transloco }}
                   </button>
@@ -454,6 +469,36 @@ interface GrossEntry {
         gap: 1.5rem;
         margin-bottom: 0.75rem;
         font-size: 0.9rem;
+      }
+      .ocr-result--warning {
+        background: #fffaf0;
+        border-color: #dd9933;
+      }
+      .ocr-warning {
+        color: #b7791f;
+      }
+      .ocr-items {
+        margin-bottom: 0.75rem;
+        padding-top: 0.5rem;
+        border-top: 1px dashed #c6f6d5;
+      }
+      .ocr-items-title {
+        font-weight: 600;
+        font-size: 0.85rem;
+        margin: 0 0 0.35rem;
+      }
+      .ocr-item-row {
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.85rem;
+        padding: 0.15rem 0;
+      }
+      .ocr-item-name {
+        color: var(--text-primary);
+      }
+      .ocr-item-price {
+        font-weight: 600;
+        color: #48bb78;
       }
       .btn-sm {
         background: #48bb78;
@@ -895,7 +940,12 @@ export class ExpensesComponent implements OnInit {
     receivable: [],
     payable: [],
   });
-  ocrResult = signal<{ amount: number | null; date: string | null } | null>(null);
+  ocrResult = signal<{
+    amount: number | null;
+    date: string | null;
+    items: OcrItem[];
+    isReceipt: boolean;
+  } | null>(null);
   ocrLoading = signal(false);
   submitting = signal(false);
   showAddModal = signal(false);
@@ -1160,7 +1210,12 @@ export class ExpensesComponent implements OnInit {
     this.ocrLoading.set(true);
     try {
       const result = await this.ocrService.recognize(file);
-      this.ocrResult.set({ amount: result.amount, date: result.date });
+      this.ocrResult.set({
+        amount: result.amount,
+        date: result.date,
+        items: result.items,
+        isReceipt: result.isReceipt,
+      });
     } finally {
       this.ocrLoading.set(false);
     }

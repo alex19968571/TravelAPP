@@ -137,6 +137,8 @@
     "selectImage": "选择收据图片",
     "recognizing": "识别中，请稍候...",
     "recognizedResult": "识别结果（请确认后填入表单）",
+    "notReceipt": "无法识别这张图片是收据，请确认上传图片或手动输入",
+    "detectedItems": "识别到的品项",
     "amount": "金额",
     "notRecognized": "未识别",
     "date": "日期",

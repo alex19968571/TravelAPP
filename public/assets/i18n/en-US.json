@@ -137,6 +137,8 @@
     "selectImage": "Select Receipt Image",
     "recognizing": "Recognizing, please wait...",
     "recognizedResult": "Recognized Result (please confirm and apply)",
+    "notReceipt": "Couldn't recognize this image as a receipt. Please check the image or enter manually",
+    "detectedItems": "Detected Items",
     "amount": "Amount",
     "notRecognized": "Not recognized",
     "date": "Date",

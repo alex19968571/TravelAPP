@@ -41,19 +41,6 @@ import { ExchangeRateService } from '../../core/services/exchange-rate.service';
             {{ destCurrency() }}
           </div>
         </div>
-        <div class="summary">
-          <div class="summary-main">
-            {{ 'shopping.total' | transloco }}
-            <strong>{{ totalAmount() | number: '1.0-0' }}</strong> {{ destCurrency() }} ({{
-              boughtCount()
-            }}/{{ items().length }})
-          </div>
-          @if (showConversion()) {
-            <div class="summary-converted">
-              ≈ {{ totalAmount() * convRate() | number: '1.0-0' }} {{ homeCurrency() }}
-            </div>
-          }
-        </div>
         <button class="btn-icon add-trigger" type="button" (click)="showAddModal.set(true)">
           ＋
         </button>
@@ -170,6 +157,21 @@ import { ExchangeRateService } from '../../core/services/exchange-rate.service';
       }
 
       <!-- 清單 -->
+      <div class="list-toolbar">
+        <div class="summary">
+          <div class="summary-main">
+            {{ 'shopping.total' | transloco }}
+            <strong>{{ totalAmount() | number: '1.0-0' }}</strong> {{ destCurrency() }} ({{
+              boughtCount()
+            }}/{{ items().length }})
+          </div>
+          @if (showConversion()) {
+            <div class="summary-converted">
+              ≈ {{ totalAmount() * convRate() | number: '1.0-0' }} {{ homeCurrency() }}
+            </div>
+          }
+        </div>
+      </div>
       <div class="items-list">
         @for (item of items(); track item.client_record_id) {
           <div class="item-card card" [class.bought]="item.is_bought">
@@ -291,6 +293,11 @@ import { ExchangeRateService } from '../../core/services/exchange-rate.service';
         flex-shrink: 0;
       }
 
+      .list-toolbar {
+        display: flex;
+        justify-content: flex-end;
+        margin-bottom: 0.6rem;
+      }
       .summary {
         text-align: right;
       }

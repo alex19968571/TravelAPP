@@ -137,6 +137,8 @@
     "selectImage": "選擇收據圖片",
     "recognizing": "辨識中，請稍候...",
     "recognizedResult": "辨識結果（請確認後填入表單）",
+    "notReceipt": "無法辨識這張圖片是收據，請確認上傳圖片或手動輸入",
+    "detectedItems": "辨識到的品項",
     "amount": "金額",
     "notRecognized": "未辨識",
     "date": "日期",

@@ -137,6 +137,8 @@
     "selectImage": "レシート画像を選択",
     "recognizing": "認識中です、しばらくお待ちください...",
     "recognizedResult": "認識結果（確認してフォームに反映）",
+    "notReceipt": "この画像はレシートと認識できませんでした。画像をご確認いただくか、手動で入力してください",
+    "detectedItems": "認識された項目",
     "amount": "金額",
     "notRecognized": "未認識",
     "date": "日付",

@@ -6,7 +6,6 @@ import {
   Input,
   OnDestroy,
   Output,
-  computed,
   forwardRef,
   inject,
   signal,
@@ -147,10 +146,10 @@ export class DropdownSelectComponent implements ControlValueAccessor, OnDestroy 
   private onChangeFn: (v: unknown) => void = () => {};
   private onTouchedFn: () => void = () => {};
 
-  selectedLabel = computed(() => {
+  selectedLabel(): string {
     const found = this.options.find((o) => o.value === this.value);
     return found ? found.label : this.placeholder;
-  });
+  }
 
   writeValue(v: unknown): void {
     this.value = v;
