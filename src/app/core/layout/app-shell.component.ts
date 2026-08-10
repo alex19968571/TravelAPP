@@ -16,7 +16,13 @@ import { PreferenceService } from '../services/preference.service';
           <span class="logo-icon">🧳</span>
           <span class="logo-text">Tt</span>
         </a>
-        <div class="clock">{{ pref.clockDisplay() }}</div>
+        <div class="top-right">
+          <div class="dest-indicator">
+            <span class="fi fi-{{ pref.country().code.toLowerCase() }}"></span>
+            <span class="dest-code">{{ pref.country().code }}</span>
+          </div>
+          <div class="clock">{{ pref.clockDisplay() }}</div>
+        </div>
       </div>
 
       <div class="shell-body">
@@ -145,6 +151,25 @@ import { PreferenceService } from '../services/preference.service';
         font-weight: 800;
         color: var(--accent);
         letter-spacing: 0.02em;
+      }
+      .top-right {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+      .dest-indicator {
+        display: flex;
+        align-items: center;
+        gap: 0.3rem;
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: var(--text-secondary);
+        white-space: nowrap;
+      }
+      .dest-indicator .fi {
+        width: 1.15em;
+        border-radius: 2px;
+        flex-shrink: 0;
       }
       .clock {
         font-size: 0.8rem;

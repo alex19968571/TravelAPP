@@ -36,10 +36,6 @@ import { ExchangeRateService } from '../../core/services/exchange-rate.service';
         </a>
         <div class="header-mid">
           <h1>🛍️ {{ 'shopping.title' | transloco }}</h1>
-          <div class="currency-indicator">
-            <span class="fi fi-{{ pref.countryCode().toLowerCase() }}"></span>
-            {{ destCurrency() }}
-          </div>
         </div>
         <button class="btn-icon add-trigger" type="button" (click)="showAddModal.set(true)">
           ＋
@@ -89,8 +85,10 @@ import { ExchangeRateService } from '../../core/services/exchange-rate.service';
                 <label>{{ 'shopping.unitPrice' | transloco }}</label>
                 <div class="dual-price-row">
                   <div class="price-col">
-                    <span class="currency-label">{{ destCurrency() }}</span>
-                    <input formControlName="unit_price" type="number" min="0" step="any" />
+                    <div class="input-suffix-wrap">
+                      <input formControlName="unit_price" type="number" min="0" step="any" />
+                      <span class="currency-suffix">{{ destCurrency() }}</span>
+                    </div>
                   </div>
                   @if (showConversion()) {
                     <button
@@ -102,14 +100,16 @@ import { ExchangeRateService } from '../../core/services/exchange-rate.service';
                       ⇄
                     </button>
                     <div class="price-col">
-                      <span class="currency-label">{{ homeCurrency() }}</span>
-                      <input
-                        type="number"
-                        [value]="unitPriceHome() ?? ''"
-                        readonly
-                        class="readonly-input"
-                        placeholder="—"
-                      />
+                      <div class="input-suffix-wrap">
+                        <input
+                          type="number"
+                          [value]="unitPriceHome() ?? ''"
+                          readonly
+                          class="readonly-input"
+                          placeholder="—"
+                        />
+                        <span class="currency-suffix">{{ homeCurrency() }}</span>
+                      </div>
                     </div>
                   }
                 </div>
@@ -276,23 +276,6 @@ import { ExchangeRateService } from '../../core/services/exchange-rate.service';
         margin: 0;
       }
 
-      .currency-indicator {
-        display: flex;
-        align-items: center;
-        gap: 0.3rem;
-        font-size: 0.8rem;
-        font-weight: 700;
-        color: var(--accent);
-        background: var(--accent-light);
-        padding: 0.2rem 0.6rem;
-        border-radius: 6px;
-      }
-      .fi {
-        width: 1.2em;
-        border-radius: 2px;
-        flex-shrink: 0;
-      }
-
       .list-toolbar {
         display: flex;
         justify-content: flex-end;
@@ -362,11 +345,24 @@ import { ExchangeRateService } from '../../core/services/exchange-rate.service';
         gap: 0.2rem;
         min-width: 0;
       }
-      .currency-label {
+      .input-suffix-wrap {
+        position: relative;
+      }
+      .input-suffix-wrap input {
+        width: 100%;
+        padding-right: 3.2rem;
+        box-sizing: border-box;
+      }
+      .currency-suffix {
+        position: absolute;
+        right: 0.75rem;
+        top: 50%;
+        transform: translateY(-50%);
         font-size: 0.72rem;
         font-weight: 700;
         color: var(--accent);
         letter-spacing: 0.03em;
+        pointer-events: none;
       }
       .convert-btn {
         background: var(--accent-light);

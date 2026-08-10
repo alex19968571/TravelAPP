@@ -127,22 +127,26 @@ interface GrossEntry {
                     [placeholder]="'expenses.itemNamePlaceholder' | transloco"
                   />
                 </div>
-                <div class="form-row">
+                <div class="form-row span-2">
                   <label>{{ 'expenses.amount' | transloco }} *</label>
-                  <input formControlName="amount" type="number" min="0" step="any" />
+                  <div class="amount-input-wrap">
+                    <input
+                      formControlName="amount"
+                      type="number"
+                      min="0"
+                      step="any"
+                      class="amount-input-lg"
+                    />
+                    <span class="amount-currency-suffix">{{
+                      form.get('currency_code')?.value
+                    }}</span>
+                  </div>
                   @if (amountConverted() !== null) {
                     <div class="amount-hint">
                       ≈ <strong>{{ amountConverted()! | number: '1.0-0' }}</strong>
                       {{ homeCurrency() }}
                     </div>
                   }
-                </div>
-                <div class="form-row">
-                  <label>{{ 'expenses.currency' | transloco }}</label>
-                  <app-dropdown-select
-                    [options]="currencyDropdownOptions"
-                    formControlName="currency_code"
-                  ></app-dropdown-select>
                 </div>
                 <div class="form-row">
                   <label>{{ 'expenses.expenseDate' | transloco }} *</label>
@@ -547,6 +551,26 @@ interface GrossEntry {
       }
 
       /* 金額換算提示 */
+      .amount-input-wrap {
+        position: relative;
+      }
+      .amount-input-lg {
+        width: 100%;
+        font-size: 1.6rem;
+        font-weight: 700;
+        padding: 0.75rem 4.2rem 0.75rem 0.875rem;
+        box-sizing: border-box;
+      }
+      .amount-currency-suffix {
+        position: absolute;
+        right: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        font-size: 1.05rem;
+        font-weight: 700;
+        color: var(--accent);
+        pointer-events: none;
+      }
       .amount-hint {
         margin-top: 0.4rem;
         font-size: 0.82rem;
@@ -957,20 +981,6 @@ export class ExpensesComponent implements OnInit {
   ocrLoading = signal(false);
   submitting = signal(false);
   showAddModal = signal(false);
-
-  readonly currencyDropdownOptions = [
-    'TWD',
-    'JPY',
-    'USD',
-    'EUR',
-    'THB',
-    'KRW',
-    'HKD',
-    'SGD',
-    'MYR',
-    'AUD',
-    'GBP',
-  ].map((c) => ({ value: c, label: c }));
 
   payerDropdownOptions(): { value: string; label: string }[] {
     return this.members().map((m) => ({ value: m.id, label: m.display_name }));
