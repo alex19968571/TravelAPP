@@ -50,10 +50,8 @@ const KEYPAD_ROWS: string[][] = [
                 }
               </div>
             </div>
-            <div class="amount-row">
-              <span class="amount">{{ amountStr() }}</span>
-              <span class="currency-code">{{ leftCountry().currency }}</span>
-            </div>
+            <div class="amount">{{ amountStr() }}</div>
+            <div class="currency-code">{{ leftCountry().currency }}</div>
           </div>
 
           <button class="swap-btn" (click)="swap()">⇄</button>
@@ -79,10 +77,8 @@ const KEYPAD_ROWS: string[][] = [
                 }
               </div>
             </div>
-            <div class="amount-row">
-              <span class="amount converted">{{ convertedAmount() | number: '1.0-2' }}</span>
-              <span class="currency-code">{{ rightCountry().currency }}</span>
-            </div>
+            <div class="amount converted">{{ convertedAmount() | number: '1.0-2' }}</div>
+            <div class="currency-code">{{ rightCountry().currency }}</div>
           </div>
         </div>
 
@@ -91,11 +87,12 @@ const KEYPAD_ROWS: string[][] = [
           {{ rightCountry().currency }}
         </div>
 
-        <!-- 計算過程（逐行顯示，舊紀錄往上滑動消失） -->
+        <!-- 計算過程（輸入同時即時同步顯示，逐行顯示，舊紀錄往上滑動消失） -->
         <div class="calc-history" #historyEl>
           @for (line of history(); track $index) {
             <div class="calc-history-line">{{ line }}</div>
           }
+          <div class="calc-history-line calc-history-current">{{ currentLine() }}</div>
         </div>
 
         <!-- 下方：計算機鍵盤（iPhone 計算機版面，支援四則運算並即時換匯） -->
@@ -188,15 +185,8 @@ const KEYPAD_ROWS: string[][] = [
         align-items: center;
         gap: 0.35rem;
       }
-      .amount-row {
-        display: flex;
-        align-items: baseline;
-        justify-content: center;
-        flex-wrap: wrap;
-        gap: 0.35rem;
-      }
       .amount {
-        font-size: 2rem;
+        font-size: 1.5rem;
         font-weight: 700;
         color: var(--text-primary);
         font-variant-numeric: tabular-nums;
@@ -207,7 +197,7 @@ const KEYPAD_ROWS: string[][] = [
         color: var(--accent);
       }
       .currency-code {
-        font-size: 1.05rem;
+        font-size: 0.8rem;
         color: var(--text-secondary);
         font-weight: 600;
       }
@@ -324,7 +314,7 @@ const KEYPAD_ROWS: string[][] = [
       }
 
       .calc-history {
-        height: 4.2rem;
+        height: 3.8rem;
         overflow-y: auto;
         overflow-x: hidden;
         margin-bottom: 0.75rem;
@@ -338,10 +328,14 @@ const KEYPAD_ROWS: string[][] = [
       .calc-history-line {
         text-align: right;
         font-family: var(--font-mono);
-        font-size: 0.8rem;
+        font-size: 1.1rem;
         color: var(--text-secondary);
-        line-height: 1.4rem;
+        line-height: 1.9rem;
         white-space: nowrap;
+      }
+      .calc-history-current {
+        color: var(--text-primary);
+        font-weight: 600;
       }
 
       .keypad {
@@ -427,6 +421,15 @@ export class ExchangeComponent implements OnInit, AfterViewInit {
 
   convertedAmount = computed(() => (parseFloat(this.amountStr()) || 0) * this.rate());
 
+  currentLine = computed(() => {
+    const op = this.pendingOp();
+    const pending = this.pendingValue();
+    if (op !== null && pending !== null) {
+      return `${this.formatResult(pending)} ${op} ${this.amountStr()}`;
+    }
+    return this.amountStr();
+  });
+
   async ngOnInit(): Promise<void> {
     await this.rateService.refreshIfNeeded();
     await this.refreshRate();
@@ -504,6 +507,7 @@ export class ExchangeComponent implements OnInit, AfterViewInit {
     if (key === '⌫') {
       const next = this.amountStr().slice(0, -1);
       this.amountStr.set(next === '' || next === '-' ? '0' : next);
+      this.scrollHistoryToBottom();
       return;
     }
     let current = this.amountStr();
@@ -512,8 +516,12 @@ export class ExchangeComponent implements OnInit, AfterViewInit {
       this.awaitingOperand.set(false);
     }
     if (key === '.') {
-      if (current.includes('.')) return;
+      if (current.includes('.')) {
+        this.scrollHistoryToBottom();
+        return;
+      }
       this.amountStr.set(`${current}.`);
+      this.scrollHistoryToBottom();
       return;
     }
     if (current === '0') {
@@ -521,6 +529,7 @@ export class ExchangeComponent implements OnInit, AfterViewInit {
     } else {
       this.amountStr.set(current + key);
     }
+    this.scrollHistoryToBottom();
   }
 
   clear(): void {
@@ -569,6 +578,10 @@ export class ExchangeComponent implements OnInit, AfterViewInit {
 
   private pushHistory(line: string): void {
     this.history.update((h) => [...h, line]);
+    this.scrollHistoryToBottom();
+  }
+
+  private scrollHistoryToBottom(): void {
     setTimeout(() => {
       const el = this.historyEl?.nativeElement;
       if (el) el.scrollTop = el.scrollHeight;
@@ -578,11 +591,13 @@ export class ExchangeComponent implements OnInit, AfterViewInit {
   percent(): void {
     const current = parseFloat(this.amountStr()) || 0;
     this.amountStr.set(this.formatResult(current / 100));
+    this.scrollHistoryToBottom();
   }
 
   toggleSign(): void {
     const current = parseFloat(this.amountStr()) || 0;
     this.amountStr.set(this.formatResult(-current));
+    this.scrollHistoryToBottom();
   }
 
   private calculate(a: number, b: number, op: string): number {

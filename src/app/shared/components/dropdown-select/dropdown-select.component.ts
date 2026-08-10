@@ -4,6 +4,7 @@ import {
   EventEmitter,
   HostListener,
   Input,
+  OnDestroy,
   Output,
   computed,
   forwardRef,
@@ -131,7 +132,9 @@ export interface DropdownOption {
     `,
   ],
 })
-export class DropdownSelectComponent implements ControlValueAccessor {
+export class DropdownSelectComponent implements ControlValueAccessor, OnDestroy {
+  private static openInstance: DropdownSelectComponent | null = null;
+
   private elRef = inject(ElementRef<HTMLElement>);
 
   @Input() options: DropdownOption[] = [];
@@ -160,7 +163,22 @@ export class DropdownSelectComponent implements ControlValueAccessor {
   }
 
   toggle(): void {
-    this.open.set(!this.open());
+    if (this.open()) {
+      this.close();
+      return;
+    }
+    if (DropdownSelectComponent.openInstance && DropdownSelectComponent.openInstance !== this) {
+      DropdownSelectComponent.openInstance.close();
+    }
+    DropdownSelectComponent.openInstance = this;
+    this.open.set(true);
+  }
+
+  close(): void {
+    this.open.set(false);
+    if (DropdownSelectComponent.openInstance === this) {
+      DropdownSelectComponent.openInstance = null;
+    }
   }
 
   select(v: unknown): void {
@@ -168,13 +186,19 @@ export class DropdownSelectComponent implements ControlValueAccessor {
     this.onChangeFn(v);
     this.onTouchedFn();
     this.selectionChange.emit(v);
-    this.open.set(false);
+    this.close();
+  }
+
+  ngOnDestroy(): void {
+    if (DropdownSelectComponent.openInstance === this) {
+      DropdownSelectComponent.openInstance = null;
+    }
   }
 
   @HostListener('document:click', ['$event'])
   onDocumentClick(e: MouseEvent): void {
-    if (!this.elRef.nativeElement.contains(e.target as Node)) {
-      this.open.set(false);
+    if (this.open() && !this.elRef.nativeElement.contains(e.target as Node)) {
+      this.close();
     }
   }
 }
