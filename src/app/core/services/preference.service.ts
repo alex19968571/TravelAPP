@@ -192,6 +192,7 @@ export interface ColorOption {
 }
 
 export const COLOR_OPTIONS: ColorOption[] = [
+  { id: 'gold', label: '黃銅金', accent: '#b8874a', accentLight: '#f5ecdc', accentDark: '#4a3a22' },
   { id: 'purple', label: '紫藍', accent: '#667eea', accentLight: '#f0f0ff', accentDark: '#3a3d8c' },
   { id: 'indigo', label: '靛藍', accent: '#4361ee', accentLight: '#eef0ff', accentDark: '#2a3bb0' },
   { id: 'mint', label: '薄荷', accent: '#06d6a0', accentLight: '#e8fff8', accentDark: '#048f6a' },
@@ -228,7 +229,7 @@ export class PreferenceService {
   private transloco = inject(TranslocoService);
 
   readonly theme = signal<Theme>(load('pref_theme', 'light'));
-  readonly colorId = signal<string>(load('pref_color', 'purple'));
+  readonly colorId = signal<string>(load('pref_color', 'gold'));
   readonly customColorHex = signal<string>(load('pref_custom_color', '#667eea'));
   readonly fontSize = signal<FontSize>(load('pref_fontSize', 'md'));
   readonly countryCode = signal<string>(load('pref_country', 'TW'));

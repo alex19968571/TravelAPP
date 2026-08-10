@@ -177,14 +177,17 @@ const CURRENCY_OPTIONS = [
               >
                 ⓘ
               </button>
-              <div class="trip-info">
-                <h3>{{ trip.title }}</h3>
-                @if (formatDateRange(trip); as range) {
-                  <div class="trip-dates">📅 {{ range }}</div>
-                }
-                <div class="trip-meta">
-                  <span>🌏 {{ trip.target_timezone }}</span>
-                  <span>💰 {{ trip.base_currency }}</span>
+              <div class="trip-card-body">
+                <div class="trip-info">
+                  <div class="trip-route">{{ trip.target_timezone }}</div>
+                  <h3>{{ trip.title }}</h3>
+                </div>
+                <div class="trip-perf"></div>
+                <div class="trip-stub">
+                  @if (formatDateRange(trip); as range) {
+                    <div class="trip-dates">{{ range }}</div>
+                  }
+                  <div class="trip-currency">{{ trip.base_currency }}</div>
                 </div>
               </div>
               <div class="trip-nav desktop-only">
@@ -505,31 +508,88 @@ const CURRENCY_OPTIONS = [
         display: none;
       }
       .trip-card.card {
-        padding: 1.25rem 1.5rem;
+        padding: 0;
         margin-bottom: 0;
         position: relative;
         display: flex;
-        align-items: center;
-        gap: 1rem;
-        transition: transform 0.2s ease;
+        flex-direction: column;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        overflow: hidden;
+      }
+      .trip-card.card:hover {
+        box-shadow: 0 12px 28px var(--shadow);
+      }
+      .trip-card-body {
+        display: flex;
+        align-items: stretch;
       }
       .trip-info {
         flex: 1;
         cursor: pointer;
         min-width: 0;
+        padding: 1.1rem 1.1rem 1rem 1.25rem;
+      }
+      .trip-route {
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--accent);
+        margin-bottom: 0.3rem;
       }
       .trip-info h3 {
-        font-size: 1.2rem;
-        font-weight: 600;
-        margin: 0 0 0.4rem;
+        font-size: 1.15rem;
+        font-weight: 400;
+        margin: 0;
         color: var(--text-primary);
         padding-right: 1.5rem;
       }
+      .trip-perf {
+        position: relative;
+        width: 1px;
+        flex-shrink: 0;
+        background-image: linear-gradient(var(--border) 60%, transparent 0%);
+        background-size: 1px 8px;
+        background-repeat: repeat-y;
+      }
+      .trip-perf::before,
+      .trip-perf::after {
+        content: '';
+        position: absolute;
+        left: -7px;
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        background: var(--bg);
+        border: 1px solid var(--border);
+      }
+      .trip-perf::before { top: -7px; }
+      .trip-perf::after { bottom: -7px; }
+      .trip-stub {
+        flex-shrink: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 0.2rem;
+        padding: 1rem 1.25rem;
+        min-width: 84px;
+        cursor: pointer;
+      }
       .trip-dates {
-        color: var(--accent);
-        font-size: 0.85rem;
+        font-family: var(--font-mono);
+        font-variant-numeric: tabular-nums;
+        color: var(--text-primary);
+        font-size: 0.82rem;
         font-weight: 600;
-        margin-bottom: 0.3rem;
+        white-space: nowrap;
+      }
+      .trip-currency {
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        color: var(--accent);
+        font-weight: 700;
+        letter-spacing: 0.04em;
       }
       .trip-meta {
         display: flex;

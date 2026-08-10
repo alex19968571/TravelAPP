@@ -1,16 +1,18 @@
 /* ── 設計系統 CSS 變數 ── */
 :root {
-  --accent:          #667eea;
-  --accent-light:    #f0f0ff;
+  --accent:          #b8874a;
+  --accent-light:    #f5ecdc;
   --font-size-base:  16px;
+  --font-display:    Georgia, 'Iowan Old Style', 'Palatino Linotype', 'Noto Serif TC', serif;
+  --font-mono:       ui-monospace, 'SF Mono', 'Cascadia Code', 'Roboto Mono', monospace;
 
   /* 淺色主題（預設） */
-  --bg:              #f5f6fa;
+  --bg:              #f7f4ee;
   --surface:         #ffffff;
-  --text-primary:    #1a1a2e;
-  --text-secondary:  #666666;
-  --border:          #dddddd;
-  --shadow:          rgba(0, 0, 0, 0.08);
+  --text-primary:    #14213d;
+  --text-secondary:  #5b6472;
+  --border:          #e4dfd3;
+  --shadow:          rgba(20, 33, 61, 0.08);
   --input-bg:        #ffffff;
   --header-bg:       #ffffff;
   --icon-bg:         rgba(120, 120, 140, 0.14);
@@ -18,16 +20,24 @@
 }
 
 [data-theme='dark'] {
-  --bg:              #0e0e1a;
-  --surface:         #1a1a2e;
-  --text-primary:    #e8e8f0;
-  --text-secondary:  #9090aa;
-  --border:          #2e2e4a;
-  --shadow:          rgba(0, 0, 0, 0.5);
+  --bg:              #12151f;
+  --surface:         #1a1f2e;
+  --text-primary:    #eef0f6;
+  --text-secondary:  #93a0b4;
+  --border:          #2b3143;
+  --shadow:          rgba(0, 0, 0, 0.4);
   --input-bg:        #12121e;
-  --header-bg:       #1a1a2e;
+  --header-bg:       #1a1f2e;
   --icon-bg:         rgba(180, 180, 200, 0.16);
   --icon-bg-hover:   rgba(180, 180, 200, 0.28);
+}
+
+/* ── 標題統一改用襯線字體，帶出旅行雜誌質感 ── */
+h1, h2, h3,
+.logo-text,
+.page-title {
+  font-family: var(--font-display);
+  font-weight: 400;
 }
 
 /* ── Reset ── */

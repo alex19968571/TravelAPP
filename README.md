@@ -1,59 +1,220 @@
 # TravelApp
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 22.0.7.
+一款以「行程規劃」為核心的旅行工具 App，整合景點地圖排程、購物清單、記帳分帳、多幣別即時換算、行程成員邀請等功能，支援多語系（繁中／簡中／日文／英文）與深色模式。前端以 Angular 21 + Signal 開發，資料儲存於 Supabase（PostgreSQL），並透過本機快取與同步佇列支援離線優先（offline-first）操作。
 
-## Development server
+## 目錄
 
-To start a local development server, run:
+- [技術架構](#技術架構)
+- [功能總覽](#功能總覽)
+  - [帳號與登入](#1-帳號與登入)
+  - [我的行程](#2-我的行程)
+  - [景點行程](#3-景點行程)
+  - [行程首頁（單一行程總覽）](#4-行程首頁單一行程總覽)
+  - [購物清單](#5-購物清單)
+  - [記帳分帳](#6-記帳分帳)
+  - [行程成員與邀請](#7-行程成員與邀請)
+  - [換匯計算機](#8-換匯計算機)
+  - [帳戶](#9-帳戶)
+  - [設定](#10-設定)
+  - [多語系](#11-多語系)
+  - [離線與跨裝置同步](#12-離線與跨裝置同步)
+- [專案結構](#專案結構)
+- [開發環境設定](#開發環境設定)
+- [常用指令](#常用指令)
+
+---
+
+## 技術架構
+
+| 項目 | 說明 |
+|---|---|
+| 前端框架 | Angular 21（Standalone Component + Signal，`standalone: true`） |
+| 語言 | TypeScript |
+| 資料庫 / 後端 | Supabase（PostgreSQL + Auth + Storage） |
+| 地圖服務 | Google Maps JavaScript API（地點搜尋、路線規劃、交通時間估算） |
+| 匯率資料 | 第三方匯率 API（`ExchangeRateService`） |
+| 圖片辨識 | OCR（`OcrService`，用於記帳分帳的收據辨識） |
+| 多語系 | `@jsverse/transloco`，語系檔位於 `public/assets/i18n/` |
+| 本機快取 / 離線同步 | Dexie（IndexedDB）+ 自訂 `SyncEngineService` 佇列 |
+| 樣式 | 純 CSS 變數設計系統（`src/styles.scss`），無 UI 元件庫依賴 |
+| 部署 | GitHub Pages |
+
+---
+
+## 功能總覽
+
+### 1. 帳號與登入
+
+- 支援以 **Google 帳號** 或 **Apple 帳號** 登入（`login.component.ts` / `auth.service.ts`）
+- 登入後由 `authGuard` 保護所有行程相關頁面，未登入會導回登入頁
+- 可透過「邀請連結／邀請碼」直接加入他人建立的行程（`join-trip.component.ts`），登入後自動完成加入流程
+
+### 2. 我的行程
+
+路徑：`/trips`（App 首頁）
+
+- 以卡片列表顯示使用者所有行程，包含行程名稱、去回程日期、目的地時區、基礎貨幣
+- **新增行程**：點擊右上角「＋」，可輸入行程名稱、去程／回程日期時間、目的地時區、行程貨幣
+- **加入行程**：於同一選單輸入他人分享的邀請碼即可加入
+- **編輯行程**：點擊卡片右上角「ⓘ」，可修改行程名稱、日期時間、時區、貨幣
+- **刪除行程**：手機／平板於卡片上左滑即可顯示刪除按鈕；桌面版點擊卡片右上角開啟操作選單
+- 每張行程卡片下方提供四個快速入口：**景點行程**、**購物清單**、**記帳分帳**、**行程成員**
+- 點擊卡片本體會直接進入「行程首頁」（該行程的每日行程總覽）
+
+### 3. 景點行程
+
+路徑：`/trips/:id/itinerary`
+
+- 內嵌 Google 地圖，可透過關鍵字搜尋地點，或直接點擊地圖新增景點
+- 新增景點時可指定「加入日期」（下拉選單，對應行程天數）與「插入順序」（該天第幾個景點）
+- 每個景點可上傳一張圖片、填寫備註
+- 編輯既有景點：可修改名稱、備註、所屬日期、更換圖片
+- 地圖上會依景點所屬日期以不同顏色標示，並繪製當日路線（Polyline）
+- 若定位失敗，會自動 fallback 使用 Nominatim（OpenStreetMap）地理編碼，確保沒有 Google API 額度也能查詢地點
+
+### 4. 行程首頁（單一行程總覽）
+
+路徑：`/trips/:id`
+
+- 以「日期分頁」切換檢視每一天的景點清單，日期分頁等比例填滿整行，支援左右箭頭捲動（桌面版）
+- **拖曳排序**：每個景點卡片提供拖曳把手，可透過滑鼠或觸控直接拖曳調整景點順序（同時支援桌面與行動裝置）；順序異動後，該天所有景點間的交通方式與時間會自動重設為預設值，避免資訊對不上
+- **景點間交通資訊**：可為相鄰兩個景點設定交通方式（步行／開車／騎車／大眾運輸／飛機／自訂），支援的方式點擊「自動帶入時間」可呼叫 Google Directions API 自動估算所需時間；查無路線時會顯示提示訊息並可改用自訂時間
+- 點擊景點卡片可直接開啟編輯視窗（名稱、日期、備註、圖片）
+- 右下角浮動按鈕可快速跳轉回「景點行程」頁面新增新景點
+
+### 5. 購物清單
+
+路徑：`/trips/:id/shopping`
+
+- 依行程建立採買清單，記錄品項名稱、數量、單價、幣別
+- 可勾選「已購買」狀態，方便旅途中對照清單採買
+- 支援拍照／上傳收據以 OCR 辨識，自動帶出品項與金額（`OcrService`）
+- 自動依當前設定的貨幣換算總金額
+
+### 6. 記帳分帳
+
+路徑：`/trips/:id/expenses`
+
+- 記錄每一筆旅行支出：金額、幣別、類別、付款人、分攤成員
+- 支援拍照上傳收據並透過 OCR 自動辨識金額，減少手動輸入
+- 自動依成員分攤比例計算「誰欠誰多少錢」，並依使用者目前所在國家的貨幣即時換算顯示
+- 依日期彙整每日花費，並提供整趟行程的總支出統計
+
+### 7. 行程成員與邀請
+
+路徑：`/trips/:id/members`
+
+- 顯示目前所有行程成員與角色（可編輯／僅檢視）
+- 產生「邀請碼」或「邀請連結」，可直接複製分享給朋友加入行程
+- 具管理權限者可移除成員（手機／平板可用左滑刪除）
+
+### 8. 換匯計算機
+
+路徑：`/exchange`
+
+- 上方左右各選擇一個國家（幣別），中間按鈕可一鍵互換左右幣別
+- 下方提供計算機鍵盤，輸入金額後即時換算並顯示匯率（例：`1 TWD ≈ 4.5 JPY`）
+- 幣別清單與即時匯率透過 `ExchangeRateService` 取得
+
+### 9. 帳戶
+
+路徑：`/account`
+
+- 更換大頭貼：可上傳自訂圖片，或從內建的多組預設圖示／色塊中挑選
+- 顯示並可切換「當前所在國家」（會影響換匯目標幣別與 UI 語系）
+- 登出帳號
+
+### 10. 設定
+
+路徑：`/settings`
+
+- **主題**：淺色／深色模式切換
+- **主題色**：提供多組預設配色（黃銅金／紫藍／靛藍／薄荷／珊瑚／琥珀／石板）供選擇，亦可自訂任意色碼
+- **字級**：小／中／大／特大，全站即時套用
+- **目的地國家 / 語言**：切換後會同步影響 UI 顯示語言與時間格式
+- 底部列有各廠站安裝程式／相關系統的快速連結（依部署環境設定）
+
+### 11. 多語系
+
+- 支援 **繁體中文 / 簡體中文 / 日文 / 英文** 四種語系，語系檔位於 `public/assets/i18n/{zh-TW,zh-CN,ja-JP,en-US}.json`
+- 語系會依使用者於「設定」頁選擇的目的地國家自動切換，也可能透過瀏覽器語言自動偵測
+
+### 12. 離線與跨裝置同步
+
+- 所有行程、景點、購物清單、記帳資料皆先寫入本機 IndexedDB（Dexie），確保無網路時仍可繼續操作
+- `SyncEngineService` 會將異動排入佇列，恢復連線後自動同步回 Supabase，並將其他成員的異動同步下來，達成多人協作即時更新
+
+---
+
+## 專案結構
+
+```
+TravelApp/
+├─ public/assets/i18n/        # 多語系 JSON 檔（zh-TW / zh-CN / ja-JP / en-US）
+├─ src/
+│  ├─ app/
+│  │  ├─ core/
+│  │  │  ├─ guards/           # 路由守衛（authGuard）
+│  │  │  ├─ layout/           # App Shell（頂部列 + 側邊欄／底部選單）
+│  │  │  ├─ models/           # 資料模型（Trip、ItineraryItem、ShoppingItem…）
+│  │  │  ├─ services/         # 商業邏輯服務（Trip、Maps、Exchange、Sync…）
+│  │  │  └─ utils/
+│  │  ├─ features/
+│  │  │  ├─ auth/             # 登入、加入行程
+│  │  │  ├─ trips/            # 我的行程、行程首頁、行程成員
+│  │  │  ├─ itinerary/        # 景點行程（地圖 + 景點編輯）
+│  │  │  ├─ shopping/         # 購物清單
+│  │  │  ├─ expenses/         # 記帳分帳
+│  │  │  ├─ exchange/         # 換匯計算機
+│  │  │  ├─ account/          # 帳戶
+│  │  │  └─ settings/         # 設定
+│  │  ├─ app.routes.ts        # 全站路由設定
+│  │  └─ app.config.ts
+│  ├─ environments/           # Supabase / Google Maps API 金鑰設定
+│  └─ styles.scss             # 全域設計系統（CSS 變數：色彩、字體、深色主題）
+└─ supabase/                  # 資料庫 Migration SQL
+```
+
+---
+
+## 開發環境設定
+
+1. **安裝套件**
+   ```bash
+   npm install
+   ```
+
+2. **設定環境變數**
+   於 `src/environments/environment.ts`（開發）與 `environment.prod.ts`（正式）填入：
+   - `supabaseUrl` / `supabaseAnonKey`：Supabase 專案的 API 網址與金鑰
+   - `googleMapsApiKey`：Google Maps JavaScript API 金鑰（需啟用 Maps、Places、Directions、Geocoding API）
+
+3. **啟動本機開發伺服器**
+   ```bash
+   ng serve
+   ```
+   開啟瀏覽器至 `http://localhost:4200/`，程式碼變更會自動重新載入。
+
+4. **資料庫初始化**
+   `supabase/` 資料夾內為資料表結構的 Migration SQL，依序於 Supabase 專案的 SQL Editor 執行即可建立所需資料表。
+
+---
+
+## 常用指令
 
 ```bash
+# 安裝套件
+npm install
+
+# 開發模式（本機伺服器）
 ng serve
-```
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
-
-## Code scaffolding
-
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
-
-```bash
-ng generate component component-name
-```
-
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
-
-```bash
-ng generate --help
-```
-
-## Building
-
-To build the project run:
-
-```bash
+# 正式建置（輸出至 dist/）
 ng build
-```
 
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
-
-## Running unit tests
-
-To execute unit tests with the [Vitest](https://vitest.dev/) test runner, use the following command:
-
-```bash
+# 執行單元測試（Vitest）
 ng test
+
+# 產生新元件
+ng generate component features/xxx/xxx.component
 ```
-
-## Running end-to-end tests
-
-For end-to-end (e2e) testing, run:
-
-```bash
-ng e2e
-```
-
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
-
-## Additional Resources
-
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.

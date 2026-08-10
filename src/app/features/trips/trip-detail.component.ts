@@ -98,12 +98,7 @@ const TRANSPORT_OPTIONS: { mode: TransportMode; icon: string }[] = [
             <p class="empty-day">{{ 'tripDetail.notScheduled' | transloco }}</p>
           } @else {
             <div class="item-list">
-              @for (
-                item of displayList();
-                track item.id;
-                let i = $index;
-                let last = $last
-              ) {
+              @for (item of displayList(); track item.id; let i = $index; let last = $last) {
                 <!-- 景點卡片 -->
                 <div
                   class="itinerary-item"
