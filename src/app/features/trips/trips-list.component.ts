@@ -120,7 +120,7 @@ const CURRENCY_OPTIONS = [
           </div>
         </div>
         <div class="add-menu" [class.open]="showAddMenu()">
-          <button class="btn-icon" (click)="toggleAddMenu($event)">＋</button>
+          <button class="btn-icon" (click)="toggleAddMenu()">＋</button>
           <div class="add-dropdown">
             <button class="add-option" (click)="openJoinPrompt()">
               🔑 {{ 'trips.enterInviteCode' | transloco }}
@@ -940,8 +940,7 @@ export class TripsListComponent implements OnInit {
     if (!document.querySelector('.add-menu')?.contains(target)) this.showAddMenu.set(false);
   }
 
-  toggleAddMenu(e: MouseEvent): void {
-    e.stopPropagation();
+  toggleAddMenu(): void {
     this.showAddMenu.set(!this.showAddMenu());
   }
 

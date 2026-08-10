@@ -35,7 +35,7 @@ export interface DropdownOption {
   ],
   template: `
     <div class="dropdown-picker" [class.open]="open()">
-      <button type="button" class="dropdown-trigger" (click)="toggle($event)">
+      <button type="button" class="dropdown-trigger" (click)="toggle()">
         <span class="dropdown-label">{{ selectedLabel() }}</span>
         <span class="caret" [class.flipped]="open()">▾</span>
       </button>
@@ -159,8 +159,7 @@ export class DropdownSelectComponent implements ControlValueAccessor {
     this.onTouchedFn = fn;
   }
 
-  toggle(e: MouseEvent): void {
-    e.stopPropagation();
+  toggle(): void {
     this.open.set(!this.open());
   }
 

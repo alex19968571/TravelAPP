@@ -50,8 +50,10 @@ const KEYPAD_ROWS: string[][] = [
                 }
               </div>
             </div>
-            <div class="amount">{{ amountStr() }}</div>
-            <div class="currency-code">{{ leftCountry().currency }}</div>
+            <div class="amount-row">
+              <span class="amount">{{ amountStr() }}</span>
+              <span class="currency-code">{{ leftCountry().currency }}</span>
+            </div>
           </div>
 
           <button class="swap-btn" (click)="swap()">⇄</button>
@@ -77,8 +79,10 @@ const KEYPAD_ROWS: string[][] = [
                 }
               </div>
             </div>
-            <div class="amount converted">{{ convertedAmount() | number: '1.0-2' }}</div>
-            <div class="currency-code">{{ rightCountry().currency }}</div>
+            <div class="amount-row">
+              <span class="amount converted">{{ convertedAmount() | number: '1.0-2' }}</span>
+              <span class="currency-code">{{ rightCountry().currency }}</span>
+            </div>
           </div>
         </div>
 
@@ -184,8 +188,15 @@ const KEYPAD_ROWS: string[][] = [
         align-items: center;
         gap: 0.35rem;
       }
+      .amount-row {
+        display: flex;
+        align-items: baseline;
+        justify-content: center;
+        flex-wrap: wrap;
+        gap: 0.35rem;
+      }
       .amount {
-        font-size: 1.5rem;
+        font-size: 2rem;
         font-weight: 700;
         color: var(--text-primary);
         font-variant-numeric: tabular-nums;
@@ -196,7 +207,7 @@ const KEYPAD_ROWS: string[][] = [
         color: var(--accent);
       }
       .currency-code {
-        font-size: 0.8rem;
+        font-size: 1.05rem;
         color: var(--text-secondary);
         font-weight: 600;
       }

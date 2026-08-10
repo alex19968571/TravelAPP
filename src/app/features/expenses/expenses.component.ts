@@ -900,8 +900,19 @@ export class ExpensesComponent implements OnInit {
   submitting = signal(false);
   showAddModal = signal(false);
 
-  readonly currencyDropdownOptions = ['TWD', 'JPY', 'USD', 'EUR', 'THB', 'KRW', 'HKD', 'SGD', 'MYR', 'AUD', 'GBP']
-    .map((c) => ({ value: c, label: c }));
+  readonly currencyDropdownOptions = [
+    'TWD',
+    'JPY',
+    'USD',
+    'EUR',
+    'THB',
+    'KRW',
+    'HKD',
+    'SGD',
+    'MYR',
+    'AUD',
+    'GBP',
+  ].map((c) => ({ value: c, label: c }));
 
   payerDropdownOptions(): { value: string; label: string }[] {
     return this.members().map((m) => ({ value: m.id, label: m.display_name }));
