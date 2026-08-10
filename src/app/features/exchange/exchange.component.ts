@@ -50,7 +50,7 @@ const KEYPAD_ROWS: string[][] = [
                 }
               </div>
             </div>
-            <div class="amount">{{ amountStr() }}</div>
+            <div class="amount">{{ displayAmount() }}</div>
             <div class="currency-code">{{ leftCountry().currency }}</div>
           </div>
 
@@ -409,6 +409,8 @@ export class ExchangeComponent implements OnInit, AfterViewInit {
   leftCountry = signal<Country>(this.pref.country());
   rightCountry = signal<Country>(this.pref.homeCountry());
   amountStr = signal('1');
+  /** 上方顯示金額：僅在完成一次運算（按 = 或連續運算的中間結果）後才更新，輸入第二個運算元期間維持顯示上次結果 */
+  displayAmount = signal('1');
   rate = signal(1);
 
   showLeftPicker = signal(false);
@@ -419,12 +421,15 @@ export class ExchangeComponent implements OnInit, AfterViewInit {
   private awaitingOperand = signal(false);
   history = signal<string[]>([]);
 
-  convertedAmount = computed(() => (parseFloat(this.amountStr()) || 0) * this.rate());
+  convertedAmount = computed(() => (parseFloat(this.displayAmount()) || 0) * this.rate());
 
   currentLine = computed(() => {
     const op = this.pendingOp();
     const pending = this.pendingValue();
     if (op !== null && pending !== null) {
+      if (this.awaitingOperand()) {
+        return `${this.formatResult(pending)} ${op}`;
+      }
       return `${this.formatResult(pending)} ${op} ${this.amountStr()}`;
     }
     return this.amountStr();
@@ -507,6 +512,7 @@ export class ExchangeComponent implements OnInit, AfterViewInit {
     if (key === '⌫') {
       const next = this.amountStr().slice(0, -1);
       this.amountStr.set(next === '' || next === '-' ? '0' : next);
+      this.syncDisplayIfComposingFirstOperand();
       this.scrollHistoryToBottom();
       return;
     }
@@ -516,11 +522,10 @@ export class ExchangeComponent implements OnInit, AfterViewInit {
       this.awaitingOperand.set(false);
     }
     if (key === '.') {
-      if (current.includes('.')) {
-        this.scrollHistoryToBottom();
-        return;
+      if (!current.includes('.')) {
+        this.amountStr.set(`${current}.`);
       }
-      this.amountStr.set(`${current}.`);
+      this.syncDisplayIfComposingFirstOperand();
       this.scrollHistoryToBottom();
       return;
     }
@@ -529,14 +534,23 @@ export class ExchangeComponent implements OnInit, AfterViewInit {
     } else {
       this.amountStr.set(current + key);
     }
+    this.syncDisplayIfComposingFirstOperand();
     this.scrollHistoryToBottom();
   }
 
   clear(): void {
     this.amountStr.set('0');
+    this.displayAmount.set('0');
     this.pendingValue.set(null);
     this.pendingOp.set(null);
     this.awaitingOperand.set(false);
+  }
+
+  /** 尚未輸入任何運算子時，輸入中的第一個數字要同步顯示在上方；輸入第二個運算元期間則暫不更新 */
+  private syncDisplayIfComposingFirstOperand(): void {
+    if (this.pendingOp() === null) {
+      this.displayAmount.set(this.amountStr());
+    }
   }
 
   isActiveOp(op: string): boolean {
@@ -553,6 +567,7 @@ export class ExchangeComponent implements OnInit, AfterViewInit {
         `${this.formatResult(a)} ${prevOp} ${this.formatResult(current)} = ${this.formatResult(result)}`,
       );
       this.amountStr.set(this.formatResult(result));
+      this.displayAmount.set(this.formatResult(result));
       this.pendingValue.set(result);
     } else {
       this.pendingValue.set(current);
@@ -571,6 +586,7 @@ export class ExchangeComponent implements OnInit, AfterViewInit {
       `${this.formatResult(a)} ${op} ${this.formatResult(current)} = ${this.formatResult(result)}`,
     );
     this.amountStr.set(this.formatResult(result));
+    this.displayAmount.set(this.formatResult(result));
     this.pendingValue.set(null);
     this.pendingOp.set(null);
     this.awaitingOperand.set(false);
@@ -591,12 +607,14 @@ export class ExchangeComponent implements OnInit, AfterViewInit {
   percent(): void {
     const current = parseFloat(this.amountStr()) || 0;
     this.amountStr.set(this.formatResult(current / 100));
+    this.syncDisplayIfComposingFirstOperand();
     this.scrollHistoryToBottom();
   }
 
   toggleSign(): void {
     const current = parseFloat(this.amountStr()) || 0;
     this.amountStr.set(this.formatResult(-current));
+    this.syncDisplayIfComposingFirstOperand();
     this.scrollHistoryToBottom();
   }
 
