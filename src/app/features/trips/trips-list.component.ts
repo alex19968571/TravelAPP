@@ -365,19 +365,19 @@ const CURRENCY_OPTIONS = [
       .filter-bar {
         display: flex;
         gap: 0.5rem;
-        flex: 1;
+        flex: 9 1 0;
         min-width: 0;
       }
       .filter-year {
-        width: 78px;
-        flex-shrink: 0;
+        flex: 2 1 0;
+        min-width: 0;
       }
       .filter-month {
-        width: 64px;
-        flex-shrink: 0;
+        flex: 2 1 0;
+        min-width: 0;
       }
       .filter-country {
-        flex: 1;
+        flex: 5 1 0;
         min-width: 0;
         position: relative;
       }
@@ -455,6 +455,10 @@ const CURRENCY_OPTIONS = [
       }
       .add-menu {
         position: relative;
+        flex: 1 1 0;
+        display: flex;
+        justify-content: flex-end;
+        align-items: center;
       }
       .add-dropdown {
         position: absolute;

@@ -105,7 +105,11 @@ interface GrossEntry {
                       }
                     </div>
                   }
-                  <button class="btn-sm" (click)="applyOcr()">
+                  <button
+                    class="btn-sm"
+                    [disabled]="ocr.amount === null && ocr.date === null"
+                    (click)="applyOcr()"
+                  >
                     {{ 'expenses.applyOcr' | transloco }}
                   </button>
                 </div>
@@ -508,6 +512,10 @@ interface GrossEntry {
         padding: 0.375rem 1rem;
         cursor: pointer;
         font-size: 0.875rem;
+      }
+      .btn-sm:disabled {
+        background: #a0aec0;
+        cursor: not-allowed;
       }
 
       /* ── 表單 ── */
@@ -1205,8 +1213,10 @@ export class ExpensesComponent implements OnInit {
 
   // ── OCR ─────────────────────────────────────────
   async scanReceipt(event: Event): Promise<void> {
-    const file = (event.target as HTMLInputElement).files?.[0];
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
     if (!file) return;
+    this.ocrResult.set(null);
     this.ocrLoading.set(true);
     try {
       const result = await this.ocrService.recognize(file);
@@ -1218,6 +1228,8 @@ export class ExpensesComponent implements OnInit {
       });
     } finally {
       this.ocrLoading.set(false);
+      // 重設 input 的值，讓再次選擇同一張圖片也能觸發 change 事件
+      input.value = '';
     }
   }
 
