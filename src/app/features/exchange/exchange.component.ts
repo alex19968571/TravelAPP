@@ -87,6 +87,13 @@ const KEYPAD_ROWS: string[][] = [
           {{ rightCountry().currency }}
         </div>
 
+        <!-- 計算過程（逐行顯示，舊紀錄往上滑動消失） -->
+        <div class="calc-history" #historyEl>
+          @for (line of history(); track $index) {
+            <div class="calc-history-line">{{ line }}</div>
+          }
+        </div>
+
         <!-- 下方：計算機鍵盤（iPhone 計算機版面，支援四則運算並即時換匯） -->
         <div class="keypad card">
           <div class="keypad-row">
@@ -302,7 +309,28 @@ const KEYPAD_ROWS: string[][] = [
         text-align: center;
         color: var(--text-secondary);
         font-size: 0.85rem;
-        margin-bottom: 1rem;
+        margin-bottom: 0.5rem;
+      }
+
+      .calc-history {
+        height: 4.2rem;
+        overflow-y: auto;
+        overflow-x: hidden;
+        margin-bottom: 0.75rem;
+        padding: 0 0.25rem;
+        scroll-behavior: smooth;
+        scrollbar-width: none;
+      }
+      .calc-history::-webkit-scrollbar {
+        display: none;
+      }
+      .calc-history-line {
+        text-align: right;
+        font-family: var(--font-mono);
+        font-size: 0.8rem;
+        color: var(--text-secondary);
+        line-height: 1.4rem;
+        white-space: nowrap;
       }
 
       .keypad {
@@ -364,6 +392,7 @@ const KEYPAD_ROWS: string[][] = [
 })
 export class ExchangeComponent implements OnInit, AfterViewInit {
   @ViewChild('scaleWrap') scaleWrap?: ElementRef<HTMLElement>;
+  @ViewChild('historyEl') historyEl?: ElementRef<HTMLElement>;
 
   private pref = inject(PreferenceService);
   private rateService = inject(ExchangeRateService);
@@ -383,6 +412,7 @@ export class ExchangeComponent implements OnInit, AfterViewInit {
   private pendingValue = signal<number | null>(null);
   private pendingOp = signal<string | null>(null);
   private awaitingOperand = signal(false);
+  history = signal<string[]>([]);
 
   convertedAmount = computed(() => (parseFloat(this.amountStr()) || 0) * this.rate());
 
@@ -496,7 +526,12 @@ export class ExchangeComponent implements OnInit, AfterViewInit {
   onOperator(op: string): void {
     const current = parseFloat(this.amountStr()) || 0;
     if (this.pendingOp() !== null && !this.awaitingOperand()) {
-      const result = this.calculate(this.pendingValue()!, current, this.pendingOp()!);
+      const a = this.pendingValue()!;
+      const prevOp = this.pendingOp()!;
+      const result = this.calculate(a, current, prevOp);
+      this.pushHistory(
+        `${this.formatResult(a)} ${prevOp} ${this.formatResult(current)} = ${this.formatResult(result)}`,
+      );
       this.amountStr.set(this.formatResult(result));
       this.pendingValue.set(result);
     } else {
@@ -510,11 +545,23 @@ export class ExchangeComponent implements OnInit, AfterViewInit {
     const op = this.pendingOp();
     if (op === null || this.pendingValue() === null) return;
     const current = parseFloat(this.amountStr()) || 0;
-    const result = this.calculate(this.pendingValue()!, current, op);
+    const a = this.pendingValue()!;
+    const result = this.calculate(a, current, op);
+    this.pushHistory(
+      `${this.formatResult(a)} ${op} ${this.formatResult(current)} = ${this.formatResult(result)}`,
+    );
     this.amountStr.set(this.formatResult(result));
     this.pendingValue.set(null);
     this.pendingOp.set(null);
     this.awaitingOperand.set(false);
+  }
+
+  private pushHistory(line: string): void {
+    this.history.update((h) => [...h, line]);
+    setTimeout(() => {
+      const el = this.historyEl?.nativeElement;
+      if (el) el.scrollTop = el.scrollHeight;
+    });
   }
 
   percent(): void {

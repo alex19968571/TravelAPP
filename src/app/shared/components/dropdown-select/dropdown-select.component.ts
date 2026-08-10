@@ -1,8 +1,10 @@
 import {
   Component,
   ElementRef,
+  EventEmitter,
   HostListener,
   Input,
+  Output,
   computed,
   forwardRef,
   inject,
@@ -134,6 +136,7 @@ export class DropdownSelectComponent implements ControlValueAccessor {
 
   @Input() options: DropdownOption[] = [];
   @Input() placeholder = '';
+  @Output() selectionChange = new EventEmitter<unknown>();
 
   value: unknown = null;
   open = signal(false);
@@ -165,6 +168,7 @@ export class DropdownSelectComponent implements ControlValueAccessor {
     this.value = v;
     this.onChangeFn(v);
     this.onTouchedFn();
+    this.selectionChange.emit(v);
     this.open.set(false);
   }
 

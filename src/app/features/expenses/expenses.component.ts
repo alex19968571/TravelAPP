@@ -10,6 +10,7 @@ import { OcrService } from '../../core/services/ocr.service';
 import { TripService } from '../../core/services/trip.service';
 import { PreferenceService } from '../../core/services/preference.service';
 import { generateId } from '../../core/utils/uuid.util';
+import { DropdownSelectComponent } from '../../shared/components/dropdown-select/dropdown-select.component';
 
 interface ShareRow {
   memberId: string;
@@ -29,7 +30,13 @@ interface GrossEntry {
 @Component({
   selector: 'app-expenses',
   standalone: true,
-  imports: [CommonModule, RouterModule, ReactiveFormsModule, TranslocoModule],
+  imports: [
+    CommonModule,
+    RouterModule,
+    ReactiveFormsModule,
+    TranslocoModule,
+    DropdownSelectComponent,
+  ],
   template: `
     <div class="page-container">
       <header class="page-header">
@@ -113,19 +120,10 @@ interface GrossEntry {
                 </div>
                 <div class="form-row">
                   <label>{{ 'expenses.currency' | transloco }}</label>
-                  <select formControlName="currency_code">
-                    <option value="TWD">TWD</option>
-                    <option value="JPY">JPY</option>
-                    <option value="USD">USD</option>
-                    <option value="EUR">EUR</option>
-                    <option value="THB">THB</option>
-                    <option value="KRW">KRW</option>
-                    <option value="HKD">HKD</option>
-                    <option value="SGD">SGD</option>
-                    <option value="MYR">MYR</option>
-                    <option value="AUD">AUD</option>
-                    <option value="GBP">GBP</option>
-                  </select>
+                  <app-dropdown-select
+                    [options]="currencyDropdownOptions"
+                    formControlName="currency_code"
+                  ></app-dropdown-select>
                 </div>
                 <div class="form-row">
                   <label>{{ 'expenses.expenseDate' | transloco }} *</label>
@@ -133,19 +131,19 @@ interface GrossEntry {
                 </div>
                 <div class="form-row">
                   <label>{{ 'expenses.payer' | transloco }} *</label>
-                  <select formControlName="payer_member_id">
-                    @for (m of members(); track m.id) {
-                      <option [value]="m.id">{{ m.display_name }}</option>
-                    }
-                  </select>
+                  <app-dropdown-select
+                    [options]="payerDropdownOptions()"
+                    formControlName="payer_member_id"
+                  ></app-dropdown-select>
                 </div>
                 <div class="form-row span-2">
                   <label>{{ 'expenses.splitMethod' | transloco }}</label>
                   <div class="split-ctrl-row">
-                    <select formControlName="split_type" (change)="onSplitTypeChange()">
-                      <option value="EQUAL">{{ 'expenses.splitEqual' | transloco }}</option>
-                      <option value="SHARES">{{ 'expenses.splitShares' | transloco }}</option>
-                    </select>
+                    <app-dropdown-select
+                      [options]="splitTypeDropdownOptions()"
+                      formControlName="split_type"
+                      (selectionChange)="onSplitTypeChange()"
+                    ></app-dropdown-select>
                     <div class="person-count-wrap">
                       <span class="person-label">{{ 'expenses.personCount' | transloco }}</span>
                       <input
@@ -484,8 +482,7 @@ interface GrossEntry {
         color: var(--text-secondary);
         font-size: 0.9rem;
       }
-      .form-row input,
-      .form-row select {
+      .form-row input {
         width: 100%;
         padding: 0.625rem 0.875rem;
         border: 1.5px solid var(--border);
@@ -494,15 +491,6 @@ interface GrossEntry {
         box-sizing: border-box;
         background: var(--input-bg);
         color: var(--text-primary);
-      }
-      .form-row select {
-        padding-right: 3rem;
-        appearance: none;
-        -webkit-appearance: none;
-        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%23667eea' d='M1 1l5 5 5-5'/%3E%3C/svg%3E");
-        background-repeat: no-repeat;
-        background-position: right 1rem center;
-        background-size: 12px;
       }
 
       /* 金額換算提示 */
@@ -523,7 +511,7 @@ interface GrossEntry {
         gap: 0.75rem;
         align-items: center;
       }
-      .split-ctrl-row select {
+      .split-ctrl-row app-dropdown-select {
         flex: 1;
       }
       .person-count-wrap {
@@ -911,6 +899,20 @@ export class ExpensesComponent implements OnInit {
   ocrLoading = signal(false);
   submitting = signal(false);
   showAddModal = signal(false);
+
+  readonly currencyDropdownOptions = ['TWD', 'JPY', 'USD', 'EUR', 'THB', 'KRW', 'HKD', 'SGD', 'MYR', 'AUD', 'GBP']
+    .map((c) => ({ value: c, label: c }));
+
+  payerDropdownOptions(): { value: string; label: string }[] {
+    return this.members().map((m) => ({ value: m.id, label: m.display_name }));
+  }
+
+  splitTypeDropdownOptions(): { value: string; label: string }[] {
+    return [
+      { value: 'EQUAL', label: this.transloco.translate('expenses.splitEqual') },
+      { value: 'SHARES', label: this.transloco.translate('expenses.splitShares') },
+    ];
+  }
 
   closeAddModal(): void {
     this.showAddModal.set(false);

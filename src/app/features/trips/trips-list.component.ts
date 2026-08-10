@@ -178,25 +178,17 @@ const CURRENCY_OPTIONS = [
           </div>
           <div class="form-row">
             <label>{{ 'trips.timezone' | transloco }}</label>
-            <div class="select-wrap">
-              <select formControlName="target_timezone">
-                @for (o of timezoneOptions; track o.value) {
-                  <option [value]="o.value">{{ o.label }}</option>
-                }
-              </select>
-              <span class="select-caret">▾</span>
-            </div>
+            <app-dropdown-select
+              [options]="timezoneDropdownOptions"
+              formControlName="target_timezone"
+            ></app-dropdown-select>
           </div>
           <div class="form-row">
             <label>{{ 'trips.currency' | transloco }}</label>
-            <div class="select-wrap">
-              <select formControlName="base_currency">
-                @for (o of currencyOptions; track o.value) {
-                  <option [value]="o.value">{{ o.label }}</option>
-                }
-              </select>
-              <span class="select-caret">▾</span>
-            </div>
+            <app-dropdown-select
+              [options]="currencyDropdownOptions"
+              formControlName="base_currency"
+            ></app-dropdown-select>
           </div>
           <div class="form-actions">
             <button type="button" class="btn-secondary" (click)="showForm.set(false)">
@@ -301,25 +293,17 @@ const CURRENCY_OPTIONS = [
               </div>
               <div class="form-row">
                 <label>{{ 'trips.timezone' | transloco }}</label>
-                <div class="select-wrap">
-                  <select formControlName="target_timezone">
-                    @for (o of timezoneOptions; track o.value) {
-                      <option [value]="o.value">{{ o.label }}</option>
-                    }
-                  </select>
-                  <span class="select-caret">▾</span>
-                </div>
+                <app-dropdown-select
+                  [options]="timezoneDropdownOptions"
+                  formControlName="target_timezone"
+                ></app-dropdown-select>
               </div>
               <div class="form-row">
                 <label>{{ 'trips.currency' | transloco }}</label>
-                <div class="select-wrap">
-                  <select formControlName="base_currency">
-                    @for (o of currencyOptions; track o.value) {
-                      <option [value]="o.value">{{ o.label }}</option>
-                    }
-                  </select>
-                  <span class="select-caret">▾</span>
-                </div>
+                <app-dropdown-select
+                  [options]="currencyDropdownOptions"
+                  formControlName="base_currency"
+                ></app-dropdown-select>
               </div>
               <div class="form-actions">
                 <button type="button" class="btn-secondary" (click)="closeEditTrip()">
@@ -549,32 +533,6 @@ const CURRENCY_OPTIONS = [
         box-sizing: border-box;
         background: var(--input-bg);
         color: var(--text-primary);
-      }
-
-      /* ── 下拉選單：套用與國家選單一致的箭頭圖示 ── */
-      .select-wrap {
-        position: relative;
-      }
-      .select-wrap select {
-        width: 100%;
-        padding: 0.625rem 2.25rem 0.625rem 0.875rem;
-        border: 1.5px solid var(--border);
-        border-radius: 10px;
-        font-size: 0.95rem;
-        box-sizing: border-box;
-        background: var(--input-bg);
-        color: var(--text-primary);
-        appearance: none;
-        -webkit-appearance: none;
-      }
-      .select-wrap .select-caret {
-        position: absolute;
-        right: 0.875rem;
-        top: 50%;
-        transform: translateY(-50%);
-        font-size: 0.7rem;
-        color: var(--text-secondary);
-        pointer-events: none;
       }
 
       .form-actions {
@@ -874,6 +832,8 @@ export class TripsListComponent implements OnInit {
 
   timezoneOptions = TIMEZONE_OPTIONS;
   currencyOptions = CURRENCY_OPTIONS;
+  timezoneDropdownOptions = TIMEZONE_OPTIONS.map((o) => ({ value: o.value, label: o.label }));
+  currencyDropdownOptions = CURRENCY_OPTIONS.map((o) => ({ value: o.value, label: o.label }));
 
   isTouch =
     typeof window !== 'undefined' &&
