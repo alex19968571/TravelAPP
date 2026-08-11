@@ -537,7 +537,7 @@ const CURRENCY_OPTIONS = [
         padding: 0.625rem 0.875rem;
         border: 1.5px solid var(--border);
         border-radius: 10px;
-        font-size: 0.95rem;
+        font-size: 16px;
         box-sizing: border-box;
         background: var(--input-bg);
         color: var(--text-primary);

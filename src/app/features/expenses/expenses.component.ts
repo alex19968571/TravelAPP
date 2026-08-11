@@ -274,7 +274,11 @@ interface GrossEntry {
                   "
                 >
                   {{
-                    submitting() ? ('expenses.saving' | transloco) : ('expenses.add' | transloco)
+                    submitting()
+                      ? ('expenses.saving' | transloco)
+                      : editingExpenseId()
+                        ? ('common.save' | transloco)
+                        : ('expenses.add' | transloco)
                   }}
                 </button>
               </div>
@@ -307,6 +311,12 @@ interface GrossEntry {
                 <span class="expand-icon">{{
                   expandedExpenseId() === expense.client_record_id ? '▲' : '▼'
                 }}</span>
+                <button
+                  class="edit-btn"
+                  (click)="$event.stopPropagation(); openEditExpense(expense)"
+                >
+                  ✏️
+                </button>
                 <button
                   class="remove-btn"
                   (click)="$event.stopPropagation(); deleteExpense(expense.client_record_id)"
@@ -557,10 +567,11 @@ interface GrossEntry {
       }
       .form-row input {
         width: 100%;
+        min-width: 0;
         padding: 0.625rem 0.875rem;
         border: 1.5px solid var(--border);
         border-radius: 10px;
-        font-size: 0.95rem;
+        font-size: 16px;
         box-sizing: border-box;
         background: var(--input-bg);
         color: var(--text-primary);
@@ -571,9 +582,10 @@ interface GrossEntry {
         display: flex;
         align-items: center;
         gap: 0.5rem;
+        height: 3rem;
         border: 1.5px solid var(--border);
         border-radius: 10px;
-        padding: 0.625rem 0.5rem 0.625rem 0.875rem;
+        padding: 0 0.5rem 0 0.875rem;
         box-sizing: border-box;
         background: var(--input-bg);
       }
@@ -587,6 +599,7 @@ interface GrossEntry {
         flex: 1;
         min-width: 0;
         width: auto;
+        height: 100%;
         border: none !important;
         outline: none !important;
         box-shadow: none !important;
@@ -862,6 +875,12 @@ interface GrossEntry {
         font-size: 1rem;
         color: #e53e3e;
       }
+      .edit-btn {
+        background: none;
+        border: none;
+        cursor: pointer;
+        font-size: 1rem;
+      }
 
       /* 展開：分帳明細 */
       .expense-splits {
@@ -1068,6 +1087,46 @@ export class ExpensesComponent implements OnInit {
 
   closeAddModal(): void {
     this.showAddModal.set(false);
+    this.editingExpenseId.set(null);
+    this.form.reset({
+      currency_code: this.pref.country().currency,
+      expense_date: new Date().toISOString().split('T')[0],
+      payer_member_id: this.members()[0]?.id ?? '',
+      split_type: 'EQUAL',
+    });
+    this._amountConverted.set(null);
+    this.splitType.set('EQUAL');
+    this.shareRows.set([]);
+  }
+
+  async openEditExpense(expense: Expense): Promise<void> {
+    this.editingExpenseId.set(expense.client_record_id);
+    const splits = await this.expenseService.getSplits(expense.client_record_id);
+
+    this.form.reset({
+      title: expense.title,
+      amount: expense.amount,
+      currency_code: expense.currency_code,
+      expense_date: expense.expense_date_utc.split('T')[0],
+      payer_member_id: expense.payer_member_id,
+      split_type: expense.split_type === 'SHARES' ? 'SHARES' : 'EQUAL',
+    });
+    this.splitType.set(expense.split_type === 'SHARES' ? 'SHARES' : 'EQUAL');
+
+    if (expense.split_type === 'SHARES') {
+      this.shareRows.set(
+        splits.map((s) => ({
+          memberId: s.member_id,
+          name: this.getMemberName(s.member_id),
+          weight: s.share_weight,
+        })),
+      );
+    } else {
+      this.personCount.set(splits.length || this.members().length || 2);
+      this.shareRows.set([]);
+    }
+
+    this.showAddModal.set(true);
   }
 
   readonly grossReceivable = computed(() =>
@@ -1095,6 +1154,7 @@ export class ExpensesComponent implements OnInit {
   // 展開費用明細
   expandedExpenseId = signal<string | null>(null);
   expandedSplits = signal<ExpenseSplit[]>([]);
+  editingExpenseId = signal<string | null>(null);
 
   form = this.fb.group({
     title: ['', [Validators.required, Validators.maxLength(100)]],
@@ -1345,6 +1405,12 @@ export class ExpensesComponent implements OnInit {
           ? this.shareRows().map((r) => ({ memberId: r.memberId, weight: r.weight }))
           : undefined;
 
+      const editingId = this.editingExpenseId();
+      // 目前尚無精細的分帳異動比對，編輯採「刪除舊記錄後依表單重建」的簡化方式實現
+      if (editingId) {
+        await this.expenseService.delete(editingId);
+      }
+
       await this.expenseService.create({
         trip_id: this.tripId,
         title: title!,
@@ -1358,16 +1424,7 @@ export class ExpensesComponent implements OnInit {
         share_weights: shareWeights,
       });
 
-      this.form.reset({
-        currency_code: this.pref.country().currency,
-        expense_date: new Date().toISOString().split('T')[0],
-        payer_member_id: this.members()[0]?.id ?? '',
-        split_type: 'EQUAL',
-      });
-      this._amountConverted.set(null);
-      this.splitType.set('EQUAL');
-      this.shareRows.set([]);
-      this.showAddModal.set(false);
+      this.closeAddModal();
       await this.loadExpenses();
     } finally {
       this.submitting.set(false);
