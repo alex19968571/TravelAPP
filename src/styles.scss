@@ -79,6 +79,19 @@ html, body {
 input, select, textarea, button { font-family: inherit; }
 a { color: inherit; }
 
+/* ── 模擬原生 App 操作手感：點擊/拖曳不反白、不跳出長按選單 ── */
+body {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+}
+input, textarea, [contenteditable='true'] {
+  -webkit-user-select: text;
+  user-select: text;
+  -webkit-touch-callout: default;
+}
+
 /* PWA safe-area (iOS notch) */
 body {
   padding-top: env(safe-area-inset-top);

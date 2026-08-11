@@ -566,24 +566,24 @@ interface GrossEntry {
       .amount-input-wrap:focus-within {
         border-color: var(--accent);
       }
-      input.amount-input-lg {
+      input.amount-input-lg,
+      input.amount-input-lg:hover,
+      input.amount-input-lg:focus,
+      input.amount-input-lg:focus-visible {
         flex: 1;
         min-width: 0;
         width: auto;
-        border: none;
-        box-shadow: none;
+        border: none !important;
+        outline: none !important;
+        box-shadow: none !important;
         appearance: none;
         -webkit-appearance: none;
-        background: transparent;
+        -moz-appearance: textfield;
+        background: transparent !important;
         font-size: 1.6rem;
         font-weight: 700;
         padding: 0.75rem 0;
         box-sizing: border-box;
-      }
-      input.amount-input-lg:focus {
-        outline: none;
-        border: none;
-        box-shadow: none;
       }
       .amount-currency-badge {
         flex-shrink: 0;
@@ -774,6 +774,10 @@ interface GrossEntry {
         width: 100%;
         max-height: 90vh;
         overflow-y: auto;
+        scrollbar-width: none;
+      }
+      .modal-card::-webkit-scrollbar {
+        display: none;
       }
 
       /* ── 費用清單 ── */

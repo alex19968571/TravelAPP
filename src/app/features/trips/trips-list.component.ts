@@ -915,15 +915,36 @@ export class TripsListComponent implements OnInit {
     const countryCode = this.filterCountryCode();
 
     return this.trips().filter((t) => {
-      if (year) {
+      if (year && month) {
         const start = t.start_date_utc ? new Date(t.start_date_utc) : null;
         if (!start) return false;
         const end = t.end_date_utc ? new Date(t.end_date_utc) : start;
-        const rangeStart = month ? new Date(year, month - 1, 1) : new Date(year, 0, 1);
-        const rangeEnd = month
-          ? new Date(year, month, 0, 23, 59, 59)
-          : new Date(year, 11, 31, 23, 59, 59);
+        const rangeStart = new Date(year, month - 1, 1);
+        const rangeEnd = new Date(year, month, 0, 23, 59, 59);
         if (end < rangeStart || start > rangeEnd) return false;
+      } else if (year) {
+        const start = t.start_date_utc ? new Date(t.start_date_utc) : null;
+        if (!start) return false;
+        const end = t.end_date_utc ? new Date(t.end_date_utc) : start;
+        const rangeStart = new Date(year, 0, 1);
+        const rangeEnd = new Date(year, 11, 31, 23, 59, 59);
+        if (end < rangeStart || start > rangeEnd) return false;
+      } else if (month) {
+        // 不限年份：只要行程涵蓋範圍內有任一個月符合該月份即符合
+        const start = t.start_date_utc ? new Date(t.start_date_utc) : null;
+        if (!start) return false;
+        const end = t.end_date_utc ? new Date(t.end_date_utc) : start;
+        let matched = false;
+        const cursor = new Date(start.getFullYear(), start.getMonth(), 1);
+        const endCursor = new Date(end.getFullYear(), end.getMonth(), 1);
+        while (cursor <= endCursor) {
+          if (cursor.getMonth() + 1 === month) {
+            matched = true;
+            break;
+          }
+          cursor.setMonth(cursor.getMonth() + 1);
+        }
+        if (!matched) return false;
       }
       if (countryCode) {
         const c = this.tripCountry(t);
