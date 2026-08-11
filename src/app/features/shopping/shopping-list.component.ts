@@ -196,6 +196,12 @@ const CURRENCY_CODES = ['TWD', 'JPY', 'USD', 'EUR', 'THB', 'KRW', 'HKD', 'SGD', 
           }
         </div>
       </div>
+      @if (items().length === 0) {
+        <div class="empty-state">
+          <p>🛍️</p>
+          <p>{{ 'shopping.noItems' | transloco }}</p>
+        </div>
+      }
       <div class="items-list">
         @for (item of items(); track item.client_record_id) {
           <div class="item-card card" [class.bought]="item.is_bought">
@@ -521,6 +527,15 @@ const CURRENCY_CODES = ['TWD', 'JPY', 'USD', 'EUR', 'THB', 'KRW', 'HKD', 'SGD', 
       }
 
       /* ── 清單項目 ── */
+      .empty-state {
+        text-align: center;
+        padding: 4rem 2rem;
+        color: var(--text-secondary);
+        font-size: 1.1rem;
+      }
+      .empty-state p:first-child {
+        font-size: 3rem;
+      }
       .items-list {
         display: flex;
         flex-direction: column;

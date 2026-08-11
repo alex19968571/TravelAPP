@@ -130,7 +130,8 @@
     "link": "商品連結",
     "linkPlaceholder": "https://...",
     "viewLink": "🔗 商品連結",
-    "delete": "🗑 刪除"
+    "delete": "🗑 刪除",
+    "noItems": "尚未安排任何購物項目"
   },
   "expenses": {
     "backToTrip": "返回行程",
@@ -139,6 +140,7 @@
     "selectImage": "選擇收據圖片",
     "recognizing": "辨識中，請稍候...",
     "recognizedResult": "辨識結果（請確認後填入表單）",
+    "noExpenses": "尚未安排任何記帳項目",
     "notReceipt": "無法辨識這張圖片是收據，請確認上傳圖片或手動輸入",
     "detectedItems": "辨識到的品項",
     "amount": "金額",

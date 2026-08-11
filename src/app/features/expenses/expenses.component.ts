@@ -283,6 +283,12 @@ interface GrossEntry {
       }
 
       <!-- 費用清單 -->
+      @if (expenses().length === 0) {
+        <div class="empty-state">
+          <p>💸</p>
+          <p>{{ 'expenses.noExpenses' | transloco }}</p>
+        </div>
+      }
       <div class="expenses-list">
         @for (expense of expenses(); track expense.client_record_id) {
           <div class="expense-card card" (click)="toggleExpand(expense)">
@@ -558,10 +564,12 @@ interface GrossEntry {
         display: flex;
         align-items: center;
         gap: 0.5rem;
+        height: 3.6rem;
         border: 1.5px solid var(--border);
         border-radius: 10px;
         padding: 0 0.5rem 0 0.875rem;
         box-sizing: border-box;
+        overflow: hidden;
       }
       .amount-input-wrap:focus-within {
         border-color: var(--accent);
@@ -573,6 +581,7 @@ interface GrossEntry {
         flex: 1;
         min-width: 0;
         width: auto;
+        height: 100%;
         border: none !important;
         outline: none !important;
         box-shadow: none !important;
@@ -582,7 +591,7 @@ interface GrossEntry {
         background: transparent !important;
         font-size: 1.6rem;
         font-weight: 700;
-        padding: 0.75rem 0;
+        padding: 0;
         box-sizing: border-box;
       }
       input.amount-input-lg::-webkit-outer-spin-button,
@@ -780,9 +789,21 @@ interface GrossEntry {
         max-height: 90vh;
         overflow-y: auto;
         scrollbar-width: none;
+        background: var(--surface);
+        border-radius: 16px;
       }
       .modal-card::-webkit-scrollbar {
         display: none;
+      }
+
+      .empty-state {
+        text-align: center;
+        padding: 4rem 2rem;
+        color: var(--text-secondary);
+        font-size: 1.1rem;
+      }
+      .empty-state p:first-child {
+        font-size: 3rem;
       }
 
       /* ── 費用清單 ── */

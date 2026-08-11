@@ -130,7 +130,8 @@
     "link": "Item Link",
     "linkPlaceholder": "https://...",
     "viewLink": "🔗 Item Link",
-    "delete": "🗑 Delete"
+    "delete": "🗑 Delete",
+    "noItems": "No shopping items yet"
   },
   "expenses": {
     "backToTrip": "Back to Trip",
@@ -139,6 +140,7 @@
     "selectImage": "Select Receipt Image",
     "recognizing": "Recognizing, please wait...",
     "recognizedResult": "Recognized Result (please confirm and apply)",
+    "noExpenses": "No expenses recorded yet",
     "notReceipt": "Couldn't recognize this image as a receipt. Please check the image or enter manually",
     "detectedItems": "Detected Items",
     "amount": "Amount",

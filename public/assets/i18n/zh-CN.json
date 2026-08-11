@@ -130,7 +130,8 @@
     "link": "商品链接",
     "linkPlaceholder": "https://...",
     "viewLink": "🔗 商品链接",
-    "delete": "🗑 删除"
+    "delete": "🗑 删除",
+    "noItems": "尚未安排任何购物项目"
   },
   "expenses": {
     "backToTrip": "返回行程",
@@ -139,6 +140,7 @@
     "selectImage": "选择收据图片",
     "recognizing": "识别中，请稍候...",
     "recognizedResult": "识别结果（请确认后填入表单）",
+    "noExpenses": "尚未安排任何记账项目",
     "notReceipt": "无法识别这张图片是收据，请确认上传图片或手动输入",
     "detectedItems": "识别到的品项",
     "amount": "金额",
