@@ -376,6 +376,12 @@ const CURRENCY_CODES = ['TWD', 'JPY', 'USD', 'EUR', 'THB', 'KRW', 'HKD', 'SGD', 
         width: 100%;
         padding-right: 3.2rem;
         box-sizing: border-box;
+        -moz-appearance: textfield;
+      }
+      .input-suffix-wrap input::-webkit-outer-spin-button,
+      .input-suffix-wrap input::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
       }
       .currency-suffix-select {
         position: absolute;
@@ -473,6 +479,10 @@ const CURRENCY_CODES = ['TWD', 'JPY', 'USD', 'EUR', 'THB', 'KRW', 'HKD', 'SGD', 
         width: 100%;
         max-height: 90vh;
         overflow-y: auto;
+        scrollbar-width: none;
+      }
+      .modal-card::-webkit-scrollbar {
+        display: none;
       }
       .photo-block {
         display: flex;

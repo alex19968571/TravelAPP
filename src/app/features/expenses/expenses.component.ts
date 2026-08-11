@@ -585,6 +585,11 @@ interface GrossEntry {
         padding: 0.75rem 0;
         box-sizing: border-box;
       }
+      input.amount-input-lg::-webkit-outer-spin-button,
+      input.amount-input-lg::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+      }
       .amount-currency-badge {
         flex-shrink: 0;
       }
