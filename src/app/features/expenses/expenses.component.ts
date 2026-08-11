@@ -134,9 +134,8 @@ interface GrossEntry {
                   <div class="amount-input-wrap">
                     <input
                       formControlName="amount"
-                      type="number"
-                      min="0"
-                      step="any"
+                      type="text"
+                      inputmode="decimal"
                       class="amount-input-lg"
                     />
                     <app-dropdown-select

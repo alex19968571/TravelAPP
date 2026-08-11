@@ -13,7 +13,9 @@ export class ShoppingService {
     return db.shopping_list.where('trip_id').equals(tripId).sortBy('updated_at_utc');
   }
 
-  async create(data: Omit<ShoppingItem, 'client_record_id' | 'updated_at_utc'>): Promise<ShoppingItem> {
+  async create(
+    data: Omit<ShoppingItem, 'client_record_id' | 'updated_at_utc'>,
+  ): Promise<ShoppingItem> {
     const item: ShoppingItem = {
       client_record_id: generateId(),
       updated_at_utc: new Date().toISOString(),
@@ -31,7 +33,11 @@ export class ShoppingService {
     // 否則 upsert 走到 INSERT 分支時會因缺欄位被 RLS 擋下 (403)
     const full = await db.shopping_list.get(id);
     if (full) {
-      await this.sync.enqueue('UPDATE', 'shopping_list', full as unknown as Record<string, unknown>);
+      await this.sync.enqueue(
+        'UPDATE',
+        'shopping_list',
+        full as unknown as Record<string, unknown>,
+      );
     }
   }
 

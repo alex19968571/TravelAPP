@@ -80,10 +80,16 @@ export interface DropdownOption {
       .dropdown-picker.badge {
         width: auto;
       }
-      .dropdown-picker.badge .dropdown-trigger {
+      .dropdown-picker.badge .dropdown-trigger,
+      .dropdown-picker.badge .dropdown-trigger:hover,
+      .dropdown-picker.badge .dropdown-trigger:active,
+      .dropdown-picker.badge .dropdown-trigger:focus {
         width: auto;
-        background: transparent;
+        background: transparent !important;
         border: none;
+        box-shadow: none;
+        appearance: none;
+        -webkit-appearance: none;
         padding: 0.15rem 0.3rem;
         font-size: 1.05rem;
         font-weight: 700;

@@ -10,7 +10,19 @@ import { PreferenceService } from '../../core/services/preference.service';
 import { ExchangeRateService } from '../../core/services/exchange-rate.service';
 import { DropdownSelectComponent } from '../../shared/components/dropdown-select/dropdown-select.component';
 
-const CURRENCY_CODES = ['TWD', 'JPY', 'USD', 'EUR', 'THB', 'KRW', 'HKD', 'SGD', 'MYR', 'AUD', 'GBP'];
+const CURRENCY_CODES = [
+  'TWD',
+  'JPY',
+  'USD',
+  'EUR',
+  'THB',
+  'KRW',
+  'HKD',
+  'SGD',
+  'MYR',
+  'AUD',
+  'GBP',
+];
 
 @Component({
   selector: 'app-shopping-list',
@@ -203,11 +215,7 @@ const CURRENCY_CODES = ['TWD', 'JPY', 'USD', 'EUR', 'THB', 'KRW', 'HKD', 'SGD', 
       }
       <div class="items-list">
         @for (item of items(); track item.client_record_id) {
-          <div
-            class="item-card card"
-            [class.bought]="item.is_bought"
-            (click)="openEditItem(item)"
-          >
+          <div class="item-card card" [class.bought]="item.is_bought" (click)="openEditItem(item)">
             <div class="item-main">
               <input
                 type="checkbox"
@@ -668,7 +676,9 @@ export class ShoppingListComponent implements OnInit {
   formRightCurrency = signal(this.pref.homeCountry().currency);
   private _formConvRate = signal<number>(1);
   readonly formConvRate = this._formConvRate.asReadonly();
-  readonly formShowConversion = computed(() => this.formLeftCurrency() !== this.formRightCurrency());
+  readonly formShowConversion = computed(
+    () => this.formLeftCurrency() !== this.formRightCurrency(),
+  );
 
   readonly quantity = computed(() => Number(this.form.get('quantity')?.value ?? 1));
   readonly unitPrice = computed(() => Number(this.form.get('unit_price')?.value ?? 0));
@@ -800,7 +810,10 @@ export class ShoppingListComponent implements OnInit {
         is_bought: false,
       });
       if (this.stagingPhotoFile) {
-        await this.shoppingService.handleImageUpload(this.stagingPhotoFile, created.client_record_id);
+        await this.shoppingService.handleImageUpload(
+          this.stagingPhotoFile,
+          created.client_record_id,
+        );
         await this.syncEngine.syncUp();
       }
     }

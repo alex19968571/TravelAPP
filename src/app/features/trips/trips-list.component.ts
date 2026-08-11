@@ -579,6 +579,9 @@ const CURRENCY_OPTIONS = [
         position: relative;
         overflow: hidden;
         border-radius: 16px;
+        -webkit-tap-highlight-color: transparent;
+        transform: translateZ(0);
+        -webkit-transform: translateZ(0);
       }
       .trip-card-wrap::after {
         content: '';
@@ -616,6 +619,7 @@ const CURRENCY_OPTIONS = [
           transform 0.2s ease,
           box-shadow 0.2s ease;
         overflow: hidden;
+        -webkit-tap-highlight-color: transparent;
       }
       .trip-card.card:hover,
       .trip-card.card:active {
