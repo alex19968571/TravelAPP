@@ -571,6 +571,9 @@ interface GrossEntry {
         min-width: 0;
         width: auto;
         border: none;
+        box-shadow: none;
+        appearance: none;
+        -webkit-appearance: none;
         background: transparent;
         font-size: 1.6rem;
         font-weight: 700;
@@ -579,6 +582,8 @@ interface GrossEntry {
       }
       input.amount-input-lg:focus {
         outline: none;
+        border: none;
+        box-shadow: none;
       }
       .amount-currency-badge {
         flex-shrink: 0;

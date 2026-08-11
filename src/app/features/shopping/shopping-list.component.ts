@@ -1,18 +1,29 @@
 import { Component, inject, OnInit, signal, computed } from '@angular/core';
 import { CommonModule, DecimalPipe } from '@angular/common';
 import { ActivatedRoute, RouterModule } from '@angular/router';
-import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
+import { ReactiveFormsModule, FormsModule, FormBuilder, Validators } from '@angular/forms';
 import { TranslocoModule } from '@jsverse/transloco';
 import { ShoppingItem } from '../../core/models';
 import { ShoppingService } from '../../core/services/shopping.service';
 import { SyncEngineService } from '../../core/services/sync-engine.service';
 import { PreferenceService } from '../../core/services/preference.service';
 import { ExchangeRateService } from '../../core/services/exchange-rate.service';
+import { DropdownSelectComponent } from '../../shared/components/dropdown-select/dropdown-select.component';
+
+const CURRENCY_CODES = ['TWD', 'JPY', 'USD', 'EUR', 'THB', 'KRW', 'HKD', 'SGD', 'MYR', 'AUD', 'GBP'];
 
 @Component({
   selector: 'app-shopping-list',
   standalone: true,
-  imports: [CommonModule, RouterModule, ReactiveFormsModule, DecimalPipe, TranslocoModule],
+  imports: [
+    CommonModule,
+    RouterModule,
+    ReactiveFormsModule,
+    FormsModule,
+    DecimalPipe,
+    TranslocoModule,
+    DropdownSelectComponent,
+  ],
   template: `
     <div class="page-container">
       <header class="page-header">
@@ -82,35 +93,47 @@ import { ExchangeRateService } from '../../core/services/exchange-rate.service';
                   <div class="price-col">
                     <div class="input-suffix-wrap">
                       <input formControlName="unit_price" type="number" min="0" step="any" />
-                      <span class="currency-suffix">{{ destCurrency() }}</span>
+                      <app-dropdown-select
+                        class="currency-suffix-select"
+                        variant="badge"
+                        [options]="currencyOptions"
+                        [ngModel]="formLeftCurrency()"
+                        [ngModelOptions]="{ standalone: true }"
+                        (ngModelChange)="onFormLeftCurrencyChange($event)"
+                      ></app-dropdown-select>
                     </div>
                   </div>
-                  @if (showConversion()) {
-                    <button
-                      type="button"
-                      class="convert-btn"
-                      (click)="convertUnitPrice()"
-                      title="換算成 {{ homeCurrency() }}"
-                    >
-                      ⇄
-                    </button>
-                    <div class="price-col">
-                      <div class="input-suffix-wrap">
-                        <input
-                          type="number"
-                          [value]="unitPriceHome() ?? ''"
-                          readonly
-                          class="readonly-input"
-                          placeholder="—"
-                        />
-                        <span class="currency-suffix">{{ homeCurrency() }}</span>
-                      </div>
+                  <button
+                    type="button"
+                    class="convert-btn"
+                    (click)="convertUnitPrice()"
+                    title="換算成 {{ formRightCurrency() }}"
+                  >
+                    ⇄
+                  </button>
+                  <div class="price-col">
+                    <div class="input-suffix-wrap">
+                      <input
+                        type="number"
+                        [value]="unitPriceHome() ?? ''"
+                        readonly
+                        class="readonly-input"
+                        placeholder="—"
+                      />
+                      <app-dropdown-select
+                        class="currency-suffix-select"
+                        variant="badge"
+                        [options]="currencyOptions"
+                        [ngModel]="formRightCurrency()"
+                        [ngModelOptions]="{ standalone: true }"
+                        (ngModelChange)="onFormRightCurrencyChange($event)"
+                      ></app-dropdown-select>
                     </div>
-                  }
+                  </div>
                 </div>
               </div>
 
-              <div class="form-row">
+              <div class="form-row span-2">
                 <label>{{ 'shopping.quantity' | transloco }}</label>
                 <input formControlName="quantity" type="number" min="1" />
               </div>
@@ -136,11 +159,12 @@ import { ExchangeRateService } from '../../core/services/exchange-rate.service';
                 >{{ 'shopping.subtotal' | transloco }}：<strong>{{
                   formTotal() | number: '1.0-0'
                 }}</strong>
-                {{ destCurrency() }}</span
+                {{ formLeftCurrency() }}</span
               >
-              @if (showConversion() && formTotal() > 0) {
+              @if (formShowConversion() && formTotal() > 0) {
                 <span class="sub-converted"
-                  >≈ {{ formTotal() * convRate() | number: '1.0-0' }} {{ homeCurrency() }}</span
+                  >≈ {{ formTotal() * formConvRate() | number: '1.0-0' }}
+                  {{ formRightCurrency() }}</span
                 >
               }
             </div>
@@ -353,16 +377,11 @@ import { ExchangeRateService } from '../../core/services/exchange-rate.service';
         padding-right: 3.2rem;
         box-sizing: border-box;
       }
-      .currency-suffix {
+      .currency-suffix-select {
         position: absolute;
-        right: 0.75rem;
+        right: 0.4rem;
         top: 50%;
         transform: translateY(-50%);
-        font-size: 0.72rem;
-        font-weight: 700;
-        color: var(--accent);
-        letter-spacing: 0.03em;
-        pointer-events: none;
       }
       .convert-btn {
         background: var(--accent-light);
@@ -613,6 +632,13 @@ export class ShoppingListComponent implements OnInit {
   readonly convRate = this._convRate.asReadonly();
   readonly unitPriceHome = this._unitPriceHome.asReadonly();
 
+  readonly currencyOptions = CURRENCY_CODES.map((c) => ({ value: c, label: c }));
+  formLeftCurrency = signal(this.pref.country().currency);
+  formRightCurrency = signal(this.pref.homeCountry().currency);
+  private _formConvRate = signal<number>(1);
+  readonly formConvRate = this._formConvRate.asReadonly();
+  readonly formShowConversion = computed(() => this.formLeftCurrency() !== this.formRightCurrency());
+
   readonly quantity = computed(() => Number(this.form.get('quantity')?.value ?? 1));
   readonly unitPrice = computed(() => Number(this.form.get('unit_price')?.value ?? 0));
   readonly formTotal = computed(() => this.quantity() * this.unitPrice());
@@ -641,6 +667,26 @@ export class ShoppingListComponent implements OnInit {
   private async loadConvRate(): Promise<void> {
     const rate = await this.rateService.getConversionRate(this.destCurrency(), this.homeCurrency());
     this._convRate.set(rate);
+    this._formConvRate.set(rate);
+  }
+
+  private async refreshFormRate(): Promise<void> {
+    const rate = await this.rateService.getConversionRate(
+      this.formLeftCurrency(),
+      this.formRightCurrency(),
+    );
+    this._formConvRate.set(rate);
+    this.convertUnitPrice();
+  }
+
+  onFormLeftCurrencyChange(code: string): void {
+    this.formLeftCurrency.set(code);
+    this.refreshFormRate();
+  }
+
+  onFormRightCurrencyChange(code: string): void {
+    this.formRightCurrency.set(code);
+    this.refreshFormRate();
   }
 
   convertUnitPrice(): void {
@@ -650,7 +696,7 @@ export class ShoppingListComponent implements OnInit {
       this._unitPriceHome.set(0);
       return;
     }
-    this._unitPriceHome.set(Math.round(price * this._convRate() * 100) / 100);
+    this._unitPriceHome.set(Math.round(price * this._formConvRate() * 100) / 100);
   }
 
   async loadItems(): Promise<void> {
@@ -668,6 +714,9 @@ export class ShoppingListComponent implements OnInit {
     this.showAddModal.set(false);
     this.form.reset({ quantity: 1, unit_price: 0 });
     this._unitPriceHome.set(null);
+    this.formLeftCurrency.set(this.pref.country().currency);
+    this.formRightCurrency.set(this.pref.homeCountry().currency);
+    this._formConvRate.set(this._convRate());
     this.stagingPhotoFile = null;
     this.stagingPhotoUrl.set(null);
   }

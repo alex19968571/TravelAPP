@@ -257,10 +257,10 @@ import { PreferenceService } from '../services/preference.service';
       }
 
       .avatar-frame {
-        width: 24px;
-        height: 24px;
+        width: 32px;
+        height: 32px;
         border-radius: 50%;
-        padding: 2px;
+        padding: 3px;
         box-sizing: border-box;
         display: flex;
         align-items: center;
