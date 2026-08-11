@@ -173,7 +173,7 @@ const CURRENCY_CODES = ['TWD', 'JPY', 'USD', 'EUR', 'THB', 'KRW', 'HKD', 'SGD', 
                 {{ 'common.cancel' | transloco }}
               </button>
               <button type="submit" class="btn-primary" [disabled]="form.invalid">
-                {{ 'shopping.addItem' | transloco }}
+                {{ (editingItemId() ? 'common.save' : 'shopping.addItem') | transloco }}
               </button>
             </div>
           </form>
@@ -198,18 +198,22 @@ const CURRENCY_CODES = ['TWD', 'JPY', 'USD', 'EUR', 'THB', 'KRW', 'HKD', 'SGD', 
       </div>
       @if (items().length === 0) {
         <div class="empty-state">
-          <p>🛍️</p>
           <p>{{ 'shopping.noItems' | transloco }}</p>
         </div>
       }
       <div class="items-list">
         @for (item of items(); track item.client_record_id) {
-          <div class="item-card card" [class.bought]="item.is_bought">
+          <div
+            class="item-card card"
+            [class.bought]="item.is_bought"
+            (click)="openEditItem(item)"
+          >
             <div class="item-main">
               <input
                 type="checkbox"
                 [checked]="item.is_bought"
                 (change)="toggleBought(item)"
+                (click)="$event.stopPropagation()"
                 class="checkbox"
               />
               <div class="item-info">
@@ -218,9 +222,13 @@ const CURRENCY_CODES = ['TWD', 'JPY', 'USD', 'EUR', 'THB', 'KRW', 'HKD', 'SGD', 
                   <div class="item-desc">{{ item.description }}</div>
                 }
                 @if (item.item_url) {
-                  <a [href]="item.item_url" target="_blank" class="item-link">{{
-                    'shopping.viewLink' | transloco
-                  }}</a>
+                  <a
+                    [href]="item.item_url"
+                    target="_blank"
+                    class="item-link"
+                    (click)="$event.stopPropagation()"
+                    >{{ 'shopping.viewLink' | transloco }}</a
+                  >
                 }
               </div>
               <div class="item-price">
@@ -236,7 +244,7 @@ const CURRENCY_CODES = ['TWD', 'JPY', 'USD', 'EUR', 'THB', 'KRW', 'HKD', 'SGD', 
               </div>
             </div>
 
-            <div class="item-actions">
+            <div class="item-actions" (click)="$event.stopPropagation()">
               <label class="image-upload-btn">
                 📷 {{ 'shopping.uploadImage' | transloco }}
                 <input
@@ -533,9 +541,6 @@ const CURRENCY_CODES = ['TWD', 'JPY', 'USD', 'EUR', 'THB', 'KRW', 'HKD', 'SGD', 
         color: var(--text-secondary);
         font-size: 1.1rem;
       }
-      .empty-state p:first-child {
-        font-size: 3rem;
-      }
       .items-list {
         display: flex;
         flex-direction: column;
@@ -544,6 +549,7 @@ const CURRENCY_CODES = ['TWD', 'JPY', 'USD', 'EUR', 'THB', 'KRW', 'HKD', 'SGD', 
       .item-card.card {
         padding: 1rem 1.25rem;
         transition: opacity 0.2s;
+        cursor: pointer;
       }
       .item-card.bought {
         opacity: 0.5;
@@ -680,6 +686,7 @@ export class ShoppingListComponent implements OnInit {
   });
 
   showAddModal = signal(false);
+  editingItemId = signal<string | null>(null);
   stagingPhotoUrl = signal<string | null>(null);
   private stagingPhotoFile: File | null = null;
 
@@ -737,6 +744,7 @@ export class ShoppingListComponent implements OnInit {
 
   closeAddModal(): void {
     this.showAddModal.set(false);
+    this.editingItemId.set(null);
     this.form.reset({ quantity: 1, unit_price: 0 });
     this._unitPriceHome.set(null);
     this.formLeftCurrency.set(this.pref.country().currency);
@@ -746,24 +754,55 @@ export class ShoppingListComponent implements OnInit {
     this.stagingPhotoUrl.set(null);
   }
 
+  openEditItem(item: ShoppingItem): void {
+    this.editingItemId.set(item.client_record_id);
+    this.form.reset({
+      title: item.title,
+      quantity: item.quantity,
+      unit_price: item.unit_price,
+      description: item.description ?? '',
+      item_url: item.item_url ?? '',
+    });
+    this.stagingPhotoFile = null;
+    this.stagingPhotoUrl.set(item.image_url ?? null);
+    this.showAddModal.set(true);
+  }
+
   async addItem(): Promise<void> {
     if (this.form.invalid) return;
     const { title, quantity, unit_price, description, item_url } = this.form.value;
     const qty = quantity!;
     const price = unit_price!;
-    const created = await this.shoppingService.create({
-      trip_id: this.tripId,
-      title: title!,
-      quantity: qty,
-      unit_price: price,
-      total_amount: qty * price,
-      description: description || undefined,
-      item_url: item_url || undefined,
-      is_bought: false,
-    });
-    if (this.stagingPhotoFile) {
-      await this.shoppingService.handleImageUpload(this.stagingPhotoFile, created.client_record_id);
-      await this.syncEngine.syncUp();
+    const editingId = this.editingItemId();
+
+    if (editingId) {
+      await this.shoppingService.update(editingId, {
+        title: title!,
+        quantity: qty,
+        unit_price: price,
+        total_amount: qty * price,
+        description: description || undefined,
+        item_url: item_url || undefined,
+      });
+      if (this.stagingPhotoFile) {
+        await this.shoppingService.handleImageUpload(this.stagingPhotoFile, editingId);
+        await this.syncEngine.syncUp();
+      }
+    } else {
+      const created = await this.shoppingService.create({
+        trip_id: this.tripId,
+        title: title!,
+        quantity: qty,
+        unit_price: price,
+        total_amount: qty * price,
+        description: description || undefined,
+        item_url: item_url || undefined,
+        is_bought: false,
+      });
+      if (this.stagingPhotoFile) {
+        await this.shoppingService.handleImageUpload(this.stagingPhotoFile, created.client_record_id);
+        await this.syncEngine.syncUp();
+      }
     }
     this.closeAddModal();
     await this.loadItems();

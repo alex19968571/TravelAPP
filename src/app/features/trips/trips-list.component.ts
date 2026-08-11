@@ -203,7 +203,6 @@ const CURRENCY_OPTIONS = [
 
       @if (filteredTrips().length === 0) {
         <div class="empty-state">
-          <p>🗺️</p>
           <p>{{ 'trips.noTrips' | transloco }}</p>
         </div>
       }
@@ -569,9 +568,6 @@ const CURRENCY_OPTIONS = [
         padding: 4rem 2rem;
         color: var(--text-secondary);
         font-size: 1.1rem;
-      }
-      .empty-state p:first-child {
-        font-size: 3rem;
       }
       .trips-grid {
         display: grid;

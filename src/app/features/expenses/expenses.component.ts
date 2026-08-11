@@ -116,6 +116,8 @@ interface GrossEntry {
               }
             </div>
 
+            <div class="card-divider"></div>
+
             <!-- 新增記帳 -->
             <form [formGroup]="form" (ngSubmit)="addExpense()" class="card">
               <h3>{{ 'expenses.newExpense' | transloco }}</h3>
@@ -285,7 +287,6 @@ interface GrossEntry {
       <!-- 費用清單 -->
       @if (expenses().length === 0) {
         <div class="empty-state">
-          <p>💸</p>
           <p>{{ 'expenses.noExpenses' | transloco }}</p>
         </div>
       }
@@ -451,6 +452,13 @@ interface GrossEntry {
         box-shadow: 0 4px 20px var(--shadow);
         margin-bottom: 1rem;
       }
+      .card-divider {
+        height: 1px;
+        margin: -0.25rem 1.25rem 1rem;
+        background-image: linear-gradient(90deg, var(--border) 60%, transparent 0%);
+        background-size: 8px 1px;
+        background-repeat: repeat-x;
+      }
       .ocr-card h3 {
         margin: 0 0 1rem;
         color: var(--text-primary);
@@ -564,11 +572,11 @@ interface GrossEntry {
         display: flex;
         align-items: center;
         gap: 0.5rem;
-        height: 3.6rem;
         border: 1.5px solid var(--border);
         border-radius: 10px;
-        padding: 0 0.5rem 0 0.875rem;
+        padding: 0.625rem 0.5rem 0.625rem 0.875rem;
         box-sizing: border-box;
+        background: var(--input-bg);
         overflow: hidden;
       }
       .amount-input-wrap:focus-within {
@@ -581,7 +589,6 @@ interface GrossEntry {
         flex: 1;
         min-width: 0;
         width: auto;
-        height: 100%;
         border: none !important;
         outline: none !important;
         box-shadow: none !important;
@@ -589,10 +596,11 @@ interface GrossEntry {
         -webkit-appearance: none;
         -moz-appearance: textfield;
         background: transparent !important;
-        font-size: 1.6rem;
-        font-weight: 700;
+        font-size: 0.95rem;
+        font-weight: 400;
         padding: 0;
         box-sizing: border-box;
+        color: var(--text-primary);
       }
       input.amount-input-lg::-webkit-outer-spin-button,
       input.amount-input-lg::-webkit-inner-spin-button {
@@ -801,9 +809,6 @@ interface GrossEntry {
         padding: 4rem 2rem;
         color: var(--text-secondary);
         font-size: 1.1rem;
-      }
-      .empty-state p:first-child {
-        font-size: 3rem;
       }
 
       /* ── 費用清單 ── */

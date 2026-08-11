@@ -27,9 +27,12 @@ export class ShoppingService {
   async update(id: string, changes: Partial<ShoppingItem>): Promise<void> {
     const now = new Date().toISOString();
     await db.shopping_list.update(id, { ...changes, updated_at_utc: now });
-    await this.sync.enqueue('UPDATE', 'shopping_list', {
-      client_record_id: id, ...changes, updated_at_utc: now,
-    });
+    // 送整筆記錄（而非只送有異動的欄位），確保 trip_id 等必要欄位齊全，
+    // 否則 upsert 走到 INSERT 分支時會因缺欄位被 RLS 擋下 (403)
+    const full = await db.shopping_list.get(id);
+    if (full) {
+      await this.sync.enqueue('UPDATE', 'shopping_list', full as unknown as Record<string, unknown>);
+    }
   }
 
   async toggleBought(id: string, current: boolean): Promise<void> {
