@@ -54,7 +54,7 @@ import { PreferenceService } from '../services/preference.service';
             <span class="side-label">{{ 'nav.trips' | transloco }}</span>
           </a>
           <a routerLink="/exchange" routerLinkActive="active" class="side-tab">
-            <span class="side-icon">💱</span>
+            <span class="side-icon">⇄</span>
             <span class="side-label">{{ 'nav.exchange' | transloco }}</span>
           </a>
           <a routerLink="/settings" routerLinkActive="active" class="side-tab">
@@ -91,7 +91,7 @@ import { PreferenceService } from '../services/preference.service';
           <span class="nav-label">{{ 'nav.trips' | transloco }}</span>
         </a>
         <a routerLink="/exchange" routerLinkActive="active" class="nav-tab">
-          <span class="nav-icon">💱</span>
+          <span class="nav-icon">⇄</span>
           <span class="nav-label">{{ 'nav.exchange' | transloco }}</span>
         </a>
         <a routerLink="/settings" routerLinkActive="active" class="nav-tab">

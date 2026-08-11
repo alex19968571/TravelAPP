@@ -44,7 +44,14 @@ export interface DropdownOption {
         <span class="dropdown-label">{{ selectedLabel() }}</span>
         <span class="caret" [class.flipped]="open()">▾</span>
       </button>
-      <div class="dropdown-menu">
+      <div
+        class="dropdown-menu"
+        [style.position]="menuPosition() ? 'fixed' : null"
+        [style.top]="menuPosition()?.top ?? null"
+        [style.bottom]="menuPosition()?.bottom ?? null"
+        [style.left]="menuPosition()?.left ?? null"
+        [style.width]="menuPosition()?.width ?? null"
+      >
         @for (opt of options; track opt.value) {
           <button
             type="button"
@@ -133,7 +140,10 @@ export interface DropdownOption {
         overflow-y: auto;
         z-index: 100;
         display: none;
-        scrollbar-width: thin;
+        scrollbar-width: none;
+      }
+      .dropdown-menu::-webkit-scrollbar {
+        display: none;
       }
       .dropdown-picker.drop-up .dropdown-menu {
         top: auto;
@@ -177,6 +187,9 @@ export class DropdownSelectComponent implements ControlValueAccessor, OnDestroy 
   value: unknown = null;
   open = signal(false);
   openUpward = signal(false);
+  menuPosition = signal<{ top?: string; bottom?: string; left: string; width: string } | null>(
+    null,
+  );
   private static readonly MENU_ESTIMATED_HEIGHT = 260;
 
   private onChangeFn: (v: unknown) => void = () => {};
@@ -217,13 +230,29 @@ export class DropdownSelectComponent implements ControlValueAccessor, OnDestroy 
   private updateOpenDirection(): void {
     const rect = this.elRef.nativeElement.getBoundingClientRect();
     const spaceBelow = window.innerHeight - rect.bottom;
-    this.openUpward.set(
-      spaceBelow < DropdownSelectComponent.MENU_ESTIMATED_HEIGHT && rect.top > spaceBelow,
-    );
+    const upward =
+      spaceBelow < DropdownSelectComponent.MENU_ESTIMATED_HEIGHT && rect.top > spaceBelow;
+    this.openUpward.set(upward);
+
+    if (this.variant === 'badge') {
+      // badge 選單靠右對齊、寬度自訂，維持原本相對定位樣式即可
+      this.menuPosition.set(null);
+      return;
+    }
+    // 改用 fixed 定位並以螢幕座標展開，完全跳脫任何祖先層 overflow:auto/hidden
+    // （例如可捲動的 modal）造成的裁切
+    this.menuPosition.set({
+      left: `${rect.left}px`,
+      width: `${rect.width}px`,
+      ...(upward
+        ? { bottom: `${window.innerHeight - rect.top + 6}px` }
+        : { top: `${rect.bottom + 6}px` }),
+    });
   }
 
   close(): void {
     this.open.set(false);
+    this.menuPosition.set(null);
     if (DropdownSelectComponent.openInstance === this) {
       DropdownSelectComponent.openInstance = null;
     }

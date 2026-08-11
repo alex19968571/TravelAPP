@@ -555,6 +555,10 @@ interface GrossEntry {
         gap: 1rem;
         margin-bottom: 1.25rem;
       }
+      .form-row {
+        overflow-x: hidden;
+        max-width: 100%;
+      }
       .span-2 {
         grid-column: 1 / -1;
       }

@@ -210,7 +210,11 @@ const CURRENCY_OPTIONS = [
       <div class="trips-grid">
         @for (trip of filteredTrips(); track trip.id) {
           <div class="trip-card-wrap">
-            <button class="swipe-delete" (click)="confirmDeleteTrip(trip)">
+            <button
+              class="swipe-delete"
+              [class.revealed]="swipedTripId() === trip.id"
+              (click)="confirmDeleteTrip(trip)"
+            >
               {{ 'trips.delete' | transloco }}
             </button>
             <div
@@ -515,6 +519,8 @@ const CURRENCY_OPTIONS = [
       }
       .form-row {
         margin-bottom: 1rem;
+        overflow-x: hidden;
+        max-width: 100%;
       }
       .form-row-grid {
         display: grid;
@@ -613,6 +619,7 @@ const CURRENCY_OPTIONS = [
         font-weight: 600;
         cursor: pointer;
         display: none;
+        visibility: hidden;
       }
       .trip-card.card {
         padding: 0;
@@ -755,6 +762,9 @@ const CURRENCY_OPTIONS = [
           align-items: center;
           justify-content: center;
         }
+        .swipe-delete.revealed {
+          visibility: visible;
+        }
         .trip-card.swiped {
           transform: translateX(-88px);
         }
@@ -777,6 +787,8 @@ const CURRENCY_OPTIONS = [
         padding: 1.5rem;
         max-width: 380px;
         width: 100%;
+        box-sizing: border-box;
+        overflow-x: hidden;
         box-shadow: 0 12px 40px var(--shadow);
       }
       .modal-card h3 {

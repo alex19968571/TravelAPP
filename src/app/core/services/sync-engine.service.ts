@@ -56,9 +56,9 @@ export class SyncEngineService implements OnDestroy {
       const tripIds = trips.map((t) => (t as any).id as string);
 
       const [
-        { data: itineraryItems },
-        { data: shoppingItems },
-        { data: expenses },
+        { data: itineraryItems, error: itineraryErr },
+        { data: shoppingItems, error: shoppingErr },
+        { data: expenses, error: expensesErr },
         { data: splits },
       ] = tripIds.length
         ? await Promise.all([
@@ -67,12 +67,16 @@ export class SyncEngineService implements OnDestroy {
             this.supabase.from('expenses').select('*').in('trip_id', tripIds),
             this.supabase.from('expense_splits').select('*'),
           ])
-        : [
-            { data: [] as any[] },
-            { data: [] as any[] },
-            { data: [] as any[] },
-            { data: [] as any[] },
-          ];
+        : ([
+            { data: [], error: null },
+            { data: [], error: null },
+            { data: [], error: null },
+            { data: [], error: null },
+          ] as any[]);
+
+      if (itineraryErr) console.error('[SyncEngine] fetch itinerary_items error', itineraryErr);
+      if (shoppingErr) console.error('[SyncEngine] fetch shopping_list error', shoppingErr);
+      if (expensesErr) console.error('[SyncEngine] fetch expenses error', expensesErr);
 
       await db.transaction(
         'rw',
@@ -90,29 +94,37 @@ export class SyncEngineService implements OnDestroy {
           if (members?.length) await db.trip_members.bulkPut(members as any[]);
 
           // 以伺服器資料為準：清掉「本機有、伺服器已無（例如已在其他裝置刪除）
-          // 且不是尚待上傳的本機新資料」的記錄，避免多裝置間資料分歧
+          // 且不是尚待上傳的本機新資料」的記錄，避免多裝置間資料分歧。
+          // 只有在該表格查詢確實成功時才清理，避免查詢失敗（回傳 null/空陣列）
+          // 被誤判成「伺服器上真的沒有資料」而整批刪掉本機資料。
           if (tripIds.length) {
-            await this.pruneStale(
-              db.itinerary_items,
-              'itinerary_items',
-              'id',
-              await db.itinerary_items.where('trip_id').anyOf(tripIds).toArray(),
-              new Set((itineraryItems ?? []).map((r: any) => r.id)),
-            );
-            await this.pruneStale(
-              db.shopping_list,
-              'shopping_list',
-              'client_record_id',
-              await db.shopping_list.where('trip_id').anyOf(tripIds).toArray(),
-              new Set((shoppingItems ?? []).map((r: any) => r.client_record_id)),
-            );
-            await this.pruneStale(
-              db.expenses,
-              'expenses',
-              'client_record_id',
-              await db.expenses.where('trip_id').anyOf(tripIds).toArray(),
-              new Set((expenses ?? []).map((r: any) => r.client_record_id)),
-            );
+            if (!itineraryErr) {
+              await this.pruneStale(
+                db.itinerary_items,
+                'itinerary_items',
+                'id',
+                await db.itinerary_items.where('trip_id').anyOf(tripIds).toArray(),
+                new Set((itineraryItems ?? []).map((r: any) => r.id)),
+              );
+            }
+            if (!shoppingErr) {
+              await this.pruneStale(
+                db.shopping_list,
+                'shopping_list',
+                'client_record_id',
+                await db.shopping_list.where('trip_id').anyOf(tripIds).toArray(),
+                new Set((shoppingItems ?? []).map((r: any) => r.client_record_id)),
+              );
+            }
+            if (!expensesErr) {
+              await this.pruneStale(
+                db.expenses,
+                'expenses',
+                'client_record_id',
+                await db.expenses.where('trip_id').anyOf(tripIds).toArray(),
+                new Set((expenses ?? []).map((r: any) => r.client_record_id)),
+              );
+            }
           }
 
           if (itineraryItems?.length) await db.itinerary_items.bulkPut(itineraryItems as any[]);
