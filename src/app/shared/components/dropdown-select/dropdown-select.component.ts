@@ -34,7 +34,12 @@ export interface DropdownOption {
     },
   ],
   template: `
-    <div class="dropdown-picker" [class.open]="open()" [class.badge]="variant === 'badge'">
+    <div
+      class="dropdown-picker"
+      [class.open]="open()"
+      [class.dropdown-badge]="variant === 'badge'"
+      [class.drop-up]="openUpward()"
+    >
       <button type="button" class="dropdown-trigger" (click)="toggle()">
         <span class="dropdown-label">{{ selectedLabel() }}</span>
         <span class="caret" [class.flipped]="open()">▾</span>
@@ -77,13 +82,13 @@ export interface DropdownOption {
       .dropdown-picker.open .dropdown-trigger {
         border-color: var(--accent);
       }
-      .dropdown-picker.badge {
+      .dropdown-picker.dropdown-badge {
         width: auto;
       }
-      .dropdown-picker.badge .dropdown-trigger,
-      .dropdown-picker.badge .dropdown-trigger:hover,
-      .dropdown-picker.badge .dropdown-trigger:active,
-      .dropdown-picker.badge .dropdown-trigger:focus {
+      .dropdown-picker.dropdown-badge .dropdown-trigger,
+      .dropdown-picker.dropdown-badge .dropdown-trigger:hover,
+      .dropdown-picker.dropdown-badge .dropdown-trigger:active,
+      .dropdown-picker.dropdown-badge .dropdown-trigger:focus {
         width: auto;
         background: transparent !important;
         border: none;
@@ -95,7 +100,7 @@ export interface DropdownOption {
         font-weight: 700;
         color: var(--accent);
       }
-      .dropdown-picker.badge .dropdown-menu {
+      .dropdown-picker.dropdown-badge .dropdown-menu {
         left: auto;
         right: 0;
         min-width: 110px;
@@ -129,6 +134,10 @@ export interface DropdownOption {
         z-index: 100;
         display: none;
         scrollbar-width: thin;
+      }
+      .dropdown-picker.drop-up .dropdown-menu {
+        top: auto;
+        bottom: calc(100% + 6px);
       }
       .dropdown-picker.open .dropdown-menu {
         display: block;
@@ -167,6 +176,8 @@ export class DropdownSelectComponent implements ControlValueAccessor, OnDestroy 
 
   value: unknown = null;
   open = signal(false);
+  openUpward = signal(false);
+  private static readonly MENU_ESTIMATED_HEIGHT = 260;
 
   private onChangeFn: (v: unknown) => void = () => {};
   private onTouchedFn: () => void = () => {};
@@ -195,7 +206,20 @@ export class DropdownSelectComponent implements ControlValueAccessor, OnDestroy 
       DropdownSelectComponent.openInstance.close();
     }
     DropdownSelectComponent.openInstance = this;
+    this.updateOpenDirection();
     this.open.set(true);
+    // 確保觸發按鈕（連同即將展開的選單）捲動進可視範圍，避免在可捲動 modal 內被裁掉
+    setTimeout(() => {
+      this.elRef.nativeElement.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    });
+  }
+
+  private updateOpenDirection(): void {
+    const rect = this.elRef.nativeElement.getBoundingClientRect();
+    const spaceBelow = window.innerHeight - rect.bottom;
+    this.openUpward.set(
+      spaceBelow < DropdownSelectComponent.MENU_ESTIMATED_HEIGHT && rect.top > spaceBelow,
+    );
   }
 
   close(): void {

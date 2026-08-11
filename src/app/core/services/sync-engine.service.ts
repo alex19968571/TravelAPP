@@ -1,6 +1,7 @@
 import { Injectable, inject, OnDestroy } from '@angular/core';
 import { fromEvent, merge, Subject, Subscription } from 'rxjs';
 import { debounceTime, filter, takeUntil } from 'rxjs/operators';
+import type { Table } from 'dexie';
 import { db } from '../db/local.db';
 import { SupabaseService } from './supabase.service';
 import { SyncQueueItem, Trip, ShoppingItem, Expense } from '../models';
@@ -52,18 +53,26 @@ export class SyncEngineService implements OnDestroy {
         : { data: [] as unknown[] };
 
       const trips = [...(ownedTrips ?? []), ...(joinedTrips ?? [])];
+      const tripIds = trips.map((t) => (t as any).id as string);
 
       const [
         { data: itineraryItems },
         { data: shoppingItems },
         { data: expenses },
         { data: splits },
-      ] = await Promise.all([
-        this.supabase.from('itinerary_items').select('*'),
-        this.supabase.from('shopping_list').select('*'),
-        this.supabase.from('expenses').select('*'),
-        this.supabase.from('expense_splits').select('*'),
-      ]);
+      ] = tripIds.length
+        ? await Promise.all([
+            this.supabase.from('itinerary_items').select('*').in('trip_id', tripIds),
+            this.supabase.from('shopping_list').select('*').in('trip_id', tripIds),
+            this.supabase.from('expenses').select('*').in('trip_id', tripIds),
+            this.supabase.from('expense_splits').select('*'),
+          ])
+        : [
+            { data: [] as any[] },
+            { data: [] as any[] },
+            { data: [] as any[] },
+            { data: [] as any[] },
+          ];
 
       await db.transaction(
         'rw',
@@ -74,10 +83,38 @@ export class SyncEngineService implements OnDestroy {
           db.shopping_list,
           db.expenses,
           db.expense_splits,
+          db.sync_queue,
         ],
         async () => {
           if (trips.length) await db.trips.bulkPut(trips as Trip[]);
           if (members?.length) await db.trip_members.bulkPut(members as any[]);
+
+          // 以伺服器資料為準：清掉「本機有、伺服器已無（例如已在其他裝置刪除）
+          // 且不是尚待上傳的本機新資料」的記錄，避免多裝置間資料分歧
+          if (tripIds.length) {
+            await this.pruneStale(
+              db.itinerary_items,
+              'itinerary_items',
+              'id',
+              await db.itinerary_items.where('trip_id').anyOf(tripIds).toArray(),
+              new Set((itineraryItems ?? []).map((r: any) => r.id)),
+            );
+            await this.pruneStale(
+              db.shopping_list,
+              'shopping_list',
+              'client_record_id',
+              await db.shopping_list.where('trip_id').anyOf(tripIds).toArray(),
+              new Set((shoppingItems ?? []).map((r: any) => r.client_record_id)),
+            );
+            await this.pruneStale(
+              db.expenses,
+              'expenses',
+              'client_record_id',
+              await db.expenses.where('trip_id').anyOf(tripIds).toArray(),
+              new Set((expenses ?? []).map((r: any) => r.client_record_id)),
+            );
+          }
+
           if (itineraryItems?.length) await db.itinerary_items.bulkPut(itineraryItems as any[]);
           if (shoppingItems?.length)
             await db.shopping_list.bulkPut(shoppingItems as ShoppingItem[]);
@@ -88,6 +125,22 @@ export class SyncEngineService implements OnDestroy {
     } catch (err) {
       console.error('[SyncEngine] syncDown error', err);
     }
+  }
+
+  /** 刪除本機存在、但伺服器已沒有、且未在同步佇列中等待上傳的記錄 */
+  private async pruneStale(
+    table: Table<any, string>,
+    tableName: string,
+    idField: string,
+    localRecords: any[],
+    serverIds: Set<string>,
+  ): Promise<void> {
+    const pending = await db.sync_queue.where('table_name').equals(tableName).toArray();
+    const protectedIds = new Set(pending.map((p) => (p.payload as any)[idField]).filter(Boolean));
+    const staleIds = localRecords
+      .map((r) => r[idField] as string)
+      .filter((id) => !serverIds.has(id) && !protectedIds.has(id));
+    if (staleIds.length) await table.bulkDelete(staleIds);
   }
 
   // ── Sync-Up：批次處理 SyncQueue → Supabase ───────────────────────

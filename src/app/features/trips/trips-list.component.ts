@@ -520,6 +520,10 @@ const CURRENCY_OPTIONS = [
         display: grid;
         grid-template-columns: 1fr 1fr;
         gap: 1rem;
+        min-width: 0;
+      }
+      .form-row-grid > .form-row {
+        min-width: 0;
       }
       .form-row label {
         display: block;
@@ -529,6 +533,7 @@ const CURRENCY_OPTIONS = [
       }
       .form-row input {
         width: 100%;
+        min-width: 0;
         padding: 0.625rem 0.875rem;
         border: 1.5px solid var(--border);
         border-radius: 10px;

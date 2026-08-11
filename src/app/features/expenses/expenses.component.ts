@@ -576,7 +576,6 @@ interface GrossEntry {
         padding: 0.625rem 0.5rem 0.625rem 0.875rem;
         box-sizing: border-box;
         background: var(--input-bg);
-        overflow: hidden;
       }
       .amount-input-wrap:focus-within {
         border-color: var(--accent);
@@ -595,7 +594,7 @@ interface GrossEntry {
         -webkit-appearance: none;
         -moz-appearance: textfield;
         background: transparent !important;
-        font-size: 0.95rem;
+        font-size: 16px;
         font-weight: 400;
         padding: 0;
         box-sizing: border-box;
@@ -1002,6 +1001,15 @@ interface GrossEntry {
       .settlement-row.negative .settle-converted {
         background: #fff0f0;
         color: #9b2c2c;
+      }
+
+      @media (max-width: 480px) {
+        .form-grid {
+          grid-template-columns: 1fr;
+        }
+        .span-2 {
+          grid-column: auto;
+        }
       }
     `,
   ],
