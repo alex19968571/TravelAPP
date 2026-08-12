@@ -246,9 +246,19 @@ import { NearbySpotsService, NearbySpotsResult } from '../services/nearby-spots.
         flex: 1;
         min-width: 0;
         min-height: 0;
-        overflow-y: auto;
-        -webkit-overflow-scrolling: touch;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
         padding-bottom: 68px;
+      }
+      /* 被路由插入的頁面元件（router-outlet 的下一個手足節點）填滿剩餘高度，
+         捲動與否交由各頁面自己決定，外層 shell 本身永遠不捲動 */
+      .shell-content > * {
+        flex: 1;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
       }
 
       /* ── 左側可收合清單（僅網頁版顯示）── */
@@ -374,11 +384,15 @@ import { NearbySpotsService, NearbySpotsResult } from '../services/nearby-spots.
           padding: 0.75rem 0.5rem;
           gap: 0.25rem;
           overflow-y: auto;
+          scrollbar-width: none;
           transition: width 0.2s ease;
           position: sticky;
           top: 49px;
           align-self: flex-start;
           height: calc(100vh - 49px);
+        }
+        .side-nav::-webkit-scrollbar {
+          display: none;
         }
         .sidebar-collapsed .side-nav {
           width: 64px;

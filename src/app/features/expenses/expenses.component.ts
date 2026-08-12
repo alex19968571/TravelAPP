@@ -288,6 +288,7 @@ interface GrossEntry {
       }
 
       <!-- 費用清單 -->
+      <div class="page-scroll">
       @if (expenses().length === 0) {
         <div class="empty-state">
           <p>{{ 'expenses.noExpenses' | transloco }}</p>
@@ -412,27 +413,40 @@ interface GrossEntry {
           }
         </div>
       }
+      </div>
     </div>
   `,
   styles: [
     `
       .page-container {
         max-width: 900px;
+        width: 100%;
         margin: 0 auto;
         padding: 1.5rem;
         background: var(--bg);
+        flex: 1;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        box-sizing: border-box;
+      }
+      .page-scroll {
+        flex: 1;
+        min-height: 0;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+      }
+      .page-scroll::-webkit-scrollbar {
+        display: none;
       }
       .page-header {
         display: flex;
         align-items: center;
         gap: 1rem;
         margin-bottom: 1rem;
-        position: sticky;
-        top: 0;
-        z-index: 40;
-        background: var(--bg);
-        padding-top: 0.5rem;
-        margin-top: -0.5rem;
+        flex-shrink: 0;
       }
       .back-btn {
         display: inline-flex;

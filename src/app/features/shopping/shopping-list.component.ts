@@ -193,6 +193,7 @@ const CURRENCY_CODES = [
       }
 
       <!-- 清單 -->
+      <div class="page-scroll">
       <div class="list-toolbar">
         <div class="summary">
           <div class="summary-main">
@@ -276,15 +277,33 @@ const CURRENCY_CODES = [
           </div>
         }
       </div>
+      </div>
     </div>
   `,
   styles: [
     `
       .page-container {
         max-width: 900px;
+        width: 100%;
         margin: 0 auto;
         padding: 1.5rem;
         background: var(--bg);
+        flex: 1;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        box-sizing: border-box;
+      }
+      .page-scroll {
+        flex: 1;
+        min-height: 0;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+      }
+      .page-scroll::-webkit-scrollbar {
+        display: none;
       }
       .page-header {
         display: flex;
@@ -292,12 +311,7 @@ const CURRENCY_CODES = [
         gap: 1rem;
         margin-bottom: 1.5rem;
         flex-wrap: wrap;
-        position: sticky;
-        top: 0;
-        z-index: 41;
-        background: var(--bg);
-        padding-top: 0.5rem;
-        margin-top: -0.5rem;
+        flex-shrink: 0;
       }
       .back-btn {
         display: inline-flex;
@@ -336,7 +350,7 @@ const CURRENCY_CODES = [
         justify-content: flex-end;
         margin-bottom: 0.6rem;
         position: sticky;
-        top: 64px;
+        top: 0;
         z-index: 40;
         background: var(--bg);
         padding-top: 0.5rem;

@@ -167,9 +167,19 @@ import {
     `
       .page-container {
         max-width: 600px;
+        width: 100%;
         margin: 0 auto;
         padding: 1.5rem;
         background: var(--bg);
+        box-sizing: border-box;
+        flex: 1;
+        min-height: 0;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+      }
+      .page-container::-webkit-scrollbar {
+        display: none;
       }
       .page-title {
         font-size: 1.6rem;

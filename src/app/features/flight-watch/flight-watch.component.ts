@@ -94,13 +94,14 @@ import { PreferenceService } from '../../core/services/preference.service';
         </div>
       }
 
-      @if (watches().length === 0) {
-        <div class="empty-state">
-          <p>{{ 'flightWatch.noWatches' | transloco }}</p>
-        </div>
-      }
-      <div class="items-list">
-        @for (watch of watches(); track watch.id) {
+      <div class="page-scroll">
+        @if (watches().length === 0) {
+          <div class="empty-state">
+            <p>{{ 'flightWatch.noWatches' | transloco }}</p>
+          </div>
+        }
+        <div class="items-list">
+          @for (watch of watches(); track watch.id) {
           <div class="item-card card">
             <div class="item-main">
               <div class="item-info">
@@ -154,7 +155,8 @@ import { PreferenceService } from '../../core/services/preference.service';
               </button>
             </div>
           </div>
-        }
+          }
+        </div>
       </div>
     </div>
   `,
@@ -162,9 +164,26 @@ import { PreferenceService } from '../../core/services/preference.service';
     `
       .page-container {
         max-width: 900px;
+        width: 100%;
         margin: 0 auto;
         padding: 1.5rem;
         background: var(--bg);
+        flex: 1;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        box-sizing: border-box;
+      }
+      .page-scroll {
+        flex: 1;
+        min-height: 0;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+      }
+      .page-scroll::-webkit-scrollbar {
+        display: none;
       }
       .page-header {
         display: flex;
@@ -172,12 +191,7 @@ import { PreferenceService } from '../../core/services/preference.service';
         gap: 1rem;
         margin-bottom: 1.5rem;
         flex-wrap: wrap;
-        position: sticky;
-        top: 0;
-        z-index: 41;
-        background: var(--bg);
-        padding-top: 0.5rem;
-        margin-top: -0.5rem;
+        flex-shrink: 0;
       }
       .back-btn {
         display: inline-flex;
@@ -286,6 +300,10 @@ import { PreferenceService } from '../../core/services/preference.service';
         width: 100%;
         max-height: 90vh;
         overflow-y: auto;
+        scrollbar-width: none;
+      }
+      .modal-card::-webkit-scrollbar {
+        display: none;
       }
 
       .empty-state {

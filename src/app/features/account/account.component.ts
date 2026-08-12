@@ -108,11 +108,14 @@ import { PreferenceService, COUNTRIES, Country } from '../../core/services/prefe
     `
       .page-container {
         max-width: 500px;
+        width: 100%;
         margin: 0 auto;
         padding: 6.5rem 1.5rem 1.5rem;
         background: var(--bg);
-        height: calc(100dvh - 112px);
+        box-sizing: border-box;
+        height: 100%;
         min-height: 0;
+        flex: 1;
         display: flex;
         align-items: flex-start;
         justify-content: center;

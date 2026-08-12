@@ -132,6 +132,7 @@ const CURRENCY_OPTIONS = [
         </div>
       </div>
 
+      <div class="page-scroll">
       @if (showJoin()) {
         <form class="card join-form" (ngSubmit)="submitJoin()">
           <h3>{{ 'trips.enterInviteCode' | transloco }}</h3>
@@ -271,6 +272,7 @@ const CURRENCY_OPTIONS = [
           </div>
         }
       </div>
+      </div>
 
       @if (editingTrip(); as et) {
         <div class="modal-backdrop" (click)="closeEditTrip()">
@@ -326,9 +328,26 @@ const CURRENCY_OPTIONS = [
     `
       .page-container {
         max-width: 900px;
+        width: 100%;
         margin: 0 auto;
         padding: 1.5rem;
         background: var(--bg);
+        flex: 1;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        box-sizing: border-box;
+      }
+      .page-scroll {
+        flex: 1;
+        min-height: 0;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+      }
+      .page-scroll::-webkit-scrollbar {
+        display: none;
       }
       .page-title {
         font-size: 1.6rem;
@@ -363,9 +382,7 @@ const CURRENCY_OPTIONS = [
         justify-content: space-between;
         gap: 0.6rem;
         margin-bottom: 0.75rem;
-        position: sticky;
-        top: 0;
-        z-index: 40;
+        flex-shrink: 0;
         background: var(--bg);
         padding-top: 0.5rem;
         margin-top: -0.5rem;

@@ -159,21 +159,23 @@ import {
     `
       .page-container {
         max-width: 900px;
+        width: 100%;
         margin: 0 auto;
         padding: 1.5rem;
         background: var(--bg);
+        flex: 1;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        box-sizing: border-box;
       }
       .page-header {
         display: flex;
         align-items: center;
         gap: 1rem;
         margin-bottom: 1.5rem;
-        position: sticky;
-        top: 0;
-        z-index: 41;
-        background: var(--bg);
-        padding-top: 0.5rem;
-        margin-top: -0.5rem;
+        flex-shrink: 0;
       }
       .back-btn {
         display: inline-flex;
@@ -205,6 +207,11 @@ import {
         border-radius: 16px;
         padding: 1.5rem;
         box-shadow: 0 4px 20px var(--shadow);
+        flex: 1;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
       }
       .card h3 {
         margin: 0;
@@ -215,12 +222,7 @@ import {
         align-items: center;
         justify-content: space-between;
         margin-bottom: 1rem;
-        position: sticky;
-        top: 64px;
-        z-index: 40;
-        background: var(--surface);
-        padding-top: 0.5rem;
-        margin-top: -0.5rem;
+        flex-shrink: 0;
       }
 
       /* 邀請選單 */
@@ -283,6 +285,14 @@ import {
         display: flex;
         flex-direction: column;
         gap: 0.75rem;
+        flex: 1;
+        min-height: 0;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+      }
+      .member-list::-webkit-scrollbar {
+        display: none;
       }
       .member-row-wrap {
         position: relative;

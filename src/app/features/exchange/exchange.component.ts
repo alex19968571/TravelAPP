@@ -137,22 +137,22 @@ const KEYPAD_ROWS: string[][] = [
     `
       .page-container {
         max-width: 500px;
+        width: 100%;
         margin: 0 auto;
         padding: 1.5rem;
         background: var(--bg);
-        min-height: 100vh;
-      }
-      .scale-wrap {
-        width: 100%;
-        transform-origin: center center;
-      }
-      .page-container {
-        height: calc(100dvh - 112px);
+        box-sizing: border-box;
+        height: 100%;
         min-height: 0;
+        flex: 1;
         display: flex;
         align-items: center;
         justify-content: center;
         overflow: hidden;
+      }
+      .scale-wrap {
+        width: 100%;
+        transform-origin: center center;
       }
       h1 {
         font-size: 1.6rem;
