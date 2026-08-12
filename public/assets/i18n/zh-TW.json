@@ -10,7 +10,8 @@
     "expenses": "記帳分帳",
     "exchange": "換匯",
     "settings": "設定",
-    "collapse": "收合選單"
+    "collapse": "收合選單",
+    "flightWatch": "自動盯價"
   },
   "auth": {
     "signInGoogle": "以 Google 帳號登入",
@@ -69,9 +70,15 @@
     "fontSizeXl": "特大",
     "previewText": "預覽文字：旅遊記帳本 Travel App",
     "homeCountryDesc": "影響 UI 語系與幣別換算基準",
-    "account": "帳號"
+    "account": "帳號",
+    "customColor": "自訂顏色",
+    "custom": "自訂"
   },
   "tripDetail": {
+    "editSpotTitle": "✏️ 編輯景點",
+    "namePlaceholder": "景點名稱",
+    "dateLabel": "日期",
+    "saving": "儲存中...",
     "loading": "載入中...",
     "members": "行程成員",
     "addMemberPlaceholder": "新增成員名稱",
@@ -110,7 +117,26 @@
     "dayNumber": "天數",
     "latitude": "緯度",
     "longitude": "經度",
-    "submit": "新增景點"
+    "submit": "新增景點",
+    "editTitle": "✏️ 編輯景點",
+    "addTitle": "＋ 新增景點",
+    "changePhoto": "點擊更換圖片",
+    "uploading": "上傳中...",
+    "uploadPhotoHint": "上傳景點圖片",
+    "nameLabel": "景點名稱",
+    "namePlaceholder": "輸入景點名稱",
+    "addDateLabel": "加入日期",
+    "noteLabel": "筆記",
+    "noteInputPlaceholder": "選填備註",
+    "save": "儲存",
+    "confirmBtn": "確認",
+    "mapEditBtn": "✏️ 編輯",
+    "dayWithDate": "第 {{day}} 天（{{month}}/{{date}}）",
+    "positionOnlyOne": "第 1 個位置（唯一）",
+    "positionFallback": "第 {{n}} 個位置",
+    "positionFirst": "排在最前面（{{name}} 之前）",
+    "positionLast": "排在最後面（{{name}} 之後）",
+    "positionAfter": "排在 {{name}} 之後"
   },
   "shopping": {
     "backToTrip": "返回行程",
@@ -131,7 +157,9 @@
     "linkPlaceholder": "https://...",
     "viewLink": "🔗 商品連結",
     "delete": "🗑 刪除",
-    "noItems": "尚未安排任何購物項目"
+    "noItems": "尚未安排任何購物項目",
+    "convertTo": "換算成 ",
+    "itemImageAlt": "商品圖"
   },
   "expenses": {
     "backToTrip": "返回行程",
@@ -169,7 +197,9 @@
     "payerBadge": "墊款",
     "noSplitData": "（無分帳資料）",
     "unnamed": "（未命名）",
-    "deleteConfirm": "確定刪除此筆記帳？"
+    "deleteConfirm": "確定刪除此筆記帳？",
+    "sharesEmpty": "請先選擇分帳方式或設定人數",
+    "memberFallback": "成員 {{n}}"
   },
   "common": {
     "save": "儲存",
@@ -178,7 +208,8 @@
     "delete": "刪除",
     "back": "返回",
     "confirm": "確認",
-    "loading": "載入中..."
+    "loading": "載入中...",
+    "close": "關閉"
   },
   "join": {
     "joining": "正在加入行程...",
@@ -188,6 +219,59 @@
   "exchange": {
     "title": "換匯",
     "clear": "清除"
+  },
+  "timezones": {
+    "taipei": "台北",
+    "tokyo": "東京",
+    "seoul": "首爾",
+    "shanghai": "上海",
+    "bangkok": "曼谷",
+    "hoChiMinh": "胡志明",
+    "singapore": "新加坡",
+    "kualaLumpur": "吉隆坡",
+    "jakarta": "雅加達",
+    "sydney": "雪梨",
+    "london": "倫敦",
+    "paris": "巴黎",
+    "berlin": "柏林",
+    "rome": "羅馬",
+    "newYork": "紐約",
+    "toronto": "多倫多"
+  },
+  "currencies": {
+    "twd": "台幣",
+    "jpy": "日圓",
+    "krw": "韓圓",
+    "cny": "人民幣",
+    "thb": "泰銖",
+    "vnd": "越南盾",
+    "sgd": "新幣",
+    "myr": "馬幣",
+    "idr": "盾",
+    "aud": "澳幣",
+    "gbp": "英鎊",
+    "eur": "歐元",
+    "usd": "美元",
+    "cad": "加元",
+    "chf": "瑞郎"
+  },
+  "flightWatch": {
+    "title": "自動盯價",
+    "origin": "出發地",
+    "destination": "目的地",
+    "departDate": "去程日期",
+    "returnDate": "回程日期（選填）",
+    "targetPrice": "目標價格",
+    "currency": "幣別",
+    "addWatch": "新增追蹤",
+    "noWatches": "尚未追蹤任何航班，點擊右上角「＋」開始盯價吧！",
+    "checking": "查詢中...",
+    "recheck": "重新檢查",
+    "delete": "刪除",
+    "priceUnavailable": "暫時無法取得報價"
+  },
+  "nearby": {
+    "message": "你的位置在 {{place}}，{{radius}} 公里內有 {{count}} 個景點"
   },
   "transport": {
     "noSelection": "尚未選擇交通方式 +0",

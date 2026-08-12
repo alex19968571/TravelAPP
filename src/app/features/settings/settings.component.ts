@@ -99,7 +99,7 @@ import {
                 ? pref.customColorHex()
                 : 'conic-gradient(red,yellow,lime,cyan,blue,magenta,red)'
             "
-            title="自訂顏色"
+            [title]="'settings.customColor' | transloco"
             (click)="customColorInput.click()"
           >
             @if (pref.colorId() === 'custom') {
@@ -120,7 +120,9 @@ import {
           @for (c of colors; track c.id) {
             <span class="color-label" [class.active]="pref.colorId() === c.id">{{ c.label }}</span>
           }
-          <span class="color-label" [class.active]="pref.colorId() === 'custom'">自訂</span>
+          <span class="color-label" [class.active]="pref.colorId() === 'custom'">{{
+            'settings.custom' | transloco
+          }}</span>
         </div>
       </div>
 
@@ -168,7 +170,6 @@ import {
         margin: 0 auto;
         padding: 1.5rem;
         background: var(--bg);
-        min-height: 100vh;
       }
       .page-title {
         font-size: 1.6rem;

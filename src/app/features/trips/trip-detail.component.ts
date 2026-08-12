@@ -171,21 +171,22 @@ const TRANSPORT_OPTIONS: { mode: TransportMode; icon: string }[] = [
     @if (editingItem()) {
       <div class="modal-backdrop" (click)="closeEdit()">
         <div class="modal-card" (click)="$event.stopPropagation()">
-          <h3>✏️ 編輯景點</h3>
+          <h3>{{ 'tripDetail.editSpotTitle' | transloco }}</h3>
 
           <!-- 圖片：label 包 input，確保首次點擊即觸發檔案選取 -->
           <label class="photo-block">
             @if (editPhotoUrl()) {
               <img [src]="editPhotoUrl()!" class="photo-img" alt="" />
-              <div class="photo-overlay">點擊更換圖片</div>
+              <div class="photo-overlay">{{ 'itinerary.changePhoto' | transloco }}</div>
             } @else if (editUploadingPhoto()) {
               <div class="photo-placeholder">
-                <span>⏳</span><span class="photo-hint">上傳中...</span>
+                <span>⏳</span
+                ><span class="photo-hint">{{ 'itinerary.uploading' | transloco }}</span>
               </div>
             } @else {
               <div class="photo-placeholder">
                 <span class="photo-plus">＋</span>
-                <span class="photo-hint">上傳景點圖片</span>
+                <span class="photo-hint">{{ 'itinerary.uploadPhotoHint' | transloco }}</span>
               </div>
             }
             <input type="file" accept="image/*" hidden (change)="onEditPhotoSelected($event)" />
@@ -193,13 +194,17 @@ const TRANSPORT_OPTIONS: { mode: TransportMode; icon: string }[] = [
 
           <!-- 名稱 -->
           <div class="field-group">
-            <label class="field-label">景點名稱</label>
-            <input class="field-input" [(ngModel)]="editName" placeholder="景點名稱" />
+            <label class="field-label">{{ 'itinerary.nameLabel' | transloco }}</label>
+            <input
+              class="field-input"
+              [(ngModel)]="editName"
+              [placeholder]="'tripDetail.namePlaceholder' | transloco"
+            />
           </div>
 
           <!-- 日期（切換天數） -->
           <div class="field-group">
-            <label class="field-label">日期</label>
+            <label class="field-label">{{ 'tripDetail.dateLabel' | transloco }}</label>
             <app-dropdown-select
               [options]="dateOptions()"
               [ngModel]="editDayNumber()"
@@ -209,11 +214,11 @@ const TRANSPORT_OPTIONS: { mode: TransportMode; icon: string }[] = [
 
           <!-- 筆記 -->
           <div class="field-group">
-            <label class="field-label">筆記</label>
+            <label class="field-label">{{ 'itinerary.noteLabel' | transloco }}</label>
             <textarea
               class="field-input field-notes"
               [(ngModel)]="editNotes"
-              placeholder="選填備註"
+              [placeholder]="'itinerary.noteInputPlaceholder' | transloco"
               rows="3"
             ></textarea>
           </div>
@@ -228,7 +233,7 @@ const TRANSPORT_OPTIONS: { mode: TransportMode; icon: string }[] = [
               [disabled]="!editName.trim() || editSaving()"
               (click)="saveEdit()"
             >
-              {{ editSaving() ? '儲存中...' : '儲存' }}
+              {{ (editSaving() ? 'tripDetail.saving' : 'itinerary.save') | transloco }}
             </button>
           </div>
         </div>
@@ -346,6 +351,12 @@ const TRANSPORT_OPTIONS: { mode: TransportMode; icon: string }[] = [
         align-items: center;
         gap: 1rem;
         margin-bottom: 1.5rem;
+        position: sticky;
+        top: 0;
+        z-index: 41;
+        background: var(--bg);
+        padding-top: 0.5rem;
+        margin-top: -0.5rem;
       }
       .icon-circle {
         display: flex;
@@ -382,7 +393,7 @@ const TRANSPORT_OPTIONS: { mode: TransportMode; icon: string }[] = [
         gap: 0.5rem;
         margin-bottom: 1.5rem;
         position: sticky;
-        top: 0;
+        top: 64px;
         z-index: 40;
         background: var(--bg);
         padding-top: 0.5rem;

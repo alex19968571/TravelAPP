@@ -4,11 +4,17 @@ import { debounceTime, filter, takeUntil } from 'rxjs/operators';
 import type { Table } from 'dexie';
 import { db } from '../db/local.db';
 import { SupabaseService } from './supabase.service';
-import { SyncQueueItem, Trip, ShoppingItem, Expense } from '../models';
+import { SyncQueueItem, Trip, ShoppingItem, Expense, FlightWatch } from '../models';
 import { generateId } from '../utils/uuid.util';
 
 type TableName =
-  'trips' | 'shopping_list' | 'expenses' | 'itinerary_items' | 'trip_members' | 'expense_splits';
+  | 'trips'
+  | 'shopping_list'
+  | 'expenses'
+  | 'itinerary_items'
+  | 'trip_members'
+  | 'expense_splits'
+  | 'flight_watches';
 
 const CONFLICT_FIELD: Partial<Record<TableName, string>> = {
   shopping_list: 'client_record_id',
@@ -39,10 +45,17 @@ export class SyncEngineService implements OnDestroy {
   // ── Sync-Down：登入後從雲端覆蓋寫入本地 ──────────────────────────
   async syncDown(userId: string): Promise<void> {
     try {
-      const [{ data: ownedTrips }, { data: members }] = await Promise.all([
+      const [
+        { data: ownedTrips },
+        { data: members },
+        { data: flightWatches, error: flightWatchesErr },
+      ] = await Promise.all([
         this.supabase.from('trips').select('*').eq('owner_id', userId),
         this.supabase.from('trip_members').select('*').eq('user_id', userId),
+        this.supabase.from('flight_watches').select('*').eq('owner_id', userId),
       ]);
+      if (flightWatchesErr)
+        console.error('[SyncEngine] fetch flight_watches error', flightWatchesErr);
 
       // 除了自己擁有的行程，也要抓透過邀請碼／連結加入的行程
       const joinedTripIds = [
@@ -87,11 +100,24 @@ export class SyncEngineService implements OnDestroy {
           db.shopping_list,
           db.expenses,
           db.expense_splits,
+          db.flight_watches,
           db.sync_queue,
         ],
         async () => {
           if (trips.length) await db.trips.bulkPut(trips as Trip[]);
           if (members?.length) await db.trip_members.bulkPut(members as any[]);
+
+          if (!flightWatchesErr) {
+            await this.pruneStale(
+              db.flight_watches,
+              'flight_watches',
+              'id',
+              await db.flight_watches.where('owner_id').equals(userId).toArray(),
+              new Set((flightWatches ?? []).map((r: any) => r.id)),
+            );
+          }
+          if (flightWatches?.length)
+            await db.flight_watches.bulkPut(flightWatches as FlightWatch[]);
 
           // 以伺服器資料為準：清掉「本機有、伺服器已無（例如已在其他裝置刪除）
           // 且不是尚待上傳的本機新資料」的記錄，避免多裝置間資料分歧。

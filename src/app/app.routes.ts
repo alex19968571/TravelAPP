@@ -57,6 +57,13 @@ export const routes: Routes = [
           import('./features/exchange/exchange.component').then((m) => m.ExchangeComponent),
       },
       {
+        path: 'flight-watch',
+        loadComponent: () =>
+          import('./features/flight-watch/flight-watch.component').then(
+            (m) => m.FlightWatchComponent,
+          ),
+      },
+      {
         path: 'account',
         loadComponent: () =>
           import('./features/account/account.component').then((m) => m.AccountComponent),

@@ -10,7 +10,8 @@
     "expenses": "Expenses",
     "exchange": "Exchange",
     "settings": "Settings",
-    "collapse": "Collapse menu"
+    "collapse": "Collapse menu",
+    "flightWatch": "Fare Watch"
   },
   "auth": {
     "signInGoogle": "Sign in with Google",
@@ -69,9 +70,15 @@
     "fontSizeXl": "X-Large",
     "previewText": "Preview text: Travel Ledger 旅遊記帳本",
     "homeCountryDesc": "Affects UI language and currency conversion base",
-    "account": "Account"
+    "account": "Account",
+    "customColor": "Custom Color",
+    "custom": "Custom"
   },
   "tripDetail": {
+    "editSpotTitle": "✏️ Edit Spot",
+    "namePlaceholder": "Spot Name",
+    "dateLabel": "Date",
+    "saving": "Saving...",
     "loading": "Loading...",
     "members": "Trip Members",
     "addMemberPlaceholder": "Add member name",
@@ -110,7 +117,26 @@
     "dayNumber": "Day",
     "latitude": "Latitude",
     "longitude": "Longitude",
-    "submit": "Add Spot"
+    "submit": "Add Spot",
+    "editTitle": "✏️ Edit Spot",
+    "addTitle": "＋ Add Spot",
+    "changePhoto": "Tap to change photo",
+    "uploading": "Uploading...",
+    "uploadPhotoHint": "Upload spot photo",
+    "nameLabel": "Spot Name",
+    "namePlaceholder": "Enter spot name",
+    "addDateLabel": "Add to Date",
+    "noteLabel": "Notes",
+    "noteInputPlaceholder": "Optional notes",
+    "save": "Save",
+    "confirmBtn": "Confirm",
+    "mapEditBtn": "✏️ Edit",
+    "dayWithDate": "Day {{day}} ({{month}}/{{date}})",
+    "positionOnlyOne": "Position 1 (only)",
+    "positionFallback": "Position {{n}}",
+    "positionFirst": "At the start (before {{name}})",
+    "positionLast": "At the end (after {{name}})",
+    "positionAfter": "After {{name}}"
   },
   "shopping": {
     "backToTrip": "Back to Trip",
@@ -131,7 +157,9 @@
     "linkPlaceholder": "https://...",
     "viewLink": "🔗 Item Link",
     "delete": "🗑 Delete",
-    "noItems": "No shopping items yet"
+    "noItems": "No shopping items yet",
+    "convertTo": "Convert to ",
+    "itemImageAlt": "Product photo"
   },
   "expenses": {
     "backToTrip": "Back to Trip",
@@ -169,7 +197,9 @@
     "payerBadge": "Paid",
     "noSplitData": "(No split data)",
     "unnamed": "(Unnamed)",
-    "deleteConfirm": "Delete this expense?"
+    "deleteConfirm": "Delete this expense?",
+    "sharesEmpty": "Please choose a split method or set the number of people first",
+    "memberFallback": "Member {{n}}"
   },
   "common": {
     "save": "Save",
@@ -178,7 +208,8 @@
     "delete": "Delete",
     "back": "Back",
     "confirm": "Confirm",
-    "loading": "Loading..."
+    "loading": "Loading...",
+    "close": "Close"
   },
   "join": {
     "joining": "Joining trip...",
@@ -188,6 +219,59 @@
   "exchange": {
     "title": "Exchange",
     "clear": "Clear"
+  },
+  "flightWatch": {
+    "title": "Fare Watch",
+    "origin": "Origin",
+    "destination": "Destination",
+    "departDate": "Depart Date",
+    "returnDate": "Return Date (optional)",
+    "targetPrice": "Target Price",
+    "currency": "Currency",
+    "addWatch": "Add Watch",
+    "noWatches": "No fares tracked yet. Tap ＋ to start watching!",
+    "checking": "Checking...",
+    "recheck": "Recheck",
+    "delete": "Delete",
+    "priceUnavailable": "Price temporarily unavailable"
+  },
+  "nearby": {
+    "message": "You're near {{place}} — {{count}} spot(s) within {{radius}} km"
+  },
+  "timezones": {
+    "taipei": "Taipei",
+    "tokyo": "Tokyo",
+    "seoul": "Seoul",
+    "shanghai": "Shanghai",
+    "bangkok": "Bangkok",
+    "hoChiMinh": "Ho Chi Minh City",
+    "singapore": "Singapore",
+    "kualaLumpur": "Kuala Lumpur",
+    "jakarta": "Jakarta",
+    "sydney": "Sydney",
+    "london": "London",
+    "paris": "Paris",
+    "berlin": "Berlin",
+    "rome": "Rome",
+    "newYork": "New York",
+    "toronto": "Toronto"
+  },
+  "currencies": {
+    "twd": "New Taiwan Dollar",
+    "jpy": "Japanese Yen",
+    "krw": "Korean Won",
+    "cny": "Chinese Yuan",
+    "thb": "Thai Baht",
+    "vnd": "Vietnamese Dong",
+    "sgd": "Singapore Dollar",
+    "myr": "Malaysian Ringgit",
+    "idr": "Indonesian Rupiah",
+    "aud": "Australian Dollar",
+    "gbp": "British Pound",
+    "eur": "Euro",
+    "usd": "US Dollar",
+    "cad": "Canadian Dollar",
+    "chf": "Swiss Franc"
   },
   "transport": {
     "noSelection": "No transport set +0",

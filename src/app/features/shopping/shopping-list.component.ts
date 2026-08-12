@@ -119,7 +119,7 @@ const CURRENCY_CODES = [
                     type="button"
                     class="convert-btn"
                     (click)="convertUnitPrice()"
-                    title="換算成 {{ formRightCurrency() }}"
+                    [title]="('shopping.convertTo' | transloco) + formRightCurrency()"
                   >
                     ⇄
                   </button>
@@ -263,7 +263,11 @@ const CURRENCY_CODES = [
                 />
               </label>
               @if (item.image_url) {
-                <img [src]="item.image_url" class="item-image" alt="商品圖" />
+                <img
+                  [src]="item.image_url"
+                  class="item-image"
+                  [attr.alt]="'shopping.itemImageAlt' | transloco"
+                />
               }
               <button class="remove-btn" (click)="deleteItem(item.client_record_id)">
                 {{ 'shopping.delete' | transloco }}

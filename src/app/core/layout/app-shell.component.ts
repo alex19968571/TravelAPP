@@ -1,9 +1,10 @@
-import { Component, inject, computed, signal } from '@angular/core';
+import { Component, inject, computed, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, RouterOutlet } from '@angular/router';
 import { TranslocoModule } from '@jsverse/transloco';
 import { UserProfileService, parseAvatar } from '../services/user-profile.service';
 import { PreferenceService } from '../services/preference.service';
+import { NearbySpotsService, NearbySpotsResult } from '../services/nearby-spots.service';
 
 @Component({
   selector: 'app-shell',
@@ -25,6 +26,23 @@ import { PreferenceService } from '../services/preference.service';
           <div class="clock">{{ pref.clockDisplay() }}</div>
         </div>
       </div>
+
+      @if (nearbySpots(); as spots) {
+        <div class="nearby-banner">
+          <span class="nearby-text">{{
+            'nearby.message'
+              | transloco: { place: spots.placeName, radius: spots.radiusKm, count: spots.count }
+          }}</span>
+          <button
+            class="nearby-dismiss"
+            type="button"
+            (click)="dismissNearby()"
+            [attr.aria-label]="'common.close' | transloco"
+          >
+            ✕
+          </button>
+        </div>
+      }
 
       <div class="shell-body">
         <nav class="side-nav">
@@ -49,6 +67,10 @@ import { PreferenceService } from '../services/preference.service';
             </svg>
           </button>
 
+          <a routerLink="/flight-watch" routerLinkActive="active" class="side-tab">
+            <span class="side-icon">✈️</span>
+            <span class="side-label">{{ 'nav.flightWatch' | transloco }}</span>
+          </a>
           <a routerLink="/trips" routerLinkActive="active" class="side-tab">
             <span class="side-icon">🗺️</span>
             <span class="side-label">{{ 'nav.trips' | transloco }}</span>
@@ -86,13 +108,16 @@ import { PreferenceService } from '../services/preference.service';
       </div>
 
       <nav class="bottom-nav">
+        <a routerLink="/flight-watch" routerLinkActive="active" class="nav-tab">
+          <span class="nav-icon">✈️</span>
+          <span class="nav-label">{{ 'nav.flightWatch' | transloco }}</span>
+        </a>
         <a routerLink="/trips" routerLinkActive="active" class="nav-tab">
           <span class="nav-icon">🗺️</span>
           <span class="nav-label">{{ 'nav.trips' | transloco }}</span>
         </a>
-        <a routerLink="/exchange" routerLinkActive="active" class="nav-tab">
-          <span class="nav-icon">⇄</span>
-          <span class="nav-label">{{ 'nav.exchange' | transloco }}</span>
+        <a routerLink="/exchange" routerLinkActive="active" class="nav-tab nav-tab-fab">
+          <span class="nav-icon nav-icon-fab">⇄</span>
         </a>
         <a routerLink="/settings" routerLinkActive="active" class="nav-tab">
           <span class="nav-icon">⚙️</span>
@@ -190,6 +215,27 @@ import { PreferenceService } from '../services/preference.service';
         letter-spacing: 0.02em;
       }
 
+      .nearby-banner {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.5rem;
+        padding: 0.5rem 1rem;
+        background: var(--accent-light);
+        color: var(--accent);
+        font-size: 0.82rem;
+        font-weight: 600;
+      }
+      .nearby-dismiss {
+        border: none;
+        background: transparent;
+        color: var(--accent);
+        cursor: pointer;
+        font-size: 0.8rem;
+        flex-shrink: 0;
+        padding: 0.15rem 0.4rem;
+      }
+
       .shell-body {
         flex: 1;
         min-height: 0;
@@ -259,6 +305,25 @@ import { PreferenceService } from '../services/preference.service';
       }
       .nav-label {
         font-size: 0.68rem;
+      }
+
+      /* ── 中間凸起圓形按鈕（換匯）── */
+      .nav-tab-fab {
+        justify-content: flex-start;
+        padding-top: 0;
+      }
+      .nav-icon-fab {
+        width: 56px;
+        height: 56px;
+        font-size: 1.6rem;
+        position: relative;
+        top: -18px;
+        color: #fff;
+        background: var(--accent);
+        box-shadow: 0 4px 12px var(--shadow);
+      }
+      .nav-tab-fab:hover .nav-icon-fab {
+        background: var(--accent);
       }
 
       .avatar-frame {
@@ -397,14 +462,26 @@ import { PreferenceService } from '../services/preference.service';
     `,
   ],
 })
-export class AppShellComponent {
+export class AppShellComponent implements OnInit {
   profile = inject(UserProfileService);
   pref = inject(PreferenceService);
+  private nearbySpotsService = inject(NearbySpotsService);
 
   private readonly SIDEBAR_KEY = 'sidebar_collapsed';
   sidebarCollapsed = signal<boolean>(localStorage.getItem(this.SIDEBAR_KEY) === '1');
 
   avatarParsed = computed(() => parseAvatar(this.profile.avatarUrl()));
+
+  nearbySpots = signal<NearbySpotsResult | null>(null);
+
+  async ngOnInit(): Promise<void> {
+    const result = await this.nearbySpotsService.findTodaysNearbySpots().catch(() => null);
+    if (result && result.count > 0) this.nearbySpots.set(result);
+  }
+
+  dismissNearby(): void {
+    this.nearbySpots.set(null);
+  }
 
   toggleSidebar(): void {
     const next = !this.sidebarCollapsed();

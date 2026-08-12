@@ -10,7 +10,8 @@
     "expenses": "経費・割り勘",
     "exchange": "両替",
     "settings": "設定",
-    "collapse": "メニューを折りたたむ"
+    "collapse": "メニューを折りたたむ",
+    "flightWatch": "運賃ウォッチ"
   },
   "auth": {
     "signInGoogle": "Google でログイン",
@@ -69,9 +70,15 @@
     "fontSizeXl": "特大",
     "previewText": "プレビュー：トラベル家計簿 Travel App",
     "homeCountryDesc": "UI 言語と通貨換算の基準に影響します",
-    "account": "アカウント"
+    "account": "アカウント",
+    "customColor": "カスタムカラー",
+    "custom": "カスタム"
   },
   "tripDetail": {
+    "editSpotTitle": "✏️ スポットを編集",
+    "namePlaceholder": "スポット名",
+    "dateLabel": "日付",
+    "saving": "保存中...",
     "loading": "読み込み中...",
     "members": "旅程メンバー",
     "addMemberPlaceholder": "メンバー名を追加",
@@ -110,7 +117,26 @@
     "dayNumber": "日数",
     "latitude": "緯度",
     "longitude": "経度",
-    "submit": "スポットを追加"
+    "submit": "スポットを追加",
+    "editTitle": "✏️ スポットを編集",
+    "addTitle": "＋ スポットを追加",
+    "changePhoto": "タップして写真を変更",
+    "uploading": "アップロード中...",
+    "uploadPhotoHint": "スポットの写真をアップロード",
+    "nameLabel": "スポット名",
+    "namePlaceholder": "スポット名を入力",
+    "addDateLabel": "追加する日付",
+    "noteLabel": "メモ",
+    "noteInputPlaceholder": "任意のメモ",
+    "save": "保存",
+    "confirmBtn": "確認",
+    "mapEditBtn": "✏️ 編集",
+    "dayWithDate": "{{day}} 日目（{{month}}/{{date}}）",
+    "positionOnlyOne": "1 番目（唯一の位置）",
+    "positionFallback": "{{n}} 番目の位置",
+    "positionFirst": "先頭に配置（{{name}} の前）",
+    "positionLast": "最後に配置（{{name}} の後）",
+    "positionAfter": "{{name}} の後に配置"
   },
   "shopping": {
     "backToTrip": "旅程に戻る",
@@ -131,7 +157,9 @@
     "linkPlaceholder": "https://...",
     "viewLink": "🔗 商品リンク",
     "delete": "🗑 削除",
-    "noItems": "まだ買い物リストの項目がありません"
+    "noItems": "まだ買い物リストの項目がありません",
+    "convertTo": "換算先：",
+    "itemImageAlt": "商品画像"
   },
   "expenses": {
     "backToTrip": "旅程に戻る",
@@ -169,7 +197,9 @@
     "payerBadge": "立替",
     "noSplitData": "（分割データなし）",
     "unnamed": "（名称未設定）",
-    "deleteConfirm": "この経費を削除しますか？"
+    "deleteConfirm": "この経費を削除しますか？",
+    "sharesEmpty": "先に割り勘方法または人数を設定してください",
+    "memberFallback": "メンバー {{n}}"
   },
   "common": {
     "save": "保存",
@@ -178,7 +208,8 @@
     "delete": "削除",
     "back": "戻る",
     "confirm": "確認",
-    "loading": "読み込み中..."
+    "loading": "読み込み中...",
+    "close": "閉じる"
   },
   "join": {
     "joining": "旅程に参加中...",
@@ -188,6 +219,59 @@
   "exchange": {
     "title": "両替",
     "clear": "クリア"
+  },
+  "flightWatch": {
+    "title": "運賃ウォッチ",
+    "origin": "出発地",
+    "destination": "目的地",
+    "departDate": "出発日",
+    "returnDate": "帰着日（任意）",
+    "targetPrice": "目標価格",
+    "currency": "通貨",
+    "addWatch": "追加",
+    "noWatches": "まだ追跡中の便がありません。右上の「＋」から始めましょう！",
+    "checking": "検索中...",
+    "recheck": "再検索",
+    "delete": "削除",
+    "priceUnavailable": "現在価格を取得できません"
+  },
+  "nearby": {
+    "message": "現在地：{{place}}、半径 {{radius}}km 以内に {{count}} 件のスポットがあります"
+  },
+  "timezones": {
+    "taipei": "台北",
+    "tokyo": "東京",
+    "seoul": "ソウル",
+    "shanghai": "上海",
+    "bangkok": "バンコク",
+    "hoChiMinh": "ホーチミン",
+    "singapore": "シンガポール",
+    "kualaLumpur": "クアラルンプール",
+    "jakarta": "ジャカルタ",
+    "sydney": "シドニー",
+    "london": "ロンドン",
+    "paris": "パリ",
+    "berlin": "ベルリン",
+    "rome": "ローマ",
+    "newYork": "ニューヨーク",
+    "toronto": "トロント"
+  },
+  "currencies": {
+    "twd": "台湾ドル",
+    "jpy": "円",
+    "krw": "ウォン",
+    "cny": "人民元",
+    "thb": "バーツ",
+    "vnd": "ドン",
+    "sgd": "シンガポールドル",
+    "myr": "リンギット",
+    "idr": "ルピア",
+    "aud": "豪ドル",
+    "gbp": "ポンド",
+    "eur": "ユーロ",
+    "usd": "米ドル",
+    "cad": "カナダドル",
+    "chf": "スイスフラン"
   },
   "transport": {
     "noSelection": "交通手段未設定 +0",

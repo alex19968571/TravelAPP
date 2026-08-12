@@ -208,7 +208,7 @@ interface GrossEntry {
                 @if (splitType() === 'SHARES') {
                   <div class="form-row span-2">
                     @if (shareRows().length === 0) {
-                      <div class="shares-empty">請先選擇分帳方式或設定人數</div>
+                      <div class="shares-empty">{{ 'expenses.sharesEmpty' | transloco }}</div>
                     } @else {
                       <div class="shares-table">
                         @for (row of shareRows(); track $index; let i = $index) {
@@ -1306,7 +1306,9 @@ export class ExpensesComponent implements OnInit {
     this.shareRows.set(
       Array.from({ length: count }, (_, i) => ({
         memberId: members[i]?.id ?? generateId(), // 虛擬成員也給唯一 ID，避免 settlement 合算
-        name: members[i]?.display_name ?? `成員 ${i + 1}`,
+        name:
+          members[i]?.display_name ??
+          this.transloco.translate('expenses.memberFallback', { n: i + 1 }),
         weight: i === count - 1 ? eq + rem : eq,
       })),
     );
@@ -1320,7 +1322,9 @@ export class ExpensesComponent implements OnInit {
       const i = rows.length;
       rows.push({
         memberId: members[i]?.id ?? generateId(),
-        name: members[i]?.display_name ?? `成員 ${i + 1}`,
+        name:
+          members[i]?.display_name ??
+          this.transloco.translate('expenses.memberFallback', { n: i + 1 }),
         weight: 0,
       });
     }

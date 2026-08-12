@@ -116,3 +116,18 @@ export interface ExchangeRate {
   rates: Record<string, number>;
   fetched_at: string;
 }
+
+export interface FlightWatch {
+  id: string;
+  owner_id: string;
+  origin: string;
+  destination: string;
+  depart_date: string;
+  return_date?: string | null;
+  target_price?: number | null;
+  currency: string;
+  last_price: number | null;
+  last_checked_at: string | null;
+  created_at_utc: string;
+  updated_at_utc: string;
+}

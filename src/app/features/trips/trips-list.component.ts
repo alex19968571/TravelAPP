@@ -18,40 +18,40 @@ import { PreferenceService, COUNTRIES } from '../../core/services/preference.ser
 import { DropdownSelectComponent } from '../../shared/components/dropdown-select/dropdown-select.component';
 
 const TIMEZONE_OPTIONS = [
-  { value: 'Asia/Taipei', label: '台北 (UTC+8)' },
-  { value: 'Asia/Tokyo', label: '東京 (UTC+9)' },
-  { value: 'Asia/Seoul', label: '首爾 (UTC+9)' },
-  { value: 'Asia/Shanghai', label: '上海 (UTC+8)' },
-  { value: 'Asia/Bangkok', label: '曼谷 (UTC+7)' },
-  { value: 'Asia/Ho_Chi_Minh', label: '胡志明 (UTC+7)' },
-  { value: 'Asia/Singapore', label: '新加坡 (UTC+8)' },
-  { value: 'Asia/Kuala_Lumpur', label: '吉隆坡 (UTC+8)' },
-  { value: 'Asia/Jakarta', label: '雅加達 (UTC+7)' },
-  { value: 'Australia/Sydney', label: '雪梨 (UTC+10)' },
-  { value: 'Europe/London', label: '倫敦 (UTC+0)' },
-  { value: 'Europe/Paris', label: '巴黎 (UTC+1)' },
-  { value: 'Europe/Berlin', label: '柏林 (UTC+1)' },
-  { value: 'Europe/Rome', label: '羅馬 (UTC+1)' },
-  { value: 'America/New_York', label: '紐約 (UTC-5)' },
-  { value: 'America/Toronto', label: '多倫多 (UTC-5)' },
+  { value: 'Asia/Taipei', key: 'taipei', utc: '+8' },
+  { value: 'Asia/Tokyo', key: 'tokyo', utc: '+9' },
+  { value: 'Asia/Seoul', key: 'seoul', utc: '+9' },
+  { value: 'Asia/Shanghai', key: 'shanghai', utc: '+8' },
+  { value: 'Asia/Bangkok', key: 'bangkok', utc: '+7' },
+  { value: 'Asia/Ho_Chi_Minh', key: 'hoChiMinh', utc: '+7' },
+  { value: 'Asia/Singapore', key: 'singapore', utc: '+8' },
+  { value: 'Asia/Kuala_Lumpur', key: 'kualaLumpur', utc: '+8' },
+  { value: 'Asia/Jakarta', key: 'jakarta', utc: '+7' },
+  { value: 'Australia/Sydney', key: 'sydney', utc: '+10' },
+  { value: 'Europe/London', key: 'london', utc: '+0' },
+  { value: 'Europe/Paris', key: 'paris', utc: '+1' },
+  { value: 'Europe/Berlin', key: 'berlin', utc: '+1' },
+  { value: 'Europe/Rome', key: 'rome', utc: '+1' },
+  { value: 'America/New_York', key: 'newYork', utc: '-5' },
+  { value: 'America/Toronto', key: 'toronto', utc: '-5' },
 ];
 
 const CURRENCY_OPTIONS = [
-  { value: 'TWD', label: 'TWD 台幣' },
-  { value: 'JPY', label: 'JPY 日圓' },
-  { value: 'KRW', label: 'KRW 韓圓' },
-  { value: 'CNY', label: 'CNY 人民幣' },
-  { value: 'THB', label: 'THB 泰銖' },
-  { value: 'VND', label: 'VND 越南盾' },
-  { value: 'SGD', label: 'SGD 新幣' },
-  { value: 'MYR', label: 'MYR 馬幣' },
-  { value: 'IDR', label: 'IDR 盾' },
-  { value: 'AUD', label: 'AUD 澳幣' },
-  { value: 'GBP', label: 'GBP 英鎊' },
-  { value: 'EUR', label: 'EUR 歐元' },
-  { value: 'USD', label: 'USD 美元' },
-  { value: 'CAD', label: 'CAD 加元' },
-  { value: 'CHF', label: 'CHF 瑞郎' },
+  { value: 'TWD', key: 'twd' },
+  { value: 'JPY', key: 'jpy' },
+  { value: 'KRW', key: 'krw' },
+  { value: 'CNY', key: 'cny' },
+  { value: 'THB', key: 'thb' },
+  { value: 'VND', key: 'vnd' },
+  { value: 'SGD', key: 'sgd' },
+  { value: 'MYR', key: 'myr' },
+  { value: 'IDR', key: 'idr' },
+  { value: 'AUD', key: 'aud' },
+  { value: 'GBP', key: 'gbp' },
+  { value: 'EUR', key: 'eur' },
+  { value: 'USD', key: 'usd' },
+  { value: 'CAD', key: 'cad' },
+  { value: 'CHF', key: 'chf' },
 ];
 
 @Component({
@@ -870,8 +870,14 @@ export class TripsListComponent implements OnInit {
 
   timezoneOptions = TIMEZONE_OPTIONS;
   currencyOptions = CURRENCY_OPTIONS;
-  timezoneDropdownOptions = TIMEZONE_OPTIONS.map((o) => ({ value: o.value, label: o.label }));
-  currencyDropdownOptions = CURRENCY_OPTIONS.map((o) => ({ value: o.value, label: o.label }));
+  timezoneDropdownOptions = TIMEZONE_OPTIONS.map((o) => ({
+    value: o.value,
+    label: `${this.transloco.translate('timezones.' + o.key)} (UTC${o.utc})`,
+  }));
+  currencyDropdownOptions = CURRENCY_OPTIONS.map((o) => ({
+    value: o.value,
+    label: `${o.value} ${this.transloco.translate('currencies.' + o.key)}`,
+  }));
 
   isTouch =
     typeof window !== 'undefined' &&
@@ -1153,7 +1159,7 @@ export class TripsListComponent implements OnInit {
   }
 
   async confirmDeleteTrip(trip: Trip): Promise<void> {
-    if (!confirm('確定刪除此行程？相關購物清單與記帳也會一併刪除。')) return;
+    if (!confirm(this.transloco.translate('trips.deleteConfirm'))) return;
     await this.tripService.delete(trip.id);
     this.swipedTripId.set(null);
     this.editingTrip.set(null);

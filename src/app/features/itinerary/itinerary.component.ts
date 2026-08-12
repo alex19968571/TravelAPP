@@ -82,23 +82,23 @@ const DAY_COLORS = ['#667eea', '#ed8936', '#48bb78', '#f56565', '#9f7aea', '#38b
         <div class="card staging-card">
           <!-- 標題列 -->
           <div class="panel-title">
-            {{ editingItemId() ? '✏️ 編輯景點' : '＋ 新增景點' }}
+            {{ (editingItemId() ? 'itinerary.editTitle' : 'itinerary.addTitle') | transloco }}
           </div>
 
           <!-- 圖片（label 原生關聯 input，確保首次點擊即觸發） -->
           <label class="photo-block">
             @if (stagingPhotoUrl()) {
               <img [src]="stagingPhotoUrl()!" class="photo-img" alt="" />
-              <div class="photo-overlay">點擊更換圖片</div>
+              <div class="photo-overlay">{{ 'itinerary.changePhoto' | transloco }}</div>
             } @else if (uploadingPhoto()) {
               <div class="photo-placeholder">
                 <span class="upload-spin">⏳</span>
-                <span class="photo-hint">上傳中...</span>
+                <span class="photo-hint">{{ 'itinerary.uploading' | transloco }}</span>
               </div>
             } @else {
               <div class="photo-placeholder">
                 <span class="photo-plus">＋</span>
-                <span class="photo-hint">上傳景點圖片</span>
+                <span class="photo-hint">{{ 'itinerary.uploadPhotoHint' | transloco }}</span>
               </div>
             }
             <input type="file" accept="image/*" hidden (change)="onPhotoSelected($event)" />
@@ -106,19 +106,19 @@ const DAY_COLORS = ['#667eea', '#ed8936', '#48bb78', '#f56565', '#9f7aea', '#38b
 
           <!-- 景點名稱 -->
           <div class="field-group">
-            <label class="field-label">景點名稱</label>
+            <label class="field-label">{{ 'itinerary.nameLabel' | transloco }}</label>
             <input
               class="field-input"
               [(ngModel)]="stagingName"
               name="stagingName"
-              placeholder="輸入景點名稱"
+              [placeholder]="'itinerary.namePlaceholder' | transloco"
             />
           </div>
 
           <!-- 加入日期（僅新增模式） -->
           @if (!editingItemId()) {
             <div class="field-group">
-              <label class="field-label">加入日期</label>
+              <label class="field-label">{{ 'itinerary.addDateLabel' | transloco }}</label>
               <app-dropdown-select
                 [options]="dateOptions()"
                 [ngModel]="selectedDate()?.dayNumber ?? null"
@@ -130,12 +130,12 @@ const DAY_COLORS = ['#667eea', '#ed8936', '#48bb78', '#f56565', '#9f7aea', '#38b
 
           <!-- 筆記 -->
           <div class="field-group">
-            <label class="field-label">筆記</label>
+            <label class="field-label">{{ 'itinerary.noteLabel' | transloco }}</label>
             <textarea
               class="field-input field-notes"
               [(ngModel)]="stagingNotes"
               name="stagingNotes"
-              placeholder="選填備註"
+              [placeholder]="'itinerary.noteInputPlaceholder' | transloco"
               rows="3"
             ></textarea>
           </div>
@@ -152,7 +152,7 @@ const DAY_COLORS = ['#667eea', '#ed8936', '#48bb78', '#f56565', '#9f7aea', '#38b
                 [disabled]="!stagingName.trim()"
                 (click)="confirmSave()"
               >
-                儲存
+                {{ 'itinerary.save' | transloco }}
               </button>
             } @else {
               <button
@@ -161,7 +161,7 @@ const DAY_COLORS = ['#667eea', '#ed8936', '#48bb78', '#f56565', '#9f7aea', '#38b
                 [disabled]="!stagingName.trim()"
                 (click)="onStagingConfirm()"
               >
-                確認
+                {{ 'itinerary.confirmBtn' | transloco }}
               </button>
             }
           </div>
@@ -205,6 +205,12 @@ const DAY_COLORS = ['#667eea', '#ed8936', '#48bb78', '#f56565', '#9f7aea', '#38b
         align-items: center;
         gap: 0.75rem;
         margin-bottom: 1rem;
+        position: sticky;
+        top: 0;
+        z-index: 41;
+        background: var(--bg);
+        padding-top: 0.5rem;
+        margin-top: -0.5rem;
       }
       .back-btn {
         display: inline-flex;
@@ -712,7 +718,7 @@ export class ItineraryComponent implements OnInit, AfterViewInit {
           <button id="map-add-spot-btn"
             style="width:100%;padding:8px 0;background:#667eea;color:white;border:none;
                    border-radius:8px;font-weight:600;font-size:0.875rem;cursor:pointer">
-            ＋ 新增景點
+            ${this.escHtml(this.transloco.translate('itinerary.addTitle'))}
           </button>
         </div>`,
     });
@@ -743,7 +749,7 @@ export class ItineraryComponent implements OnInit, AfterViewInit {
           <button id="${btnId}"
             style="width:100%;padding:8px 0;background:#667eea;color:white;border:none;
                    border-radius:8px;font-weight:600;font-size:0.875rem;cursor:pointer">
-            ✏️ 編輯
+            ${this.escHtml(this.transloco.translate('itinerary.mapEditBtn'))}
           </button>
         </div>`,
     });
@@ -899,8 +905,12 @@ export class ItineraryComponent implements OnInit, AfterViewInit {
 
   // ── 工具 ─────────────────────────────────────────────────────
   formatTabDate(tab: DateTab): string {
-    if (!tab.date) return `第 ${tab.dayNumber} 天`;
-    return `第 ${tab.dayNumber} 天（${tab.date.getMonth() + 1}/${tab.date.getDate()}）`;
+    if (!tab.date) return this.transloco.translate('itinerary.day', { day: tab.dayNumber });
+    return this.transloco.translate('itinerary.dayWithDate', {
+      day: tab.dayNumber,
+      month: tab.date.getMonth() + 1,
+      date: tab.date.getDate(),
+    });
   }
 
   dateOptions(): { value: number; label: string }[] {
@@ -909,13 +919,19 @@ export class ItineraryComponent implements OnInit, AfterViewInit {
 
   positionLabel(p: number): string {
     const d = this.selectedDate();
-    if (!d) return `第 ${p + 1} 個位置`;
+    if (!d) return this.transloco.translate('itinerary.positionFallback', { n: p + 1 });
     const dayItems = this.items()
       .filter((i) => i.day_number === d.dayNumber)
       .sort((a, b) => a.order_index - b.order_index);
-    if (dayItems.length === 0) return '第 1 個位置（唯一）';
-    if (p === 0) return `排在最前面（${dayItems[0].place_name} 之前）`;
-    if (p === dayItems.length) return `排在最後面（${dayItems[p - 1].place_name} 之後）`;
-    return `排在 ${dayItems[p - 1].place_name} 之後`;
+    if (dayItems.length === 0) return this.transloco.translate('itinerary.positionOnlyOne');
+    if (p === 0)
+      return this.transloco.translate('itinerary.positionFirst', { name: dayItems[0].place_name });
+    if (p === dayItems.length)
+      return this.transloco.translate('itinerary.positionLast', {
+        name: dayItems[p - 1].place_name,
+      });
+    return this.transloco.translate('itinerary.positionAfter', {
+      name: dayItems[p - 1].place_name,
+    });
   }
 }
