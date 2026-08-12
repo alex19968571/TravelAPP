@@ -118,7 +118,8 @@ import { PreferenceService } from '../services/preference.service';
   styles: [
     `
       .shell {
-        min-height: 100vh;
+        height: 100dvh;
+        overflow: hidden;
         display: flex;
         flex-direction: column;
         background: var(--bg);
@@ -191,12 +192,16 @@ import { PreferenceService } from '../services/preference.service';
 
       .shell-body {
         flex: 1;
+        min-height: 0;
         display: flex;
       }
 
       .shell-content {
         flex: 1;
         min-width: 0;
+        min-height: 0;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
         padding-bottom: 68px;
       }
 
@@ -303,6 +308,7 @@ import { PreferenceService } from '../services/preference.service';
           border-right: 1px solid var(--border);
           padding: 0.75rem 0.5rem;
           gap: 0.25rem;
+          overflow-y: auto;
           transition: width 0.2s ease;
           position: sticky;
           top: 49px;

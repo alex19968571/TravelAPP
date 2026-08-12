@@ -162,7 +162,6 @@ import {
         margin: 0 auto;
         padding: 1.5rem;
         background: var(--bg);
-        min-height: 100vh;
       }
       .page-header {
         display: flex;
@@ -170,7 +169,7 @@ import {
         gap: 1rem;
         margin-bottom: 1.5rem;
         position: sticky;
-        top: 44px;
+        top: 0;
         z-index: 41;
         background: var(--bg);
         padding-top: 0.5rem;
@@ -217,7 +216,7 @@ import {
         justify-content: space-between;
         margin-bottom: 1rem;
         position: sticky;
-        top: 108px;
+        top: 64px;
         z-index: 40;
         background: var(--surface);
         padding-top: 0.5rem;

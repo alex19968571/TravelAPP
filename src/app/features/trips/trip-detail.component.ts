@@ -340,7 +340,6 @@ const TRANSPORT_OPTIONS: { mode: TransportMode; icon: string }[] = [
         margin: 0 auto;
         padding: 1.5rem;
         background: var(--bg);
-        min-height: 100vh;
       }
       .page-header {
         display: flex;
@@ -383,7 +382,7 @@ const TRANSPORT_OPTIONS: { mode: TransportMode; icon: string }[] = [
         gap: 0.5rem;
         margin-bottom: 1.5rem;
         position: sticky;
-        top: 44px;
+        top: 0;
         z-index: 40;
         background: var(--bg);
         padding-top: 0.5rem;

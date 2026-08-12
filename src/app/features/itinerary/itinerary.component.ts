@@ -199,7 +199,6 @@ const DAY_COLORS = ['#667eea', '#ed8936', '#48bb78', '#f56565', '#9f7aea', '#38b
         margin: 0 auto;
         padding: 1.5rem;
         background: var(--bg);
-        min-height: 100vh;
       }
       .page-header {
         display: flex;

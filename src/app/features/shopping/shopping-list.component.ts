@@ -281,7 +281,6 @@ const CURRENCY_CODES = [
         margin: 0 auto;
         padding: 1.5rem;
         background: var(--bg);
-        min-height: 100vh;
       }
       .page-header {
         display: flex;
@@ -290,7 +289,7 @@ const CURRENCY_CODES = [
         margin-bottom: 1.5rem;
         flex-wrap: wrap;
         position: sticky;
-        top: 44px;
+        top: 0;
         z-index: 41;
         background: var(--bg);
         padding-top: 0.5rem;
@@ -333,7 +332,7 @@ const CURRENCY_CODES = [
         justify-content: flex-end;
         margin-bottom: 0.6rem;
         position: sticky;
-        top: 108px;
+        top: 64px;
         z-index: 40;
         background: var(--bg);
         padding-top: 0.5rem;

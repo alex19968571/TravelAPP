@@ -329,7 +329,6 @@ const CURRENCY_OPTIONS = [
         margin: 0 auto;
         padding: 1.5rem;
         background: var(--bg);
-        min-height: 100vh;
       }
       .page-title {
         font-size: 1.6rem;
@@ -365,7 +364,7 @@ const CURRENCY_OPTIONS = [
         gap: 0.6rem;
         margin-bottom: 0.75rem;
         position: sticky;
-        top: 44px;
+        top: 0;
         z-index: 40;
         background: var(--bg);
         padding-top: 0.5rem;
