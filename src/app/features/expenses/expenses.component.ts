@@ -428,6 +428,12 @@ interface GrossEntry {
         align-items: center;
         gap: 1rem;
         margin-bottom: 1rem;
+        position: sticky;
+        top: 44px;
+        z-index: 40;
+        background: var(--bg);
+        padding-top: 0.5rem;
+        margin-top: -0.5rem;
       }
       .back-btn {
         display: inline-flex;

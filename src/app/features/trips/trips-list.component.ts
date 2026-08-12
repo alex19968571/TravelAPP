@@ -364,6 +364,12 @@ const CURRENCY_OPTIONS = [
         justify-content: space-between;
         gap: 0.6rem;
         margin-bottom: 0.75rem;
+        position: sticky;
+        top: 44px;
+        z-index: 40;
+        background: var(--bg);
+        padding-top: 0.5rem;
+        margin-top: -0.5rem;
       }
       .filter-bar {
         display: flex;

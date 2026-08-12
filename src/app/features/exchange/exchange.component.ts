@@ -144,19 +144,15 @@ const KEYPAD_ROWS: string[][] = [
       }
       .scale-wrap {
         width: 100%;
+        transform-origin: center center;
       }
-      @media (hover: hover) and (pointer: fine) {
-        .page-container {
-          height: calc(100dvh - 112px);
-          min-height: 0;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          overflow: hidden;
-        }
-        .scale-wrap {
-          transform-origin: center center;
-        }
+      .page-container {
+        height: calc(100dvh - 112px);
+        min-height: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
       }
       h1 {
         font-size: 1.6rem;

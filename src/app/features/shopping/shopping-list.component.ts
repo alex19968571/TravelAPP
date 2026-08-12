@@ -289,6 +289,12 @@ const CURRENCY_CODES = [
         gap: 1rem;
         margin-bottom: 1.5rem;
         flex-wrap: wrap;
+        position: sticky;
+        top: 44px;
+        z-index: 41;
+        background: var(--bg);
+        padding-top: 0.5rem;
+        margin-top: -0.5rem;
       }
       .back-btn {
         display: inline-flex;
@@ -326,6 +332,11 @@ const CURRENCY_CODES = [
         display: flex;
         justify-content: flex-end;
         margin-bottom: 0.6rem;
+        position: sticky;
+        top: 108px;
+        z-index: 40;
+        background: var(--bg);
+        padding-top: 0.5rem;
       }
       .summary {
         text-align: right;

@@ -169,6 +169,12 @@ import {
         align-items: center;
         gap: 1rem;
         margin-bottom: 1.5rem;
+        position: sticky;
+        top: 44px;
+        z-index: 41;
+        background: var(--bg);
+        padding-top: 0.5rem;
+        margin-top: -0.5rem;
       }
       .back-btn {
         display: inline-flex;
@@ -210,6 +216,12 @@ import {
         align-items: center;
         justify-content: space-between;
         margin-bottom: 1rem;
+        position: sticky;
+        top: 108px;
+        z-index: 40;
+        background: var(--surface);
+        padding-top: 0.5rem;
+        margin-top: -0.5rem;
       }
 
       /* 邀請選單 */

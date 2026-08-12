@@ -382,6 +382,12 @@ const TRANSPORT_OPTIONS: { mode: TransportMode; icon: string }[] = [
         align-items: center;
         gap: 0.5rem;
         margin-bottom: 1.5rem;
+        position: sticky;
+        top: 44px;
+        z-index: 40;
+        background: var(--bg);
+        padding-top: 0.5rem;
+        margin-top: -0.5rem;
       }
       .date-arrow {
         flex-shrink: 0;
