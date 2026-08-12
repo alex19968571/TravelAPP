@@ -107,11 +107,6 @@ export interface DropdownOption {
         font-weight: 700;
         color: var(--accent);
       }
-      .dropdown-picker.dropdown-badge .dropdown-menu {
-        left: auto;
-        right: 0;
-        min-width: 110px;
-      }
       .dropdown-label {
         min-width: 0;
         overflow: hidden;
@@ -234,13 +229,20 @@ export class DropdownSelectComponent implements ControlValueAccessor, OnDestroy 
       spaceBelow < DropdownSelectComponent.MENU_ESTIMATED_HEIGHT && rect.top > spaceBelow;
     this.openUpward.set(upward);
 
+    // 改用 fixed 定位並以螢幕座標展開，完全跳脫任何祖先層 overflow:auto/hidden
+    // （例如可捲動的 modal 或帶 overflow 的輸入框容器）造成的裁切
     if (this.variant === 'badge') {
-      // badge 選單靠右對齊、寬度自訂，維持原本相對定位樣式即可
-      this.menuPosition.set(null);
+      // badge 選單靠右對齊、寬度自訂
+      const menuWidth = 110;
+      this.menuPosition.set({
+        left: `${Math.max(4, rect.right - menuWidth)}px`,
+        width: `${menuWidth}px`,
+        ...(upward
+          ? { bottom: `${window.innerHeight - rect.top + 6}px` }
+          : { top: `${rect.bottom + 6}px` }),
+      });
       return;
     }
-    // 改用 fixed 定位並以螢幕座標展開，完全跳脫任何祖先層 overflow:auto/hidden
-    // （例如可捲動的 modal）造成的裁切
     this.menuPosition.set({
       left: `${rect.left}px`,
       width: `${rect.width}px`,
