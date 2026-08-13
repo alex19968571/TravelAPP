@@ -194,89 +194,93 @@ const CURRENCY_CODES = [
 
       <!-- 清單 -->
       <div class="page-scroll">
-      <div class="list-toolbar">
-        <div class="summary">
-          <div class="summary-main">
-            {{ 'shopping.total' | transloco }}
-            <strong>{{ totalAmount() | number: '1.0-0' }}</strong> {{ destCurrency() }} ({{
-              boughtCount()
-            }}/{{ items().length }})
+        <div class="list-toolbar">
+          <div class="summary">
+            <div class="summary-main">
+              {{ 'shopping.total' | transloco }}
+              <strong>{{ totalAmount() | number: '1.0-0' }}</strong> {{ destCurrency() }} ({{
+                boughtCount()
+              }}/{{ items().length }})
+            </div>
+            @if (showConversion()) {
+              <div class="summary-converted">
+                ≈ {{ totalAmount() * convRate() | number: '1.0-0' }} {{ homeCurrency() }}
+              </div>
+            }
           </div>
-          @if (showConversion()) {
-            <div class="summary-converted">
-              ≈ {{ totalAmount() * convRate() | number: '1.0-0' }} {{ homeCurrency() }}
+        </div>
+        @if (items().length === 0) {
+          <div class="empty-state">
+            <p>{{ 'shopping.noItems' | transloco }}</p>
+          </div>
+        }
+        <div class="items-list">
+          @for (item of items(); track item.client_record_id) {
+            <div
+              class="item-card card"
+              [class.bought]="item.is_bought"
+              (click)="openEditItem(item)"
+            >
+              <div class="item-main">
+                <input
+                  type="checkbox"
+                  [checked]="item.is_bought"
+                  (change)="toggleBought(item)"
+                  (click)="$event.stopPropagation()"
+                  class="checkbox"
+                />
+                <div class="item-info">
+                  <div class="item-title">{{ item.title }}</div>
+                  @if (item.description) {
+                    <div class="item-desc">{{ item.description }}</div>
+                  }
+                  @if (item.item_url) {
+                    <a
+                      [href]="item.item_url"
+                      target="_blank"
+                      class="item-link"
+                      (click)="$event.stopPropagation()"
+                      >{{ 'shopping.viewLink' | transloco }}</a
+                    >
+                  }
+                </div>
+                <div class="item-price">
+                  <div class="qty">× {{ item.quantity }}</div>
+                  <div class="amount">
+                    {{ item.total_amount | number: '1.0-0' }} {{ destCurrency() }}
+                  </div>
+                  @if (showConversion()) {
+                    <div class="amount-converted">
+                      ≈ {{ item.total_amount * convRate() | number: '1.0-0' }} {{ homeCurrency() }}
+                    </div>
+                  }
+                </div>
+              </div>
+
+              <div class="item-actions" (click)="$event.stopPropagation()">
+                <label class="image-upload-btn">
+                  📷 {{ 'shopping.uploadImage' | transloco }}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    hidden
+                    (change)="uploadImage($event, item.client_record_id)"
+                  />
+                </label>
+                @if (item.image_url) {
+                  <img
+                    [src]="item.image_url"
+                    class="item-image"
+                    [attr.alt]="'shopping.itemImageAlt' | transloco"
+                  />
+                }
+                <button class="remove-btn" (click)="deleteItem(item.client_record_id)">
+                  {{ 'shopping.delete' | transloco }}
+                </button>
+              </div>
             </div>
           }
         </div>
-      </div>
-      @if (items().length === 0) {
-        <div class="empty-state">
-          <p>{{ 'shopping.noItems' | transloco }}</p>
-        </div>
-      }
-      <div class="items-list">
-        @for (item of items(); track item.client_record_id) {
-          <div class="item-card card" [class.bought]="item.is_bought" (click)="openEditItem(item)">
-            <div class="item-main">
-              <input
-                type="checkbox"
-                [checked]="item.is_bought"
-                (change)="toggleBought(item)"
-                (click)="$event.stopPropagation()"
-                class="checkbox"
-              />
-              <div class="item-info">
-                <div class="item-title">{{ item.title }}</div>
-                @if (item.description) {
-                  <div class="item-desc">{{ item.description }}</div>
-                }
-                @if (item.item_url) {
-                  <a
-                    [href]="item.item_url"
-                    target="_blank"
-                    class="item-link"
-                    (click)="$event.stopPropagation()"
-                    >{{ 'shopping.viewLink' | transloco }}</a
-                  >
-                }
-              </div>
-              <div class="item-price">
-                <div class="qty">× {{ item.quantity }}</div>
-                <div class="amount">
-                  {{ item.total_amount | number: '1.0-0' }} {{ destCurrency() }}
-                </div>
-                @if (showConversion()) {
-                  <div class="amount-converted">
-                    ≈ {{ item.total_amount * convRate() | number: '1.0-0' }} {{ homeCurrency() }}
-                  </div>
-                }
-              </div>
-            </div>
-
-            <div class="item-actions" (click)="$event.stopPropagation()">
-              <label class="image-upload-btn">
-                📷 {{ 'shopping.uploadImage' | transloco }}
-                <input
-                  type="file"
-                  accept="image/*"
-                  hidden
-                  (change)="uploadImage($event, item.client_record_id)"
-                />
-              </label>
-              @if (item.image_url) {
-                <img
-                  [src]="item.image_url"
-                  class="item-image"
-                  [attr.alt]="'shopping.itemImageAlt' | transloco"
-                />
-              }
-              <button class="remove-btn" (click)="deleteItem(item.client_record_id)">
-                {{ 'shopping.delete' | transloco }}
-              </button>
-            </div>
-          </div>
-        }
-      </div>
       </div>
     </div>
   `,

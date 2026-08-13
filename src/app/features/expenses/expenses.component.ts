@@ -289,130 +289,131 @@ interface GrossEntry {
 
       <!-- 費用清單 -->
       <div class="page-scroll">
-      @if (expenses().length === 0) {
-        <div class="empty-state">
-          <p>{{ 'expenses.noExpenses' | transloco }}</p>
-        </div>
-      }
-      <div class="expenses-list">
-        @for (expense of expenses(); track expense.client_record_id) {
-          <div class="expense-card card" (click)="toggleExpand(expense)">
-            <div class="expense-header">
-              <div>
-                <div class="expense-title">{{ expense.title }}</div>
-                <div class="expense-meta">
-                  {{ expense.expense_date_utc | date: 'yyyy/MM/dd' }} ・ {{ expense.currency_code }}
-                  {{ expense.amount | number: '1.0-2' }}
-                  <span class="converted"
-                    >≈ TWD {{ expense.converted_amount | number: '1.0-0' }}</span
+        @if (expenses().length === 0) {
+          <div class="empty-state">
+            <p>{{ 'expenses.noExpenses' | transloco }}</p>
+          </div>
+        }
+        <div class="expenses-list">
+          @for (expense of expenses(); track expense.client_record_id) {
+            <div class="expense-card card" (click)="toggleExpand(expense)">
+              <div class="expense-header">
+                <div>
+                  <div class="expense-title">{{ expense.title }}</div>
+                  <div class="expense-meta">
+                    {{ expense.expense_date_utc | date: 'yyyy/MM/dd' }} ・
+                    {{ expense.currency_code }}
+                    {{ expense.amount | number: '1.0-2' }}
+                    <span class="converted"
+                      >≈ TWD {{ expense.converted_amount | number: '1.0-0' }}</span
+                    >
+                  </div>
+                </div>
+                <div class="expense-right">
+                  <span class="expand-icon">{{
+                    expandedExpenseId() === expense.client_record_id ? '▲' : '▼'
+                  }}</span>
+                  <button
+                    class="edit-btn"
+                    (click)="$event.stopPropagation(); openEditExpense(expense)"
                   >
+                    ✏️
+                  </button>
+                  <button
+                    class="remove-btn"
+                    (click)="$event.stopPropagation(); deleteExpense(expense.client_record_id)"
+                  >
+                    🗑
+                  </button>
                 </div>
               </div>
-              <div class="expense-right">
-                <span class="expand-icon">{{
-                  expandedExpenseId() === expense.client_record_id ? '▲' : '▼'
-                }}</span>
-                <button
-                  class="edit-btn"
-                  (click)="$event.stopPropagation(); openEditExpense(expense)"
-                >
-                  ✏️
-                </button>
-                <button
-                  class="remove-btn"
-                  (click)="$event.stopPropagation(); deleteExpense(expense.client_record_id)"
-                >
-                  🗑
-                </button>
-              </div>
-            </div>
 
-            <!-- 展開：各成員應付明細 -->
-            @if (expandedExpenseId() === expense.client_record_id) {
-              <div class="expense-splits" (click)="$event.stopPropagation()">
-                @if (expandedSplits().length === 0) {
-                  <div class="splits-empty">{{ 'expenses.noSplitData' | transloco }}</div>
-                } @else {
-                  @for (split of expandedSplits(); track split.id) {
-                    <div
-                      class="split-detail"
-                      [class.is-payer]="split.member_id === expense.payer_member_id"
-                    >
-                      <span class="split-name">
-                        {{ getMemberName(split.member_id) }}
-                        @if (split.member_id === expense.payer_member_id) {
-                          <span class="payer-badge">{{ 'expenses.payerBadge' | transloco }}</span>
+              <!-- 展開：各成員應付明細 -->
+              @if (expandedExpenseId() === expense.client_record_id) {
+                <div class="expense-splits" (click)="$event.stopPropagation()">
+                  @if (expandedSplits().length === 0) {
+                    <div class="splits-empty">{{ 'expenses.noSplitData' | transloco }}</div>
+                  } @else {
+                    @for (split of expandedSplits(); track split.id) {
+                      <div
+                        class="split-detail"
+                        [class.is-payer]="split.member_id === expense.payer_member_id"
+                      >
+                        <span class="split-name">
+                          {{ getMemberName(split.member_id) }}
+                          @if (split.member_id === expense.payer_member_id) {
+                            <span class="payer-badge">{{ 'expenses.payerBadge' | transloco }}</span>
+                          }
+                        </span>
+                        @if (expense.split_type === 'SHARES') {
+                          <span class="split-weight"
+                            >{{ split.share_weight | number: '1.0-0' }}%</span
+                          >
                         }
-                      </span>
-                      @if (expense.split_type === 'SHARES') {
-                        <span class="split-weight"
-                          >{{ split.share_weight | number: '1.0-0' }}%</span
+                        <span class="split-amount">
+                          {{ split.owed_amount | number: '1.0-2' }} {{ expense.currency_code }}
+                        </span>
+                      </div>
+                    }
+                  }
+                </div>
+              }
+            </div>
+          }
+        </div>
+
+        <!-- 結算總覽 -->
+        @if (expenses().length > 0) {
+          <div class="card settlement">
+            <h3>{{ 'expenses.settlement' | transloco }}</h3>
+
+            @if (grossReceivable().length > 0) {
+              <div class="settle-group">
+                <div class="settle-group-title positive-title">
+                  {{ 'expenses.shouldReceive' | transloco }}
+                </div>
+                @for (entry of grossReceivable(); track entry.memberId) {
+                  <div class="settlement-row positive">
+                    <span class="member-name">{{ getMemberName(entry.memberId) }}</span>
+                    <span class="settle-amounts">
+                      @for (orig of entry.originals; track orig.currency) {
+                        <span class="settle-orig"
+                          >+{{ orig.amount | number: '1.0-0' }} {{ orig.currency }}</span
                         >
                       }
-                      <span class="split-amount">
-                        {{ split.owed_amount | number: '1.0-2' }} {{ expense.currency_code }}
-                      </span>
-                    </div>
-                  }
+                      <span class="settle-converted"
+                        >+{{ entry.convertedTotal | number: '1.0-0' }} {{ homeCurrency() }}</span
+                      >
+                    </span>
+                  </div>
+                }
+              </div>
+            }
+
+            @if (grossPayable().length > 0) {
+              <div class="settle-group">
+                <div class="settle-group-title negative-title">
+                  {{ 'expenses.shouldPay' | transloco }}
+                </div>
+                @for (entry of grossPayable(); track entry.memberId) {
+                  <div class="settlement-row negative">
+                    <span class="member-name">{{ getMemberName(entry.memberId) }}</span>
+                    <span class="settle-amounts">
+                      @for (orig of entry.originals; track orig.currency) {
+                        <span class="settle-orig"
+                          >-{{ orig.amount | number: '1.0-0' }} {{ orig.currency }}</span
+                        >
+                      }
+                      <span class="settle-converted"
+                        >-{{ entry.convertedTotal | number: '1.0-0' }} {{ homeCurrency() }}</span
+                      >
+                    </span>
+                  </div>
                 }
               </div>
             }
           </div>
         }
-      </div>
-
-      <!-- 結算總覽 -->
-      @if (expenses().length > 0) {
-        <div class="card settlement">
-          <h3>{{ 'expenses.settlement' | transloco }}</h3>
-
-          @if (grossReceivable().length > 0) {
-            <div class="settle-group">
-              <div class="settle-group-title positive-title">
-                {{ 'expenses.shouldReceive' | transloco }}
-              </div>
-              @for (entry of grossReceivable(); track entry.memberId) {
-                <div class="settlement-row positive">
-                  <span class="member-name">{{ getMemberName(entry.memberId) }}</span>
-                  <span class="settle-amounts">
-                    @for (orig of entry.originals; track orig.currency) {
-                      <span class="settle-orig"
-                        >+{{ orig.amount | number: '1.0-0' }} {{ orig.currency }}</span
-                      >
-                    }
-                    <span class="settle-converted"
-                      >+{{ entry.convertedTotal | number: '1.0-0' }} {{ homeCurrency() }}</span
-                    >
-                  </span>
-                </div>
-              }
-            </div>
-          }
-
-          @if (grossPayable().length > 0) {
-            <div class="settle-group">
-              <div class="settle-group-title negative-title">
-                {{ 'expenses.shouldPay' | transloco }}
-              </div>
-              @for (entry of grossPayable(); track entry.memberId) {
-                <div class="settlement-row negative">
-                  <span class="member-name">{{ getMemberName(entry.memberId) }}</span>
-                  <span class="settle-amounts">
-                    @for (orig of entry.originals; track orig.currency) {
-                      <span class="settle-orig"
-                        >-{{ orig.amount | number: '1.0-0' }} {{ orig.currency }}</span
-                      >
-                    }
-                    <span class="settle-converted"
-                      >-{{ entry.convertedTotal | number: '1.0-0' }} {{ homeCurrency() }}</span
-                    >
-                  </span>
-                </div>
-              }
-            </div>
-          }
-        </div>
-      }
       </div>
     </div>
   `,

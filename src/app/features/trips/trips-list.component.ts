@@ -133,145 +133,149 @@ const CURRENCY_OPTIONS = [
       </div>
 
       <div class="page-scroll">
-      @if (showJoin()) {
-        <form class="card join-form" (ngSubmit)="submitJoin()">
-          <h3>{{ 'trips.enterInviteCode' | transloco }}</h3>
-          <div class="form-row">
-            <label>{{ 'trips.inviteCode' | transloco }}</label>
-            <input
-              [ngModel]="joinCode()"
-              (ngModelChange)="joinCode.set($event)"
-              name="joinCode"
-              [placeholder]="'trips.inviteCodePlaceholder' | transloco"
-              style="text-transform: uppercase;"
-            />
-          </div>
-          @if (joinError()) {
-            <p class="join-error">{{ 'trips.joinError' | transloco }}</p>
-          }
-          <div class="form-actions">
-            <button type="button" class="btn-secondary" (click)="showJoin.set(false)">
-              {{ 'common.cancel' | transloco }}
-            </button>
-            <button type="submit" class="btn-primary" [disabled]="!joinCode().trim() || joining()">
-              {{ (joining() ? 'trips.joining' : 'trips.join') | transloco }}
-            </button>
-          </div>
-        </form>
-      }
-
-      @if (showForm()) {
-        <form [formGroup]="form" (ngSubmit)="createTrip()" class="trip-form card">
-          <h3>{{ 'trips.create' | transloco }}</h3>
-          <div class="form-row">
-            <label>{{ 'trips.titleLabel' | transloco }}</label>
-            <input formControlName="title" [placeholder]="'trips.titlePlaceholder' | transloco" />
-          </div>
-          <div class="form-row-grid">
+        @if (showJoin()) {
+          <form class="card join-form" (ngSubmit)="submitJoin()">
+            <h3>{{ 'trips.enterInviteCode' | transloco }}</h3>
             <div class="form-row">
-              <label>{{ 'trips.startDate' | transloco }}</label>
-              <input formControlName="start_date_local" type="datetime-local" />
+              <label>{{ 'trips.inviteCode' | transloco }}</label>
+              <input
+                [ngModel]="joinCode()"
+                (ngModelChange)="joinCode.set($event)"
+                name="joinCode"
+                [placeholder]="'trips.inviteCodePlaceholder' | transloco"
+                style="text-transform: uppercase;"
+              />
             </div>
-            <div class="form-row">
-              <label>{{ 'trips.endDate' | transloco }}</label>
-              <input formControlName="end_date_local" type="datetime-local" />
-            </div>
-          </div>
-          <div class="form-row">
-            <label>{{ 'trips.timezone' | transloco }}</label>
-            <app-dropdown-select
-              [options]="timezoneDropdownOptions"
-              formControlName="target_timezone"
-            ></app-dropdown-select>
-          </div>
-          <div class="form-row">
-            <label>{{ 'trips.currency' | transloco }}</label>
-            <app-dropdown-select
-              [options]="currencyDropdownOptions"
-              formControlName="base_currency"
-            ></app-dropdown-select>
-          </div>
-          <div class="form-actions">
-            <button type="button" class="btn-secondary" (click)="showForm.set(false)">
-              {{ 'common.cancel' | transloco }}
-            </button>
-            <button type="submit" class="btn-primary" [disabled]="form.invalid">
-              {{ 'trips.submit' | transloco }}
-            </button>
-          </div>
-        </form>
-      }
-
-      @if (filteredTrips().length === 0) {
-        <div class="empty-state">
-          <p>{{ 'trips.noTrips' | transloco }}</p>
-        </div>
-      }
-
-      <div class="trips-grid">
-        @for (trip of filteredTrips(); track trip.id) {
-          <div class="trip-card-wrap">
-            <button
-              class="swipe-delete"
-              [class.revealed]="swipedTripId() === trip.id"
-              (click)="confirmDeleteTrip(trip)"
-            >
-              {{ 'trips.delete' | transloco }}
-            </button>
-            <div
-              class="trip-card card"
-              [class.swiped]="swipedTripId() === trip.id"
-              (touchstart)="onTouchStart($event)"
-              (touchmove)="onTouchMove($event)"
-              (touchend)="onTouchEnd($event, trip)"
-              (click)="onCardClick(trip)"
-            >
-              <button class="info-btn" (click)="openEditTrip(trip); $event.stopPropagation()">
-                ⓘ
+            @if (joinError()) {
+              <p class="join-error">{{ 'trips.joinError' | transloco }}</p>
+            }
+            <div class="form-actions">
+              <button type="button" class="btn-secondary" (click)="showJoin.set(false)">
+                {{ 'common.cancel' | transloco }}
               </button>
-              <div class="trip-card-body">
-                <div class="trip-info">
-                  <div class="trip-route">{{ trip.target_timezone }}</div>
-                  <h3>{{ trip.title }}</h3>
-                </div>
-                <div class="trip-stub">
-                  @if (formatDateRange(trip); as range) {
-                    <div class="trip-dates">{{ range }}</div>
-                  }
-                  <div class="trip-currency">{{ trip.base_currency }}</div>
-                </div>
+              <button
+                type="submit"
+                class="btn-primary"
+                [disabled]="!joinCode().trim() || joining()"
+              >
+                {{ (joining() ? 'trips.joining' : 'trips.join') | transloco }}
+              </button>
+            </div>
+          </form>
+        }
+
+        @if (showForm()) {
+          <form [formGroup]="form" (ngSubmit)="createTrip()" class="trip-form card">
+            <h3>{{ 'trips.create' | transloco }}</h3>
+            <div class="form-row">
+              <label>{{ 'trips.titleLabel' | transloco }}</label>
+              <input formControlName="title" [placeholder]="'trips.titlePlaceholder' | transloco" />
+            </div>
+            <div class="form-row-grid">
+              <div class="form-row">
+                <label>{{ 'trips.startDate' | transloco }}</label>
+                <input formControlName="start_date_local" type="datetime-local" />
               </div>
-              <div class="trip-perf-h"></div>
-              <div class="trip-nav">
-                <a
-                  [routerLink]="['/trips', trip.id]"
-                  class="nav-btn"
-                  (click)="$event.stopPropagation()"
-                  >{{ 'trips.itinerary' | transloco }}</a
-                >
-                <a
-                  [routerLink]="['/trips', trip.id, 'shopping']"
-                  class="nav-btn"
-                  (click)="$event.stopPropagation()"
-                  >{{ 'trips.shopping' | transloco }}</a
-                >
-                <a
-                  [routerLink]="['/trips', trip.id, 'expenses']"
-                  class="nav-btn"
-                  (click)="$event.stopPropagation()"
-                  >{{ 'trips.expenses' | transloco }}</a
-                >
-                <a
-                  [routerLink]="['/trips', trip.id, 'members']"
-                  class="nav-btn"
-                  (click)="$event.stopPropagation()"
-                  >{{ 'tripDetail.members' | transloco }}</a
-                >
+              <div class="form-row">
+                <label>{{ 'trips.endDate' | transloco }}</label>
+                <input formControlName="end_date_local" type="datetime-local" />
               </div>
             </div>
+            <div class="form-row">
+              <label>{{ 'trips.timezone' | transloco }}</label>
+              <app-dropdown-select
+                [options]="timezoneDropdownOptions"
+                formControlName="target_timezone"
+              ></app-dropdown-select>
+            </div>
+            <div class="form-row">
+              <label>{{ 'trips.currency' | transloco }}</label>
+              <app-dropdown-select
+                [options]="currencyDropdownOptions"
+                formControlName="base_currency"
+              ></app-dropdown-select>
+            </div>
+            <div class="form-actions">
+              <button type="button" class="btn-secondary" (click)="showForm.set(false)">
+                {{ 'common.cancel' | transloco }}
+              </button>
+              <button type="submit" class="btn-primary" [disabled]="form.invalid">
+                {{ 'trips.submit' | transloco }}
+              </button>
+            </div>
+          </form>
+        }
+
+        @if (filteredTrips().length === 0) {
+          <div class="empty-state">
+            <p>{{ 'trips.noTrips' | transloco }}</p>
           </div>
         }
-      </div>
+
+        <div class="trips-grid">
+          @for (trip of filteredTrips(); track trip.id) {
+            <div class="trip-card-wrap">
+              <button
+                class="swipe-delete"
+                [class.revealed]="swipedTripId() === trip.id"
+                (click)="confirmDeleteTrip(trip)"
+              >
+                {{ 'trips.delete' | transloco }}
+              </button>
+              <div
+                class="trip-card card"
+                [class.swiped]="swipedTripId() === trip.id"
+                (touchstart)="onTouchStart($event)"
+                (touchmove)="onTouchMove($event)"
+                (touchend)="onTouchEnd($event, trip)"
+                (click)="onCardClick(trip)"
+              >
+                <button class="info-btn" (click)="openEditTrip(trip); $event.stopPropagation()">
+                  ⓘ
+                </button>
+                <div class="trip-card-body">
+                  <div class="trip-info">
+                    <div class="trip-route">{{ trip.target_timezone }}</div>
+                    <h3>{{ trip.title }}</h3>
+                  </div>
+                  <div class="trip-stub">
+                    @if (formatDateRange(trip); as range) {
+                      <div class="trip-dates">{{ range }}</div>
+                    }
+                    <div class="trip-currency">{{ trip.base_currency }}</div>
+                  </div>
+                </div>
+                <div class="trip-perf-h"></div>
+                <div class="trip-nav">
+                  <a
+                    [routerLink]="['/trips', trip.id]"
+                    class="nav-btn"
+                    (click)="$event.stopPropagation()"
+                    >{{ 'trips.itinerary' | transloco }}</a
+                  >
+                  <a
+                    [routerLink]="['/trips', trip.id, 'shopping']"
+                    class="nav-btn"
+                    (click)="$event.stopPropagation()"
+                    >{{ 'trips.shopping' | transloco }}</a
+                  >
+                  <a
+                    [routerLink]="['/trips', trip.id, 'expenses']"
+                    class="nav-btn"
+                    (click)="$event.stopPropagation()"
+                    >{{ 'trips.expenses' | transloco }}</a
+                  >
+                  <a
+                    [routerLink]="['/trips', trip.id, 'members']"
+                    class="nav-btn"
+                    (click)="$event.stopPropagation()"
+                    >{{ 'tripDetail.members' | transloco }}</a
+                  >
+                </div>
+              </div>
+            </div>
+          }
+        </div>
       </div>
 
       @if (editingTrip(); as et) {

@@ -102,59 +102,59 @@ import { PreferenceService } from '../../core/services/preference.service';
         }
         <div class="items-list">
           @for (watch of watches(); track watch.id) {
-          <div class="item-card card">
-            <div class="item-main">
-              <div class="item-info">
-                <div class="item-title">{{ watch.origin }} → {{ watch.destination }}</div>
-                <div class="item-desc">
-                  {{ watch.depart_date }}
-                  @if (watch.return_date) {
-                    ～ {{ watch.return_date }}
+            <div class="item-card card">
+              <div class="item-main">
+                <div class="item-info">
+                  <div class="item-title">{{ watch.origin }} → {{ watch.destination }}</div>
+                  <div class="item-desc">
+                    {{ watch.depart_date }}
+                    @if (watch.return_date) {
+                      ～ {{ watch.return_date }}
+                    }
+                  </div>
+                  @if (watch.target_price) {
+                    <div class="item-desc">
+                      {{ 'flightWatch.targetPrice' | transloco }}：{{
+                        watch.target_price | number: '1.0-0'
+                      }}
+                      {{ watch.currency }}
+                    </div>
                   }
                 </div>
-                @if (watch.target_price) {
-                  <div class="item-desc">
-                    {{ 'flightWatch.targetPrice' | transloco }}：{{
-                      watch.target_price | number: '1.0-0'
-                    }}
-                    {{ watch.currency }}
-                  </div>
-                }
+                <div class="item-price">
+                  @if (checking() === watch.id) {
+                    <div class="amount">{{ 'flightWatch.checking' | transloco }}</div>
+                  } @else if (watch.last_price !== null) {
+                    <div
+                      class="amount"
+                      [class.below-target]="
+                        watch.target_price != null && watch.last_price <= watch.target_price
+                      "
+                    >
+                      {{ watch.last_price | number: '1.0-0' }} {{ watch.currency }}
+                    </div>
+                    <div class="amount-checked">{{ formatCheckedAt(watch.last_checked_at) }}</div>
+                  } @else {
+                    <div class="amount-unavailable">
+                      {{ 'flightWatch.priceUnavailable' | transloco }}
+                    </div>
+                  }
+                </div>
               </div>
-              <div class="item-price">
-                @if (checking() === watch.id) {
-                  <div class="amount">{{ 'flightWatch.checking' | transloco }}</div>
-                } @else if (watch.last_price !== null) {
-                  <div
-                    class="amount"
-                    [class.below-target]="
-                      watch.target_price != null && watch.last_price <= watch.target_price
-                    "
-                  >
-                    {{ watch.last_price | number: '1.0-0' }} {{ watch.currency }}
-                  </div>
-                  <div class="amount-checked">{{ formatCheckedAt(watch.last_checked_at) }}</div>
-                } @else {
-                  <div class="amount-unavailable">
-                    {{ 'flightWatch.priceUnavailable' | transloco }}
-                  </div>
-                }
+              <div class="item-actions">
+                <button
+                  class="refresh-btn"
+                  type="button"
+                  (click)="recheck(watch)"
+                  [disabled]="checking() === watch.id"
+                >
+                  🔄 {{ 'flightWatch.recheck' | transloco }}
+                </button>
+                <button class="remove-btn" type="button" (click)="deleteWatch(watch.id)">
+                  {{ 'flightWatch.delete' | transloco }}
+                </button>
               </div>
             </div>
-            <div class="item-actions">
-              <button
-                class="refresh-btn"
-                type="button"
-                (click)="recheck(watch)"
-                [disabled]="checking() === watch.id"
-              >
-                🔄 {{ 'flightWatch.recheck' | transloco }}
-              </button>
-              <button class="remove-btn" type="button" (click)="deleteWatch(watch.id)">
-                {{ 'flightWatch.delete' | transloco }}
-              </button>
-            </div>
-          </div>
           }
         </div>
       </div>

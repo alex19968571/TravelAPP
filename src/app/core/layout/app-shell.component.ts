@@ -252,8 +252,10 @@ import { NearbySpotsService, NearbySpotsResult } from '../services/nearby-spots.
         padding-bottom: 68px;
       }
       /* 被路由插入的頁面元件（router-outlet 的下一個手足節點）填滿剩餘高度，
-         捲動與否交由各頁面自己決定，外層 shell 本身永遠不捲動 */
-      .shell-content > * {
+         捲動與否交由各頁面自己決定，外層 shell 本身永遠不捲動。
+         router-outlet 動態插入的元件不會帶有本元件的 ngcontent 封裝屬性，
+         一般 emulated encapsulation 選擇器打不到它，需用 ::ng-deep 穿透。 */
+      ::ng-deep .shell-content > * {
         flex: 1;
         min-height: 0;
         display: flex;
