@@ -142,7 +142,7 @@ import { PreferenceService, COUNTRIES, Country } from '../../core/services/prefe
               <input
                 #avatarColorInput
                 type="color"
-                hidden
+                class="color-input-hidden"
                 [value]="stagingBg()"
                 (input)="onCustomBgColor($event)"
               />
@@ -496,6 +496,17 @@ import { PreferenceService, COUNTRIES, Country } from '../../core/services/prefe
         font-size: 1rem;
         color: white;
         text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+      }
+      .color-input-hidden {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        border: 0;
+        opacity: 0;
       }
       .modal-actions {
         display: flex;

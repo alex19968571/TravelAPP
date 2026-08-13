@@ -270,7 +270,10 @@
     "checking": "查詢中...",
     "recheck": "重新檢查",
     "delete": "刪除",
-    "priceUnavailable": "暫時無法取得報價"
+    "priceUnavailable": "暫時無法取得報價",
+    "originPlaceholder": "輸入城市或機場，例如：台北",
+    "destinationPlaceholder": "輸入城市或機場，例如：東京",
+    "swap": "交換出發地與目的地"
   },
   "nearby": {
     "message": "你的位置在 {{place}}，{{radius}} 公里內有 {{count}} 個景點"

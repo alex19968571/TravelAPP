@@ -235,7 +235,10 @@
     "checking": "Checking...",
     "recheck": "Recheck",
     "delete": "Delete",
-    "priceUnavailable": "Price temporarily unavailable"
+    "priceUnavailable": "Price temporarily unavailable",
+    "originPlaceholder": "Enter city or airport, e.g. Taipei",
+    "destinationPlaceholder": "Enter city or airport, e.g. Tokyo",
+    "swap": "Swap origin and destination"
   },
   "nearby": {
     "message": "You're near {{place}} — {{count}} spot(s) within {{radius}} km"

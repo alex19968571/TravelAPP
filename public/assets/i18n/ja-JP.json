@@ -235,7 +235,10 @@
     "checking": "検索中...",
     "recheck": "再検索",
     "delete": "削除",
-    "priceUnavailable": "現在価格を取得できません"
+    "priceUnavailable": "現在価格を取得できません",
+    "originPlaceholder": "都市または空港を入力（例：台北）",
+    "destinationPlaceholder": "都市または空港を入力（例：東京）",
+    "swap": "出発地と目的地を入れ替え"
   },
   "nearby": {
     "message": "現在地：{{place}}、半径 {{radius}}km 以内に {{count}} 件のスポットがあります"

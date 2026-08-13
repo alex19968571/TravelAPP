@@ -270,7 +270,10 @@
     "checking": "查询中...",
     "recheck": "重新检查",
     "delete": "删除",
-    "priceUnavailable": "暂时无法获取报价"
+    "priceUnavailable": "暂时无法获取报价",
+    "originPlaceholder": "输入城市或机场，例如：台北",
+    "destinationPlaceholder": "输入城市或机场，例如：东京",
+    "swap": "交换出发地与目的地"
   },
   "nearby": {
     "message": "你的位置在 {{place}}，{{radius}} 公里内有 {{count}} 个景点"
