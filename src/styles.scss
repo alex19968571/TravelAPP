@@ -127,13 +127,14 @@ input[type='time'] {
   appearance: none;
 }
 
-/* ── 手機版：彈出視窗改為全螢幕，貼合畫面不需額外滾動查看 ── */
+/* ── 手機版：彈出視窗改為全螢幕，貼合畫面不需額外滾動查看。
+   內容量少、適合維持置中卡片的彈窗可加上 .modal-card-compact 排除此規則 ── */
 @media (max-width: 640px) {
-  .modal-backdrop {
+  .modal-backdrop:not(:has(.modal-card-compact)) {
     padding: 0 !important;
     align-items: stretch !important;
   }
-  .modal-card {
+  .modal-card:not(.modal-card-compact) {
     max-width: 100% !important;
     width: 100% !important;
     height: 100dvh !important;

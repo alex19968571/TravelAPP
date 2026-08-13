@@ -131,7 +131,7 @@ const CURRENCY_CODES = [
           <form
             [formGroup]="form"
             (ngSubmit)="addWatch()"
-            class="card add-form modal-card"
+            class="card add-form modal-card modal-card-compact"
             (click)="$event.stopPropagation()"
           >
             <div class="form-grid">
@@ -207,16 +207,22 @@ const CURRENCY_CODES = [
                 <label>{{ 'flightWatch.returnDate' | transloco }}</label>
                 <input formControlName="return_date" type="date" />
               </div>
-              <div class="form-row">
+              <div class="form-row span-2">
                 <label>{{ 'flightWatch.targetPrice' | transloco }}</label>
-                <input formControlName="target_price" type="number" min="0" step="any" />
-              </div>
-              <div class="form-row">
-                <label>{{ 'flightWatch.currency' | transloco }}</label>
-                <app-dropdown-select
-                  [options]="currencyDropdownOptions"
-                  formControlName="currency"
-                ></app-dropdown-select>
+                <div class="amount-input-wrap">
+                  <input
+                    formControlName="target_price"
+                    type="text"
+                    inputmode="decimal"
+                    class="amount-input-lg"
+                  />
+                  <app-dropdown-select
+                    class="amount-currency-badge"
+                    variant="badge"
+                    [options]="currencyDropdownOptions"
+                    formControlName="currency"
+                  ></app-dropdown-select>
+                </div>
               </div>
             </div>
             <div class="form-actions">
@@ -396,6 +402,39 @@ const CURRENCY_CODES = [
         box-sizing: border-box;
         background: var(--input-bg);
         color: var(--text-primary);
+      }
+      .amount-input-wrap {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        height: 3rem;
+        border: 1.5px solid var(--border);
+        border-radius: 10px;
+        padding: 0 0.5rem 0 0.875rem;
+        box-sizing: border-box;
+        background: var(--input-bg);
+      }
+      input.amount-input-lg,
+      input.amount-input-lg:hover,
+      input.amount-input-lg:focus,
+      input.amount-input-lg:focus-visible {
+        flex: 1;
+        min-width: 0;
+        width: auto;
+        height: 100%;
+        border: none !important;
+        outline: none !important;
+        box-shadow: none !important;
+        appearance: none;
+        -webkit-appearance: none;
+        -moz-appearance: textfield;
+        padding: 0;
+        background: transparent;
+        font-size: 1.1rem;
+        color: var(--text-primary);
+      }
+      .amount-currency-badge {
+        flex-shrink: 0;
       }
       .span-2 {
         grid-column: 1 / -1;
@@ -711,7 +750,7 @@ export class FlightWatchComponent implements OnInit {
       destination: v.destination!.toUpperCase(),
       depart_date: v.depart_date!,
       return_date: v.return_date || null,
-      target_price: v.target_price ?? null,
+      target_price: v.target_price ? Number(v.target_price) : null,
       currency: v.currency!.toUpperCase(),
     });
     this.closeAddModal();

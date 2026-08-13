@@ -13,9 +13,14 @@ const TAB_HOME_ROUTES = ['/trips', '/exchange', '/settings', '/account'];
   selector: 'app-root',
   imports: [RouterOutlet],
   template: `<router-outlet />`,
-  styles: [`
-    :host { display: block; min-height: 100vh; }
-  `]
+  styles: [
+    `
+      :host {
+        display: block;
+        min-height: 100vh;
+      }
+    `,
+  ],
 })
 export class App {
   private location = inject(Location);
@@ -23,6 +28,20 @@ export class App {
   private startX = 0;
   private startY = 0;
   private tracking = false;
+
+  constructor() {
+    // 鎖住兩指縮放：Angular 的 HostListener 會被 zone.js 預設註冊為
+    // passive，preventDefault() 會被忽略，改用原生 addEventListener
+    // 並明確指定 { passive: false } 才能真正攔截手勢。
+    document.addEventListener(
+      'touchmove',
+      (e: TouchEvent) => {
+        if (e.touches.length > 1) e.preventDefault();
+      },
+      { passive: false },
+    );
+    document.addEventListener('gesturestart', (e: Event) => e.preventDefault());
+  }
 
   // 獨立安裝的 PWA（standalone 模式）沒有瀏覽器原生的邊緣滑動返回手勢，
   // 這裡用簡單的觸控偵測補上：從螢幕最左緣開始、明顯向右拖曳即視為「返回上一頁」。

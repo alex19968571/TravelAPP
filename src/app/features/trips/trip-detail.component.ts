@@ -243,7 +243,7 @@ const TRANSPORT_OPTIONS: { mode: TransportMode; icon: string }[] = [
     <!-- ── 交通方式設定 Modal ── -->
     @if (editingTransportFrom()) {
       <div class="modal-backdrop" (click)="closeTransportModal()">
-        <div class="modal-card" (click)="$event.stopPropagation()">
+        <div class="modal-card modal-card-compact" (click)="$event.stopPropagation()">
           <h3>{{ 'transport.editTitle' | transloco }}</h3>
 
           <!-- 交通方式下拉選單 -->

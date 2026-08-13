@@ -122,7 +122,7 @@ import { PreferenceService, COUNTRIES, Country } from '../../core/services/prefe
                   }
                 </button>
               }
-              <button
+              <div
                 class="color-swatch custom-swatch"
                 [class.selected]="isCustomBg()"
                 [style.background]="
@@ -131,21 +131,19 @@ import { PreferenceService, COUNTRIES, Country } from '../../core/services/prefe
                     : 'conic-gradient(red,yellow,lime,cyan,blue,magenta,red)'
                 "
                 [title]="'settings.customColor' | transloco"
-                (click)="avatarColorInput.click()"
               >
                 @if (isCustomBg()) {
                   <span class="check">✓</span>
                 } @else {
                   <span class="custom-icon">✎</span>
                 }
-              </button>
-              <input
-                #avatarColorInput
-                type="color"
-                class="color-input-hidden"
-                [value]="stagingBg()"
-                (input)="onCustomBgColor($event)"
-              />
+                <input
+                  type="color"
+                  class="color-input-overlay"
+                  [value]="stagingBg()"
+                  (input)="onCustomBgColor($event)"
+                />
+              </div>
             </div>
 
             <div class="modal-actions">
@@ -490,23 +488,27 @@ import { PreferenceService, COUNTRIES, Country } from '../../core/services/prefe
         text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
       }
       .custom-swatch {
+        position: relative;
         border-color: var(--border);
       }
       .custom-icon {
         font-size: 1rem;
         color: white;
         text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+        pointer-events: none;
       }
-      .color-input-hidden {
+      /* 真實 color input 直接疊在視覺按鈕上方接收點擊/觸控，
+         比透過另一個元素合成 .click() 觸發更能相容各家手機瀏覽器 */
+      .color-input-overlay {
         position: absolute;
-        width: 1px;
-        height: 1px;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        border: none;
         padding: 0;
-        margin: -1px;
-        overflow: hidden;
-        clip: rect(0, 0, 0, 0);
-        border: 0;
+        margin: 0;
         opacity: 0;
+        cursor: pointer;
       }
       .modal-actions {
         display: flex;
