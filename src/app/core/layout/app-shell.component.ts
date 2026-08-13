@@ -251,17 +251,11 @@ import { NearbySpotsService, NearbySpotsResult } from '../services/nearby-spots.
         flex-direction: column;
         padding-bottom: 68px;
       }
-      /* 被路由插入的頁面元件（router-outlet 的下一個手足節點）填滿剩餘高度，
+      /* 被路由插入的頁面元件（router-outlet 的下一個手足節點）填滿剩餘高度、
          捲動與否交由各頁面自己決定，外層 shell 本身永遠不捲動。
-         router-outlet 動態插入的元件不會帶有本元件的 ngcontent 封裝屬性，
-         一般 emulated encapsulation 選擇器打不到它，需用 ::ng-deep 穿透。 */
-      ::ng-deep .shell-content > * {
-        flex: 1;
-        min-height: 0;
-        display: flex;
-        flex-direction: column;
-        overflow: hidden;
-      }
+         這條規則實際定義在 src/styles.scss（全域），因為 router-outlet
+         動態插入的元件不會帶有本元件的 ngcontent 封裝屬性，元件層級的
+         scoped 選擇器（含 ::ng-deep）無法可靠命中它。 */
 
       /* ── 左側可收合清單（僅網頁版顯示）── */
       .side-nav {

@@ -65,8 +65,9 @@ html, body {
   margin: 0;
   padding: 0;
   width: 100%;
-  overflow-x: hidden;
-  overscroll-behavior-x: none;
+  height: 100%;
+  overflow: hidden;
+  overscroll-behavior: none;
   font-size: var(--font-size-base);
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans TC',
     'PingFang TC', Helvetica, Arial, sans-serif;
@@ -74,6 +75,20 @@ html, body {
   color: var(--text-primary);
   -webkit-font-smoothing: antialiased;
   transition: background 0.25s ease, color 0.25s ease;
+}
+
+/* ── app-shell 架構：被 router-outlet 動態插入的頁面元件不會帶有
+   app-shell 的 ngcontent 封裝屬性，元件層級的 scoped CSS 選擇器永遠打不到它，
+   所以這條規則必須放在全域樣式表才能保證生效。
+   <router-outlet> 本身也是一個真實、佔位用的 DOM 元素（並非只是註解），
+   會跟被插入的頁面元件一起被 "> *" 選到並各分到一半 flex 空間，
+   必須用 :not(router-outlet) 排除它。 ── */
+.shell-content > *:not(router-outlet) {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
 input, select, textarea, button { font-family: inherit; }

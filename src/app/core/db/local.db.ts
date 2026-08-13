@@ -40,6 +40,11 @@ export class LocalDb extends Dexie {
     this.version(2).stores({
       flight_watches: 'id, owner_id, updated_at_utc',
     });
+    // pruneStale() 需要以 table_name 查詢 sync_queue，version 1 未替它建索引，
+    // 會直接丟出 SchemaError 並讓整個 syncDown transaction 回滾。
+    this.version(3).stores({
+      sync_queue: 'id, status, created_at, table_name',
+    });
   }
 }
 

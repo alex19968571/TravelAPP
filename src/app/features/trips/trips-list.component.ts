@@ -184,14 +184,14 @@ const CURRENCY_OPTIONS = [
             <div class="form-row">
               <label>{{ 'trips.timezone' | transloco }}</label>
               <app-dropdown-select
-                [options]="timezoneDropdownOptions"
+                [options]="timezoneDropdownOptions()"
                 formControlName="target_timezone"
               ></app-dropdown-select>
             </div>
             <div class="form-row">
               <label>{{ 'trips.currency' | transloco }}</label>
               <app-dropdown-select
-                [options]="currencyDropdownOptions"
+                [options]="currencyDropdownOptions()"
                 formControlName="base_currency"
               ></app-dropdown-select>
             </div>
@@ -303,14 +303,14 @@ const CURRENCY_OPTIONS = [
               <div class="form-row">
                 <label>{{ 'trips.timezone' | transloco }}</label>
                 <app-dropdown-select
-                  [options]="timezoneDropdownOptions"
+                  [options]="timezoneDropdownOptions()"
                   formControlName="target_timezone"
                 ></app-dropdown-select>
               </div>
               <div class="form-row">
                 <label>{{ 'trips.currency' | transloco }}</label>
                 <app-dropdown-select
-                  [options]="currencyDropdownOptions"
+                  [options]="currencyDropdownOptions()"
                   formControlName="base_currency"
                 ></app-dropdown-select>
               </div>
@@ -891,14 +891,19 @@ export class TripsListComponent implements OnInit {
 
   timezoneOptions = TIMEZONE_OPTIONS;
   currencyOptions = CURRENCY_OPTIONS;
-  timezoneDropdownOptions = TIMEZONE_OPTIONS.map((o) => ({
-    value: o.value,
-    label: `${this.transloco.translate('timezones.' + o.key)} (UTC${o.utc})`,
-  }));
-  currencyDropdownOptions = CURRENCY_OPTIONS.map((o) => ({
-    value: o.value,
-    label: `${o.value} ${this.transloco.translate('currencies.' + o.key)}`,
-  }));
+
+  timezoneDropdownOptions(): { value: string; label: string }[] {
+    return TIMEZONE_OPTIONS.map((o) => ({
+      value: o.value,
+      label: `${this.transloco.translate('timezones.' + o.key)} (UTC${o.utc})`,
+    }));
+  }
+  currencyDropdownOptions(): { value: string; label: string }[] {
+    return CURRENCY_OPTIONS.map((o) => ({
+      value: o.value,
+      label: `${o.value} ${this.transloco.translate('currencies.' + o.key)}`,
+    }));
+  }
 
   isTouch =
     typeof window !== 'undefined' &&
