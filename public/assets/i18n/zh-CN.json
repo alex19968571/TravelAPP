@@ -23,7 +23,9 @@
     "homeCountry": "当前所在国家",
     "account": "账户",
     "uploadPhoto": "上传照片",
-    "orChoosePreset": "或选择预设头像"
+    "orChoosePreset": "或选择预设头像",
+    "chooseIcon": "选择图标",
+    "chooseBgColor": "选择背景色"
   },
   "trips": {
     "myTrips": "我的行程",

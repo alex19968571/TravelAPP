@@ -440,8 +440,10 @@ const CURRENCY_CODES = [
       .currency-suffix-select {
         position: absolute;
         right: 0.4rem;
-        top: 50%;
-        transform: translateY(-50%);
+        top: 0;
+        bottom: 0;
+        display: flex;
+        align-items: center;
       }
       .convert-btn {
         background: var(--accent-light);

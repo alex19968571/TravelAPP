@@ -215,12 +215,7 @@ const DAY_COLORS = ['#667eea', '#ed8936', '#48bb78', '#f56565', '#9f7aea', '#38b
         align-items: center;
         gap: 0.75rem;
         margin-bottom: 1rem;
-        position: sticky;
-        top: 0;
-        z-index: 41;
-        background: var(--bg);
-        padding-top: 0.5rem;
-        margin-top: -0.5rem;
+        flex-shrink: 0;
       }
       .back-btn {
         display: inline-flex;
@@ -369,6 +364,10 @@ const DAY_COLORS = ['#667eea', '#ed8936', '#48bb78', '#f56565', '#9f7aea', '#38b
         display: flex;
         flex-direction: column;
         gap: 0.35rem;
+      }
+      .field-group app-dropdown-select {
+        display: block;
+        width: 100%;
       }
       .field-label {
         font-size: 0.875rem;

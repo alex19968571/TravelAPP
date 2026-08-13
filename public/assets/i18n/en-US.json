@@ -23,7 +23,9 @@
     "homeCountry": "Home Country",
     "account": "Account",
     "uploadPhoto": "Upload Photo",
-    "orChoosePreset": "Or choose a preset avatar"
+    "orChoosePreset": "Or choose a preset avatar",
+    "chooseIcon": "Choose Icon",
+    "chooseBgColor": "Choose Background Color"
   },
   "trips": {
     "myTrips": "My Trips",

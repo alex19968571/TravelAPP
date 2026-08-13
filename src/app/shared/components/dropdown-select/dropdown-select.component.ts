@@ -133,7 +133,7 @@ export interface DropdownOption {
         box-shadow: 0 8px 32px var(--shadow);
         max-height: 260px;
         overflow-y: auto;
-        z-index: 100;
+        z-index: 1000;
         display: none;
         scrollbar-width: none;
       }

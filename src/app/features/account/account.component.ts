@@ -14,7 +14,6 @@ import { AuthService } from '../../core/services/auth.service';
 import {
   UserProfileService,
   PRESET_AVATARS,
-  PresetAvatar,
   parseAvatar,
 } from '../../core/services/user-profile.service';
 import { PreferenceService, COUNTRIES, Country } from '../../core/services/preference.service';
@@ -27,7 +26,7 @@ import { PreferenceService, COUNTRIES, Country } from '../../core/services/prefe
     <div class="page-container">
       <div class="scale-wrap" #scaleWrap>
         <div class="avatar-hero">
-          <button class="avatar-big" (click)="showAvatarPicker.set(true)">
+          <button class="avatar-big" (click)="openAvatarPicker()">
             @if (avatarParsed().type === 'image') {
               <img [src]="$any(avatarParsed()).src" class="avatar-img" alt="avatar" />
             } @else if (avatarParsed().type === 'preset') {
@@ -42,7 +41,7 @@ import { PreferenceService, COUNTRIES, Country } from '../../core/services/prefe
         </div>
 
         <div class="card">
-          <button class="row-item" (click)="showAvatarPicker.set(true)">
+          <button class="row-item" (click)="openAvatarPicker()">
             <span>👤 {{ 'account.changeAvatar' | transloco }}</span>
             <span class="chevron">›</span>
           </button>
@@ -78,7 +77,7 @@ import { PreferenceService, COUNTRIES, Country } from '../../core/services/prefe
       </div>
 
       @if (showAvatarPicker()) {
-        <div class="modal-backdrop" (click)="showAvatarPicker.set(false)">
+        <div class="modal-backdrop" (click)="closeAvatarPicker()">
           <div class="modal-card" (click)="$event.stopPropagation()">
             <h3>{{ 'account.changeAvatar' | transloco }}</h3>
             <button class="btn-secondary full-width" (click)="avatarInputRef.nativeElement.click()">
@@ -91,13 +90,71 @@ import { PreferenceService, COUNTRIES, Country } from '../../core/services/prefe
               hidden
               (change)="onAvatarSelected($event)"
             />
+
             <p class="section-desc">{{ 'account.orChoosePreset' | transloco }}</p>
+
+            <div class="avatar-preview" [style.background]="stagingBg()">{{ stagingEmoji() }}</div>
+
+            <p class="section-label">{{ 'account.chooseIcon' | transloco }}</p>
             <div class="preset-grid">
-              @for (p of presetAvatars; track p.id) {
-                <button class="preset-swatch" [style.background]="p.bg" (click)="selectPreset(p)">
-                  {{ p.emoji }}
+              @for (e of avatarEmojis; track e) {
+                <button
+                  class="preset-swatch"
+                  [class.selected]="stagingEmoji() === e"
+                  (click)="stagingEmoji.set(e)"
+                >
+                  {{ e }}
                 </button>
               }
+            </div>
+
+            <p class="section-label">{{ 'account.chooseBgColor' | transloco }}</p>
+            <div class="preset-grid">
+              @for (c of avatarColors; track c) {
+                <button
+                  class="color-swatch"
+                  [style.background]="c"
+                  [class.selected]="stagingBg() === c"
+                  (click)="stagingBg.set(c)"
+                >
+                  @if (stagingBg() === c) {
+                    <span class="check">✓</span>
+                  }
+                </button>
+              }
+              <button
+                class="color-swatch custom-swatch"
+                [class.selected]="isCustomBg()"
+                [style.background]="
+                  isCustomBg()
+                    ? stagingBg()
+                    : 'conic-gradient(red,yellow,lime,cyan,blue,magenta,red)'
+                "
+                [title]="'settings.customColor' | transloco"
+                (click)="avatarColorInput.click()"
+              >
+                @if (isCustomBg()) {
+                  <span class="check">✓</span>
+                } @else {
+                  <span class="custom-icon">✎</span>
+                }
+              </button>
+              <input
+                #avatarColorInput
+                type="color"
+                hidden
+                [value]="stagingBg()"
+                (input)="onCustomBgColor($event)"
+              />
+            </div>
+
+            <div class="modal-actions">
+              <button class="btn-secondary" (click)="closeAvatarPicker()">
+                {{ 'common.cancel' | transloco }}
+              </button>
+              <button class="btn-primary" (click)="confirmAvatarPicker()">
+                {{ 'common.confirm' | transloco }}
+              </button>
             </div>
           </div>
         </div>
@@ -335,7 +392,13 @@ import { PreferenceService, COUNTRIES, Country } from '../../core/services/prefe
         padding: 1.5rem;
         max-width: 360px;
         width: 100%;
+        max-height: 90vh;
+        overflow-y: auto;
+        scrollbar-width: none;
         box-shadow: 0 12px 40px var(--shadow);
+      }
+      .modal-card::-webkit-scrollbar {
+        display: none;
       }
       .modal-card h3 {
         margin: 0 0 1rem;
@@ -368,7 +431,8 @@ import { PreferenceService, COUNTRIES, Country } from '../../core/services/prefe
         width: 100%;
         aspect-ratio: 1;
         border-radius: 50%;
-        border: none;
+        border: 3px solid transparent;
+        background: var(--bg);
         font-size: 1.4rem;
         cursor: pointer;
         display: flex;
@@ -378,6 +442,75 @@ import { PreferenceService, COUNTRIES, Country } from '../../core/services/prefe
       }
       .preset-swatch:hover {
         transform: scale(1.08);
+      }
+      .preset-swatch.selected {
+        border-color: var(--accent);
+        background: var(--accent-light);
+      }
+
+      .avatar-preview {
+        width: 72px;
+        height: 72px;
+        margin: 0.75rem auto;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2rem;
+      }
+      .section-label {
+        margin: 1rem 0 0.5rem;
+        color: var(--text-secondary);
+        font-size: 0.85rem;
+        font-weight: 600;
+      }
+      .color-swatch {
+        width: 100%;
+        aspect-ratio: 1;
+        border-radius: 50%;
+        border: 3px solid transparent;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition:
+          transform 0.15s,
+          border-color 0.15s;
+      }
+      .color-swatch:hover {
+        transform: scale(1.08);
+      }
+      .color-swatch.selected {
+        border-color: var(--accent);
+      }
+      .check {
+        color: white;
+        font-size: 1.1rem;
+        font-weight: 700;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+      }
+      .custom-swatch {
+        border-color: var(--border);
+      }
+      .custom-icon {
+        font-size: 1rem;
+        color: white;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+      }
+      .modal-actions {
+        display: flex;
+        gap: 0.75rem;
+        justify-content: flex-end;
+        margin-top: 1.25rem;
+      }
+      .btn-primary {
+        background: var(--accent);
+        color: white;
+        border: none;
+        border-radius: 10px;
+        padding: 0.625rem 1.5rem;
+        font-weight: 600;
+        cursor: pointer;
       }
     `,
   ],
@@ -391,11 +524,16 @@ export class AccountComponent implements AfterViewInit {
   pref = inject(PreferenceService);
 
   countries = COUNTRIES;
-  presetAvatars = PRESET_AVATARS;
   avatarParsed = computed(() => parseAvatar(this.profile.avatarUrl()));
+
+  avatarEmojis = [...new Set(PRESET_AVATARS.map((p) => p.emoji))];
+  avatarColors = [...new Set(PRESET_AVATARS.map((p) => p.bg))];
 
   showHomeCountry = signal(false);
   showAvatarPicker = signal(false);
+  stagingEmoji = signal(this.avatarEmojis[0]);
+  stagingBg = signal(this.avatarColors[0]);
+  isCustomBg = computed(() => !this.avatarColors.includes(this.stagingBg()));
 
   ngAfterViewInit(): void {
     setTimeout(() => this.applyScale());
@@ -436,8 +574,32 @@ export class AccountComponent implements AfterViewInit {
     this.showHomeCountry.set(false);
   }
 
-  async selectPreset(preset: PresetAvatar): Promise<void> {
-    await this.profile.setPresetAvatar(preset);
+  openAvatarPicker(): void {
+    const parsed = this.avatarParsed();
+    if (parsed.type === 'preset') {
+      this.stagingEmoji.set(parsed.emoji);
+      this.stagingBg.set(parsed.bg);
+    } else {
+      this.stagingEmoji.set(this.avatarEmojis[0]);
+      this.stagingBg.set(this.avatarColors[0]);
+    }
+    this.showAvatarPicker.set(true);
+  }
+
+  closeAvatarPicker(): void {
+    this.showAvatarPicker.set(false);
+  }
+
+  onCustomBgColor(event: Event): void {
+    this.stagingBg.set((event.target as HTMLInputElement).value);
+  }
+
+  async confirmAvatarPicker(): Promise<void> {
+    await this.profile.setPresetAvatar({
+      id: 'custom',
+      emoji: this.stagingEmoji(),
+      bg: this.stagingBg(),
+    });
     this.showAvatarPicker.set(false);
   }
 

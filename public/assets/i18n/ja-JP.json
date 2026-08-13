@@ -23,7 +23,9 @@
     "homeCountry": "現在の滞在国",
     "account": "アカウント",
     "uploadPhoto": "写真をアップロード",
-    "orChoosePreset": "またはプリセットアバターを選択"
+    "orChoosePreset": "またはプリセットアバターを選択",
+    "chooseIcon": "アイコンを選択",
+    "chooseBgColor": "背景色を選択"
   },
   "trips": {
     "myTrips": "マイ旅程",
