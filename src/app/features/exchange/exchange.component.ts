@@ -34,6 +34,7 @@ const KEYPAD_ROWS: string[][] = [
               <button class="country-trigger" (click)="toggleLeftPicker($event)">
                 <span class="fi fi-{{ leftCountry().code.toLowerCase() }}"></span>
                 <span class="cname">{{ leftCountry().nativeName }}</span>
+                <span class="ccode">{{ leftCountry().currency }}</span>
                 <span class="caret" [class.flipped]="showLeftPicker()">▾</span>
               </button>
               <div class="country-dropdown">
@@ -61,6 +62,7 @@ const KEYPAD_ROWS: string[][] = [
               <button class="country-trigger" (click)="toggleRightPicker($event)">
                 <span class="fi fi-{{ rightCountry().code.toLowerCase() }}"></span>
                 <span class="cname">{{ rightCountry().nativeName }}</span>
+                <span class="ccode">{{ rightCountry().currency }}</span>
                 <span class="caret" [class.flipped]="showRightPicker()">▾</span>
               </button>
               <div class="country-dropdown">
@@ -245,6 +247,12 @@ const KEYPAD_ROWS: string[][] = [
         overflow: hidden;
         text-overflow: ellipsis;
       }
+      .ccode {
+        display: none;
+        font-weight: 700;
+        color: var(--accent);
+        font-size: 0.75rem;
+      }
       .caret {
         font-size: 0.65rem;
         color: var(--text-secondary);
@@ -384,8 +392,22 @@ const KEYPAD_ROWS: string[][] = [
       }
 
       @media (max-width: 420px) {
+        .page-container {
+          padding: 0.75rem 0.5rem;
+        }
         .cname {
           display: none;
+        }
+        .ccode {
+          display: inline;
+        }
+        .country-trigger {
+          flex: 1;
+          justify-content: center;
+          padding: 0.4rem 0.5rem;
+        }
+        .side {
+          min-width: 0;
         }
       }
     `,

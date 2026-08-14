@@ -658,6 +658,9 @@ const CURRENCY_OPTIONS = [
           box-shadow 0.2s ease;
         overflow: hidden;
         -webkit-tap-highlight-color: transparent;
+        /* 允許瀏覽器原生處理垂直捲動，水平方向交給 JS 判斷，
+           避免左滑刪除手勢與上下捲動互相搶奪。 */
+        touch-action: pan-y;
       }
       .trip-card.card:hover,
       .trip-card.card:active {
@@ -1018,7 +1021,9 @@ export class TripsListComponent implements OnInit {
   editingTrip = signal<Trip | null>(null);
 
   private touchStartX = 0;
+  private touchStartY = 0;
   private touchDeltaX = 0;
+  private touchAxis: 'x' | 'y' | null = null;
 
   form = this.fb.group({
     title: ['', [Validators.required, Validators.maxLength(100)]],
@@ -1114,14 +1119,29 @@ export class TripsListComponent implements OnInit {
 
   onTouchStart(e: TouchEvent): void {
     this.touchStartX = e.touches[0].clientX;
+    this.touchStartY = e.touches[0].clientY;
     this.touchDeltaX = 0;
+    this.touchAxis = null;
   }
 
   onTouchMove(e: TouchEvent): void {
-    this.touchDeltaX = e.touches[0].clientX - this.touchStartX;
+    const deltaX = e.touches[0].clientX - this.touchStartX;
+    const deltaY = e.touches[0].clientY - this.touchStartY;
+
+    // 手勢方向尚未鎖定時，依前幾個像素的移動量判斷是左右滑動還是上下捲動，
+    // 避免手指些微斜移就誤觸左滑刪除，或被瀏覽器原生垂直捲動打斷水平手勢。
+    if (!this.touchAxis) {
+      if (Math.abs(deltaX) < 8 && Math.abs(deltaY) < 8) return;
+      this.touchAxis = Math.abs(deltaX) > Math.abs(deltaY) ? 'x' : 'y';
+    }
+
+    if (this.touchAxis === 'x') {
+      this.touchDeltaX = deltaX;
+    }
   }
 
   onTouchEnd(e: TouchEvent, trip: Trip): void {
+    if (this.touchAxis !== 'x') return;
     if (this.touchDeltaX < -40) {
       e.preventDefault();
       this.swipedTripId.set(trip.id);

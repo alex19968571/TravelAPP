@@ -1,11 +1,22 @@
-import { Component, inject, OnInit, signal, computed, ViewChild, ElementRef } from '@angular/core';
+import {
+  Component,
+  inject,
+  OnInit,
+  AfterViewInit,
+  signal,
+  computed,
+  ViewChild,
+  ViewChildren,
+  QueryList,
+  ElementRef,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
 import { Trip, ItineraryItem, TransportMode } from '../../core/models';
 import { TripService } from '../../core/services/trip.service';
-import { MapsService } from '../../core/services/maps.service';
+import { MapsService, RouteOption } from '../../core/services/maps.service';
 import { DropdownSelectComponent } from '../../shared/components/dropdown-select/dropdown-select.component';
 
 interface DateTab {
@@ -67,7 +78,7 @@ const TRANSPORT_OPTIONS: { mode: TransportMode; icon: string }[] = [
               <polyline points="15 18 9 12 15 6"></polyline>
             </svg>
           </button>
-          <div class="date-tabs" #dateTabsEl>
+          <div class="date-tabs" [class.date-tabs-few]="dateTabs().length <= 4" #dateTabsEl>
             @for (d of dateTabs(); track $index) {
               <button
                 class="date-tab"
@@ -288,25 +299,69 @@ const TRANSPORT_OPTIONS: { mode: TransportMode; icon: string }[] = [
                   </button>
                   @if (tRouteOptions()?.length) {
                     <div class="route-options">
-                      @for (r of tRouteOptions(); track $index) {
-                        <button
-                          type="button"
-                          class="route-option"
-                          [class.selected]="tSelectedRouteIdx() === $index"
-                          (click)="selectRoute($index)"
-                        >
-                          <span class="route-summary">{{
-                            r.summary || ('transport.routeOption' | transloco: { n: $index + 1 })
-                          }}</span>
-                          <span class="route-meta">
-                            <span class="route-duration">{{
-                              formatDurationNoPlus(r.durationMin)
+                      @for (r of tRouteOptions(); track $index; let ri = $index) {
+                        <div class="route-option-wrap">
+                          <button
+                            type="button"
+                            class="route-option"
+                            [class.selected]="tSelectedRouteIdx() === ri"
+                            (click)="toggleRouteDetail(ri)"
+                          >
+                            <span class="route-summary">{{
+                              r.summary || ('transport.routeOption' | transloco: { n: ri + 1 })
                             }}</span>
-                            @if (r.distanceText) {
-                              <span class="route-distance">· {{ r.distanceText }}</span>
-                            }
-                          </span>
-                        </button>
+                            <span class="route-meta">
+                              <span class="route-duration">{{
+                                formatDurationNoPlus(r.durationMin)
+                              }}</span>
+                              @if (r.distanceText) {
+                                <span class="route-distance">· {{ r.distanceText }}</span>
+                              }
+                              <span
+                                class="route-expand-caret"
+                                [class.flipped]="tExpandedRouteIdx() === ri"
+                                >▾</span
+                              >
+                            </span>
+                          </button>
+
+                          @if (tExpandedRouteIdx() === ri) {
+                            <div class="route-detail">
+                              <div class="route-detail-map" #routeDetailMapEl></div>
+                              <div class="route-steps">
+                                @for (s of r.steps; track $index) {
+                                  <div class="step-row">
+                                    <span class="step-icon">{{ stepIcon(s.mode) }}</span>
+                                    <div class="step-body">
+                                      @if (s.mode === 'transit' && s.transit) {
+                                        <span
+                                          class="step-line-badge"
+                                          [style.background]="s.transit.lineColor"
+                                          >{{ s.transit.lineShortName || s.transit.lineName }}</span
+                                        >
+                                        <span class="step-text">
+                                          {{ s.transit.departureStop }} →
+                                          {{ s.transit.arrivalStop }}
+                                          @if (s.transit.numStops) {
+                                            <span class="step-stops"
+                                              >({{
+                                                'transport.viaStops'
+                                                  | transloco: { n: s.transit.numStops }
+                                              }})</span
+                                            >
+                                          }
+                                        </span>
+                                      } @else {
+                                        <span class="step-text">{{ s.instructions }}</span>
+                                      }
+                                    </div>
+                                    <span class="step-duration">{{ s.durationText }}</span>
+                                  </div>
+                                }
+                              </div>
+                            </div>
+                          }
+                        </div>
                       }
                     </div>
                   } @else if (tCalcFailed()) {
@@ -438,7 +493,7 @@ const TRANSPORT_OPTIONS: { mode: TransportMode; icon: string }[] = [
         flex: 1;
         min-width: 0;
         display: flex;
-        gap: 0.5rem;
+        gap: 0;
         overflow-x: auto;
         scroll-behavior: smooth;
         -webkit-overflow-scrolling: touch;
@@ -449,12 +504,12 @@ const TRANSPORT_OPTIONS: { mode: TransportMode; icon: string }[] = [
         display: none;
       }
       .date-tab {
-        /* 一次固定顯示 4 個，其餘用捲動/箭頭切換，而不是全部擠進同一列 */
-        flex: 0 0 calc((100% - 1.5rem) / 4);
+        /* 預設一次固定顯示 4 個，其餘用捲動/箭頭切換，而不是全部擠進同一列 */
+        flex: 0 0 25%;
         min-width: 80px;
         padding: 0.5rem 0.5rem;
-        border-radius: 10px;
         border: 1.5px solid var(--border);
+        margin-left: -1.5px;
         background: var(--surface);
         color: var(--text-secondary);
         font-weight: 600;
@@ -465,7 +520,23 @@ const TRANSPORT_OPTIONS: { mode: TransportMode; icon: string }[] = [
         overflow: hidden;
         text-overflow: ellipsis;
       }
+      .date-tab:first-child {
+        margin-left: 0;
+        border-top-left-radius: 10px;
+        border-bottom-left-radius: 10px;
+      }
+      .date-tab:last-child {
+        border-top-right-radius: 10px;
+        border-bottom-right-radius: 10px;
+      }
+      /* 日期數量 <= 4 時，等比放大填滿整列（不需捲動） */
+      .date-tabs-few .date-tab {
+        flex: 1 1 0;
+        min-width: 0;
+      }
       .date-tab.active {
+        position: relative;
+        z-index: 1;
         border-color: var(--accent);
         background: var(--accent);
         color: white;
@@ -879,6 +950,82 @@ const TRANSPORT_OPTIONS: { mode: TransportMode; icon: string }[] = [
       .route-distance {
         margin-left: 0.15rem;
       }
+      .route-expand-caret {
+        display: inline-block;
+        margin-left: 0.3rem;
+        font-size: 0.7rem;
+        transition: transform 0.2s;
+      }
+      .route-expand-caret.flipped {
+        transform: rotate(180deg);
+      }
+
+      .route-option-wrap {
+        display: flex;
+        flex-direction: column;
+      }
+      .route-detail {
+        margin-top: -0.5rem;
+        padding: 0.75rem 0.875rem 0.625rem;
+        border: 1.5px solid var(--accent);
+        border-top: none;
+        border-radius: 0 0 10px 10px;
+        background: var(--surface);
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+      }
+      .route-detail-map {
+        width: 100%;
+        height: 140px;
+        border-radius: 8px;
+        overflow: hidden;
+        background: var(--bg);
+      }
+      .route-steps {
+        display: flex;
+        flex-direction: column;
+        gap: 0.6rem;
+      }
+      .step-row {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.5rem;
+      }
+      .step-icon {
+        flex-shrink: 0;
+        font-size: 1rem;
+        line-height: 1.4;
+      }
+      .step-body {
+        flex: 1;
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+      }
+      .step-line-badge {
+        align-self: flex-start;
+        color: white;
+        font-size: 0.75rem;
+        font-weight: 700;
+        padding: 0.1rem 0.5rem;
+        border-radius: 6px;
+      }
+      .step-text {
+        font-size: 0.85rem;
+        color: var(--text-primary);
+        line-height: 1.4;
+      }
+      .step-stops {
+        color: var(--text-secondary);
+      }
+      .step-duration {
+        flex-shrink: 0;
+        font-size: 0.8rem;
+        color: var(--text-secondary);
+        white-space: nowrap;
+      }
 
       .no-auto-msg {
         font-size: 0.85rem;
@@ -917,8 +1064,9 @@ const TRANSPORT_OPTIONS: { mode: TransportMode; icon: string }[] = [
     `,
   ],
 })
-export class TripDetailComponent implements OnInit {
+export class TripDetailComponent implements OnInit, AfterViewInit {
   @ViewChild('dateTabsEl') dateTabsEl?: ElementRef<HTMLElement>;
+  @ViewChildren('routeDetailMapEl') routeDetailMapEls!: QueryList<ElementRef<HTMLDivElement>>;
 
   private route = inject(ActivatedRoute);
   private tripService = inject(TripService);
@@ -949,10 +1097,9 @@ export class TripDetailComponent implements OnInit {
   tCalcResult = signal<number | null>(null);
   tCalcing = signal(false);
   tCalcFailed = signal(false);
-  tRouteOptions = signal<{ durationMin: number; distanceText: string; summary: string }[] | null>(
-    null,
-  );
+  tRouteOptions = signal<RouteOption[] | null>(null);
   tSelectedRouteIdx = signal<number | null>(null);
+  tExpandedRouteIdx = signal<number | null>(null);
   tSaving = signal(false);
 
   transportOpts = TRANSPORT_OPTIONS;
@@ -1017,6 +1164,14 @@ export class TripDetailComponent implements OnInit {
     const id = this.route.snapshot.paramMap.get('id')!;
     this.trip.set(await this.tripService.getById(id));
     this.items.set(await this.tripService.getItinerary(id));
+  }
+
+  ngAfterViewInit(): void {
+    // 路線詳情展開時才會渲染出小地圖容器（accordion 手風琴模式，同時最多一個）
+    this.routeDetailMapEls.changes.subscribe((list: QueryList<ElementRef<HTMLDivElement>>) => {
+      const el = list.first;
+      if (el) this.renderRouteDetailMap(el.nativeElement);
+    });
   }
 
   async removeItem(itemId: string, e: MouseEvent): Promise<void> {
@@ -1155,6 +1310,7 @@ export class TripDetailComponent implements OnInit {
     this.tCalcFailed.set(false);
     this.tRouteOptions.set(null);
     this.tSelectedRouteIdx.set(null);
+    this.tExpandedRouteIdx.set(null);
     const mins = item.next_transport_minutes ?? 0;
     this.tHours.set(Math.floor(mins / 60));
     this.tMins.set(mins % 60);
@@ -1173,6 +1329,7 @@ export class TripDetailComponent implements OnInit {
     this.tCalcFailed.set(false);
     this.tRouteOptions.set(null);
     this.tSelectedRouteIdx.set(null);
+    this.tExpandedRouteIdx.set(null);
     if (mode && !this.canAutoCalc(mode)) {
       this.tTimeTab.set('custom');
     }
@@ -1185,6 +1342,46 @@ export class TripDetailComponent implements OnInit {
     this.tCalcResult.set(routes[idx].durationMin);
   }
 
+  /** 點擊路線列：同時選取該方案，並展開/收合地圖與逐步說明（手風琴，同時最多展開一個） */
+  toggleRouteDetail(idx: number): void {
+    this.selectRoute(idx);
+    this.tExpandedRouteIdx.set(this.tExpandedRouteIdx() === idx ? null : idx);
+  }
+
+  stepIcon(mode: RouteOption['steps'][number]['mode']): string {
+    switch (mode) {
+      case 'walk':
+        return '🚶';
+      case 'transit':
+        return '🚇';
+      case 'drive':
+        return '🚗';
+      case 'bike':
+        return '🚲';
+      default:
+        return '•';
+    }
+  }
+
+  /** 在展開的路線詳情內繪製迷你地圖並描繪該路線 Polyline */
+  private async renderRouteDetailMap(el: HTMLDivElement): Promise<void> {
+    const idx = this.tExpandedRouteIdx();
+    if (idx === null) return;
+    const route = this.tRouteOptions()?.[idx];
+    if (!route?.overviewPolyline) return;
+    try {
+      const path = await this.mapsService.decodePolyline(route.overviewPolyline);
+      if (!path.length) return;
+      const map = await this.mapsService.initMap(el, path[0]);
+      const polyline = this.mapsService.drawPolyline(map, route.overviewPolyline);
+      const bounds = new google.maps.LatLngBounds();
+      polyline.getPath().forEach((p) => bounds.extend(p));
+      map.fitBounds(bounds, 24);
+    } catch (err) {
+      console.warn('[TripDetail] renderRouteDetailMap failed', err);
+    }
+  }
+
   async tAutoCalc(): Promise<void> {
     const from = this.editingTransportFrom();
     const to = this.editingTransportTo();
@@ -1195,6 +1392,7 @@ export class TripDetailComponent implements OnInit {
     this.tCalcFailed.set(false);
     this.tRouteOptions.set(null);
     this.tSelectedRouteIdx.set(null);
+    this.tExpandedRouteIdx.set(null);
     try {
       const routes = await this.mapsService.estimateRoutes(
         { lat: from.latitude, lng: from.longitude },

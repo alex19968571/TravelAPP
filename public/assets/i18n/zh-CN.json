@@ -297,6 +297,7 @@
     "hour": "小时",
     "minute": "分",
     "calcFailed": "查无路线信息，请改用自定义时间",
-    "routeOption": "路线 {{n}}"
+    "routeOption": "路线 {{n}}",
+    "viaStops": "{{n}} 站"
   }
 }
