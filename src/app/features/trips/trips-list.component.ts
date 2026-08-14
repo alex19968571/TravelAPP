@@ -222,9 +222,7 @@ const CURRENCY_OPTIONS = [
                 [class.revealed]="scrapbookRevealedTripId() === trip.id"
                 [attr.aria-label]="'scrapbook.title' | transloco"
                 (click)="onScrapbookBtnClick(trip, $event)"
-              >
-                <span class="film-reel-icon">🎞️</span>
-              </button>
+              ></button>
               <div
                 class="trip-card card"
                 [class.reveal-scrapbook]="scrapbookRevealedTripId() === trip.id"
@@ -639,6 +637,20 @@ const CURRENCY_OPTIONS = [
         transform: translateZ(0);
         -webkit-transform: translateZ(0);
       }
+      /* 登機證右側中間的圓形撕票缺口裝飾 */
+      .trip-card-wrap::after {
+        content: '';
+        position: absolute;
+        right: -10px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        background: var(--bg);
+        z-index: 2;
+        pointer-events: none;
+      }
       .delete-overlay {
         position: absolute;
         inset: 0;
@@ -698,42 +710,63 @@ const CURRENCY_OPTIONS = [
         box-shadow: 0 18px 36px var(--shadow);
       }
       .trip-card.card.reveal-scrapbook {
-        transform: translateX(-64px) scale(0.96);
+        transform: translateX(-38px) scale(0.97);
       }
 
-      /* ── 行程剪貼簿：膠捲按鈕（網頁 hover／手機左滑露出） ── */
+      /* ── 行程剪貼簿：橫向底片膠捲（網頁 hover／手機左滑露出，像從登機證掉出來） ── */
       .scrapbook-btn {
         position: absolute;
-        top: 0;
-        right: 0;
-        bottom: 0;
-        width: 64px;
+        top: 50%;
+        right: 4px;
+        width: 96px;
+        height: 42px;
         z-index: 0;
         border: none;
+        border-radius: 3px;
         cursor: pointer;
         background:
-          radial-gradient(circle, #fff 0 2.5px, transparent 3px) repeat-y left 6px / 100% 18px,
-          radial-gradient(circle, #fff 0 2.5px, transparent 3px) repeat-y right 6px / 100% 18px,
+          repeating-linear-gradient(90deg, transparent 0 25px, rgba(255, 255, 255, 0.3) 25px 26px),
           #161616;
-        color: #fff;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
         opacity: 0;
         pointer-events: none;
-        transition: opacity 0.2s ease;
+        transform: translateY(-50%) translateX(18px) rotate(-6deg);
+        transition:
+          opacity 0.2s ease,
+          transform 0.2s ease;
+      }
+      /* 上下兩排底片打孔（水平膠捲的正確方向：孔在上緣與下緣，一排排橫向排列） */
+      .scrapbook-btn::before,
+      .scrapbook-btn::after {
+        content: '';
+        position: absolute;
+        left: 3px;
+        right: 3px;
+        height: 6px;
+        background-image: radial-gradient(circle, #fff 0 1.6px, transparent 1.8px);
+        background-size: 12px 6px;
+        background-repeat: repeat-x;
+        background-position: 2px center;
+      }
+      .scrapbook-btn::before {
+        top: 2px;
+      }
+      .scrapbook-btn::after {
+        bottom: 2px;
       }
       .scrapbook-btn.revealed {
         opacity: 1;
         pointer-events: auto;
-      }
-      .film-reel-icon {
-        font-size: 1.5rem;
+        transform: translateY(-50%) translateX(0) rotate(-3deg);
       }
       @media (hover: hover) and (pointer: fine) {
         .trip-card-wrap:hover .trip-card.card {
-          transform: translateX(-64px) scale(0.96);
+          transform: translateX(-38px) scale(0.97);
         }
         .trip-card-wrap:hover .scrapbook-btn {
           opacity: 1;
           pointer-events: auto;
+          transform: translateY(-50%) translateX(0) rotate(-3deg);
         }
       }
       .trip-card-body {

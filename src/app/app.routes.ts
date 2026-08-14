@@ -54,9 +54,7 @@ export const routes: Routes = [
       {
         path: 'trips/:id/scrapbook',
         loadComponent: () =>
-          import('./features/trips/trip-scrapbook.component').then(
-            (m) => m.TripScrapbookComponent,
-          ),
+          import('./features/trips/trip-scrapbook.component').then((m) => m.TripScrapbookComponent),
       },
       {
         path: 'exchange',
