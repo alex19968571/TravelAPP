@@ -145,6 +145,46 @@ export class MapsService {
     }
   }
 
+  /** 查詢兩點間所有可行路線（依所需時間由短到長排序），失敗回傳 null */
+  async estimateRoutes(
+    from: { lat: number; lng: number },
+    to: { lat: number; lng: number },
+    mode: TransportMode,
+  ): Promise<{ durationMin: number; distanceText: string; summary: string }[] | null> {
+    if (mode !== 'walk' && mode !== 'drive' && mode !== 'bike' && mode !== 'transit') return null;
+    try {
+      await this.ensureLoaded();
+      const modeMap: Record<'walk' | 'drive' | 'bike' | 'transit', google.maps.TravelMode> = {
+        walk: google.maps.TravelMode.WALKING,
+        drive: google.maps.TravelMode.DRIVING,
+        bike: google.maps.TravelMode.BICYCLING,
+        transit: google.maps.TravelMode.TRANSIT,
+      };
+      const svc = new google.maps.DirectionsService();
+      const result = await svc.route({
+        origin: from,
+        destination: to,
+        travelMode: modeMap[mode],
+        provideRouteAlternatives: true,
+      });
+      const routes = result.routes ?? [];
+      if (!routes.length) return null;
+      return routes
+        .map((r) => {
+          const leg = r.legs[0];
+          return {
+            durationMin: Math.round((leg?.duration?.value ?? 0) / 60),
+            distanceText: leg?.distance?.text ?? '',
+            summary: r.summary || '',
+          };
+        })
+        .sort((a, b) => a.durationMin - b.durationMin);
+    } catch (err) {
+      console.warn('[Maps] estimateRoutes failed', err);
+      return null;
+    }
+  }
+
   /** 估算兩點間的行程時間（分鐘），支援步行/開車/大眾運輸；失敗回傳 null */
   async estimateDuration(
     from: { lat: number; lng: number },

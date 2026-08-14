@@ -214,12 +214,12 @@ export class DropdownSelectComponent implements ControlValueAccessor, OnDestroy 
       DropdownSelectComponent.openInstance.close();
     }
     DropdownSelectComponent.openInstance = this;
+    // 先以「立即捲動」確保觸發按鈕捲動進可視範圍，再依捲動後的最終位置計算選單座標。
+    // 若改成先算位置、開啟後才 smooth 捲動，iOS Safari 上 position:fixed 選單不會
+    // 隨捲動動畫同步更新，導致選單畫面停留在舊座標、和捲動後的頁面內容重疊跑版。
+    this.elRef.nativeElement.scrollIntoView({ block: 'nearest', behavior: 'auto' });
     this.updateOpenDirection();
     this.open.set(true);
-    // 確保觸發按鈕（連同即將展開的選單）捲動進可視範圍，避免在可捲動 modal 內被裁掉
-    setTimeout(() => {
-      this.elRef.nativeElement.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
-    });
   }
 
   private updateOpenDirection(): void {

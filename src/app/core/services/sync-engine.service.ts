@@ -46,14 +46,16 @@ export class SyncEngineService implements OnDestroy {
   async syncDown(userId: string): Promise<void> {
     try {
       const [
-        { data: ownedTrips },
-        { data: members },
+        { data: ownedTrips, error: ownedTripsErr },
+        { data: members, error: membersErr },
         { data: flightWatches, error: flightWatchesErr },
       ] = await Promise.all([
         this.supabase.from('trips').select('*').eq('owner_id', userId),
         this.supabase.from('trip_members').select('*').eq('user_id', userId),
         this.supabase.from('flight_watches').select('*').eq('owner_id', userId),
       ]);
+      if (ownedTripsErr) console.error('[SyncEngine] fetch trips error', ownedTripsErr);
+      if (membersErr) console.error('[SyncEngine] fetch trip_members error', membersErr);
       if (flightWatchesErr)
         console.error('[SyncEngine] fetch flight_watches error', flightWatchesErr);
 
@@ -61,12 +63,14 @@ export class SyncEngineService implements OnDestroy {
       const joinedTripIds = [
         ...new Set((members ?? []).map((m) => (m as any).trip_id as string)),
       ].filter((id) => !(ownedTrips ?? []).some((t) => (t as any).id === id));
-      const { data: joinedTrips } = joinedTripIds.length
+      const { data: joinedTrips, error: joinedTripsErr } = joinedTripIds.length
         ? await this.supabase.from('trips').select('*').in('id', joinedTripIds)
-        : { data: [] as unknown[] };
+        : { data: [] as unknown[], error: null };
+      if (joinedTripsErr) console.error('[SyncEngine] fetch joined trips error', joinedTripsErr);
 
       const trips = [...(ownedTrips ?? []), ...(joinedTrips ?? [])];
       const tripIds = trips.map((t) => (t as any).id as string);
+      const tripsQueryOk = !ownedTripsErr && !joinedTripsErr;
 
       const [
         { data: itineraryItems, error: itineraryErr },
@@ -104,7 +108,26 @@ export class SyncEngineService implements OnDestroy {
           db.sync_queue,
         ],
         async () => {
+          if (tripsQueryOk) {
+            await this.pruneStale(
+              db.trips,
+              'trips',
+              'id',
+              await db.trips.toArray(),
+              new Set(tripIds),
+            );
+          }
           if (trips.length) await db.trips.bulkPut(trips as Trip[]);
+
+          if (!membersErr) {
+            await this.pruneStale(
+              db.trip_members,
+              'trip_members',
+              'id',
+              await db.trip_members.where('user_id').equals(userId).toArray(),
+              new Set((members ?? []).map((m: any) => m.id)),
+            );
+          }
           if (members?.length) await db.trip_members.bulkPut(members as any[]);
 
           if (!flightWatchesErr) {

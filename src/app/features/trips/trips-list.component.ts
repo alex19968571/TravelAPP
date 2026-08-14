@@ -1022,8 +1022,8 @@ export class TripsListComponent implements OnInit {
 
   form = this.fb.group({
     title: ['', [Validators.required, Validators.maxLength(100)]],
-    start_date_local: [''],
-    end_date_local: [''],
+    start_date_local: [this.todayAtMidnightLocal()],
+    end_date_local: [this.todayAtMidnightLocal()],
     target_timezone: [this.pref.country().timezone, Validators.required],
     base_currency: [this.pref.country().currency, Validators.required],
   });
@@ -1100,8 +1100,8 @@ export class TripsListComponent implements OnInit {
     this.form.reset({
       target_timezone: this.pref.country().timezone,
       base_currency: this.pref.country().currency,
-      start_date_local: '',
-      end_date_local: '',
+      start_date_local: this.todayAtMidnightLocal(),
+      end_date_local: this.todayAtMidnightLocal(),
     });
     this.showForm.set(false);
     await this.loadTrips();
@@ -1152,6 +1152,12 @@ export class TripsListComponent implements OnInit {
     const d = new Date(iso);
     const pad = (n: number) => String(n).padStart(2, '0');
     return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  }
+
+  private todayAtMidnightLocal(): string {
+    const d = new Date();
+    const pad = (n: number) => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T00:00`;
   }
 
   openEditTrip(trip: Trip): void {

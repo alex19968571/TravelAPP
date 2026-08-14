@@ -104,20 +104,6 @@ const CURRENCY_CODES = [
   template: `
     <div class="page-container">
       <header class="page-header">
-        <a [routerLink]="['/trips']" class="back-btn" [attr.aria-label]="'common.back' | transloco">
-          <svg
-            width="18"
-            height="18"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2.5"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          >
-            <polyline points="15 18 9 12 15 6"></polyline>
-          </svg>
-        </a>
         <div class="header-mid">
           <h1>✈️ {{ 'flightWatch.title' | transloco }}</h1>
         </div>
@@ -334,18 +320,6 @@ const CURRENCY_CODES = [
         gap: 1rem;
         margin-bottom: 1.5rem;
         flex-wrap: wrap;
-        flex-shrink: 0;
-      }
-      .back-btn {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        width: 36px;
-        height: 36px;
-        border-radius: 50%;
-        color: var(--accent);
-        text-decoration: none;
-        background: var(--icon-bg);
         flex-shrink: 0;
       }
       .header-mid {

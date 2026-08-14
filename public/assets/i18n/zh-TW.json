@@ -296,6 +296,7 @@
     "estimated": "預估：",
     "hour": "時",
     "minute": "分",
-    "calcFailed": "查無路線資訊，請改用自訂時間"
+    "calcFailed": "查無路線資訊，請改用自訂時間",
+    "routeOption": "路線 {{n}}"
   }
 }

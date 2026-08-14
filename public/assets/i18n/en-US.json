@@ -296,6 +296,7 @@
     "estimated": "Estimated: ",
     "hour": "h",
     "minute": "m",
-    "calcFailed": "No route found. Please enter the time manually."
+    "calcFailed": "No route found. Please enter the time manually.",
+    "routeOption": "Route {{n}}"
   }
 }

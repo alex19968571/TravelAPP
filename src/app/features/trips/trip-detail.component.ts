@@ -286,10 +286,28 @@ const TRANSPORT_OPTIONS: { mode: TransportMode; icon: string }[] = [
                         : ('transport.autoCalc' | transloco)
                     }}
                   </button>
-                  @if (tCalcResult() !== null) {
-                    <div class="calc-result">
-                      {{ 'transport.estimated' | transloco
-                      }}{{ formatDurationNoPlus(tCalcResult()!) }}
+                  @if (tRouteOptions()?.length) {
+                    <div class="route-options">
+                      @for (r of tRouteOptions(); track $index) {
+                        <button
+                          type="button"
+                          class="route-option"
+                          [class.selected]="tSelectedRouteIdx() === $index"
+                          (click)="selectRoute($index)"
+                        >
+                          <span class="route-summary">{{
+                            r.summary || ('transport.routeOption' | transloco: { n: $index + 1 })
+                          }}</span>
+                          <span class="route-meta">
+                            <span class="route-duration">{{
+                              formatDurationNoPlus(r.durationMin)
+                            }}</span>
+                            @if (r.distanceText) {
+                              <span class="route-distance">· {{ r.distanceText }}</span>
+                            }
+                          </span>
+                        </button>
+                      }
                     </div>
                   } @else if (tCalcFailed()) {
                     <p class="no-auto-msg">{{ 'transport.calcFailed' | transloco }}</p>
@@ -418,6 +436,7 @@ const TRANSPORT_OPTIONS: { mode: TransportMode; icon: string }[] = [
       }
       .date-tabs {
         flex: 1;
+        min-width: 0;
         display: flex;
         gap: 0.5rem;
         overflow-x: auto;
@@ -430,8 +449,9 @@ const TRANSPORT_OPTIONS: { mode: TransportMode; icon: string }[] = [
         display: none;
       }
       .date-tab {
-        flex: 1;
-        min-width: 0;
+        /* 一次固定顯示 4 個，其餘用捲動/箭頭切換，而不是全部擠進同一列 */
+        flex: 0 0 calc((100% - 1.5rem) / 4);
+        min-width: 80px;
         padding: 0.5rem 0.5rem;
         border-radius: 10px;
         border: 1.5px solid var(--border);
@@ -815,12 +835,49 @@ const TRANSPORT_OPTIONS: { mode: TransportMode; icon: string }[] = [
         cursor: not-allowed;
       }
 
-      .calc-result {
-        text-align: center;
-        font-size: 0.95rem;
+      .route-options {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        margin-top: 0.75rem;
+      }
+      .route-option {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem;
+        width: 100%;
+        padding: 0.625rem 0.875rem;
+        border: 1.5px solid var(--border);
+        border-radius: 10px;
+        background: var(--surface);
+        cursor: pointer;
+        text-align: left;
+      }
+      .route-option:hover {
+        border-color: var(--accent);
+      }
+      .route-option.selected {
+        border-color: var(--accent);
+        background: var(--accent-light);
+      }
+      .route-summary {
+        font-size: 0.9rem;
+        color: var(--text-primary);
+        font-weight: 600;
+      }
+      .route-meta {
+        flex-shrink: 0;
+        font-size: 0.85rem;
+        color: var(--text-secondary);
+        white-space: nowrap;
+      }
+      .route-duration {
         font-weight: 700;
         color: var(--accent);
-        padding: 0.25rem 0;
+      }
+      .route-distance {
+        margin-left: 0.15rem;
       }
 
       .no-auto-msg {
@@ -892,6 +949,10 @@ export class TripDetailComponent implements OnInit {
   tCalcResult = signal<number | null>(null);
   tCalcing = signal(false);
   tCalcFailed = signal(false);
+  tRouteOptions = signal<{ durationMin: number; distanceText: string; summary: string }[] | null>(
+    null,
+  );
+  tSelectedRouteIdx = signal<number | null>(null);
   tSaving = signal(false);
 
   transportOpts = TRANSPORT_OPTIONS;
@@ -946,7 +1007,10 @@ export class TripDetailComponent implements OnInit {
   }
 
   scrollDates(dir: number): void {
-    this.dateTabsEl?.nativeElement.scrollBy({ left: dir * 140, behavior: 'smooth' });
+    const el = this.dateTabsEl?.nativeElement;
+    if (!el) return;
+    // 一次捲動一整頁（可視寬度），對應「一次固定顯示 4 個」的版面
+    el.scrollBy({ left: dir * el.clientWidth, behavior: 'smooth' });
   }
 
   async ngOnInit(): Promise<void> {
@@ -1089,6 +1153,8 @@ export class TripDetailComponent implements OnInit {
     this.tMode.set(mode);
     this.tCalcResult.set(null);
     this.tCalcFailed.set(false);
+    this.tRouteOptions.set(null);
+    this.tSelectedRouteIdx.set(null);
     const mins = item.next_transport_minutes ?? 0;
     this.tHours.set(Math.floor(mins / 60));
     this.tMins.set(mins % 60);
@@ -1105,9 +1171,18 @@ export class TripDetailComponent implements OnInit {
     this.tMode.set(mode);
     this.tCalcResult.set(null);
     this.tCalcFailed.set(false);
+    this.tRouteOptions.set(null);
+    this.tSelectedRouteIdx.set(null);
     if (mode && !this.canAutoCalc(mode)) {
       this.tTimeTab.set('custom');
     }
+  }
+
+  selectRoute(idx: number): void {
+    const routes = this.tRouteOptions();
+    if (!routes?.[idx]) return;
+    this.tSelectedRouteIdx.set(idx);
+    this.tCalcResult.set(routes[idx].durationMin);
   }
 
   async tAutoCalc(): Promise<void> {
@@ -1118,14 +1193,17 @@ export class TripDetailComponent implements OnInit {
     this.tCalcing.set(true);
     this.tCalcResult.set(null);
     this.tCalcFailed.set(false);
+    this.tRouteOptions.set(null);
+    this.tSelectedRouteIdx.set(null);
     try {
-      const minutes = await this.mapsService.estimateDuration(
+      const routes = await this.mapsService.estimateRoutes(
         { lat: from.latitude, lng: from.longitude },
         { lat: to.latitude, lng: to.longitude },
         mode,
       );
-      this.tCalcResult.set(minutes);
-      this.tCalcFailed.set(minutes === null);
+      this.tRouteOptions.set(routes);
+      this.tCalcFailed.set(!routes?.length);
+      if (routes?.length) this.selectRoute(0);
     } finally {
       this.tCalcing.set(false);
     }
