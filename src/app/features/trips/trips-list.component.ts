@@ -15,6 +15,7 @@ import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
 import { Trip } from '../../core/models';
 import { TripService } from '../../core/services/trip.service';
 import { PreferenceService, COUNTRIES } from '../../core/services/preference.service';
+import { PageTransitionService } from '../../core/services/page-transition.service';
 import { DropdownSelectComponent } from '../../shared/components/dropdown-select/dropdown-select.component';
 
 const TIMEZONE_OPTIONS = [
@@ -215,11 +216,21 @@ const CURRENCY_OPTIONS = [
         <div class="trips-grid">
           @for (trip of filteredTrips(); track trip.id) {
             <div class="trip-card-wrap">
+              <button
+                type="button"
+                class="scrapbook-btn"
+                [class.revealed]="scrapbookRevealedTripId() === trip.id"
+                [attr.aria-label]="'scrapbook.title' | transloco"
+                (click)="onScrapbookBtnClick(trip, $event)"
+              >
+                <span class="film-reel-icon">🎞️</span>
+              </button>
               <div
                 class="trip-card card"
+                [class.reveal-scrapbook]="scrapbookRevealedTripId() === trip.id"
                 (pointerdown)="onCardPointerDown($event, trip)"
-                (pointermove)="onCardPointerMove($event)"
-                (pointerup)="onCardPointerUp()"
+                (pointermove)="onCardPointerMove($event, trip)"
+                (pointerup)="onCardPointerUp($event, trip)"
                 (pointerleave)="onCardPointerCancel()"
                 (pointercancel)="onCardPointerCancel()"
                 (contextmenu)="$event.preventDefault()"
@@ -665,22 +676,65 @@ const CURRENCY_OPTIONS = [
         padding: 0;
         margin-bottom: 0;
         position: relative;
+        z-index: 1;
         display: flex;
         flex-direction: column;
+        background: var(--surface);
         transition:
           transform 0.2s ease,
           box-shadow 0.2s ease;
         overflow: hidden;
         -webkit-tap-highlight-color: transparent;
-        /* 長按觸發刪除確認時，避免手機瀏覽器跳出文字選取/放大鏡選單 */
+        /* 長按刪除／左滑露出膠捲手勢期間，避免手機瀏覽器跳出文字選取/放大鏡選單；
+           水平方向交給 JS 判斷，垂直方向仍讓瀏覽器原生捲動處理。 */
         -webkit-user-select: none;
         user-select: none;
         -webkit-touch-callout: none;
+        touch-action: pan-y;
       }
       .trip-card.card:hover,
       .trip-card.card:active {
         transform: translateY(-4px);
         box-shadow: 0 18px 36px var(--shadow);
+      }
+      .trip-card.card.reveal-scrapbook {
+        transform: translateX(-64px) scale(0.96);
+      }
+
+      /* ── 行程剪貼簿：膠捲按鈕（網頁 hover／手機左滑露出） ── */
+      .scrapbook-btn {
+        position: absolute;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        width: 64px;
+        z-index: 0;
+        border: none;
+        cursor: pointer;
+        background:
+          radial-gradient(circle, #fff 0 2.5px, transparent 3px) repeat-y left 6px / 100% 18px,
+          radial-gradient(circle, #fff 0 2.5px, transparent 3px) repeat-y right 6px / 100% 18px,
+          #161616;
+        color: #fff;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.2s ease;
+      }
+      .scrapbook-btn.revealed {
+        opacity: 1;
+        pointer-events: auto;
+      }
+      .film-reel-icon {
+        font-size: 1.5rem;
+      }
+      @media (hover: hover) and (pointer: fine) {
+        .trip-card-wrap:hover .trip-card.card {
+          transform: translateX(-64px) scale(0.96);
+        }
+        .trip-card-wrap:hover .scrapbook-btn {
+          opacity: 1;
+          pointer-events: auto;
+        }
       }
       .trip-card-body {
         display: flex;
@@ -895,6 +949,7 @@ export class TripsListComponent implements OnInit {
   fb = inject(FormBuilder);
   private router = inject(Router);
   private transloco = inject(TranslocoService);
+  private pageTransition = inject(PageTransitionService);
 
   timezoneOptions = TIMEZONE_OPTIONS;
   currencyOptions = CURRENCY_OPTIONS;
@@ -1023,14 +1078,23 @@ export class TripsListComponent implements OnInit {
   joining = signal(false);
   /** 目前處於「長按刪除確認」狀態（反黑＋垃圾桶按鈕）的行程 id */
   longPressedTripId = signal<string | null>(null);
+  /** 目前露出「行程剪貼簿」膠捲按鈕的行程 id（手機左滑露出／網頁 hover 用 CSS 直接處理） */
+  scrapbookRevealedTripId = signal<string | null>(null);
   editingTrip = signal<Trip | null>(null);
 
   private static readonly LONG_PRESS_MS = 500;
   private static readonly LONG_PRESS_MOVE_TOLERANCE_PX = 10;
+  /** 左滑超過此距離：露出膠捲按鈕（停留態，需再點一下才進入） */
+  private static readonly SCRAPBOOK_REVEAL_PX = 24;
+  /** 左滑超過此距離：放開手指直接進入行程剪貼簿（含過場動畫） */
+  private static readonly SCRAPBOOK_FULL_SWIPE_PX = 90;
   private longPressTimer: ReturnType<typeof setTimeout> | null = null;
   private longPressTriggered = false;
   private longPressStartX = 0;
   private longPressStartY = 0;
+  /** 移動超過容忍值後鎖定的手勢軸向；僅觸控手勢才會判斷左滑膠捲（滑鼠用 hover，不吃這條路徑） */
+  private swipeAxis: 'x' | 'y' | null = null;
+  private swipeDeltaX = 0;
 
   form = this.fb.group({
     title: ['', [Validators.required, Validators.maxLength(100)]],
@@ -1119,9 +1183,9 @@ export class TripsListComponent implements OnInit {
     await this.loadTrips();
   }
 
-  // ── 卡片互動：長按進入刪除確認態 ──────────────────────────
+  // ── 卡片互動：長按進入刪除確認態／觸控左滑露出行程剪貼簿膠捲 ──────
   onCardClick(trip: Trip): void {
-    // 長按剛觸發後，手指放開瀏覽器仍會補一個 click，這裡吃掉避免誤觸導覽
+    // 長按或左滑剛觸發後，手指放開瀏覽器仍會補一個 click，這裡吃掉避免誤觸導覽
     if (this.longPressTriggered) {
       this.longPressTriggered = false;
       return;
@@ -1131,14 +1195,21 @@ export class TripsListComponent implements OnInit {
       this.longPressedTripId.set(null);
       return;
     }
+    if (this.scrapbookRevealedTripId() === trip.id) {
+      // 膠捲已露出時，點卡片本體視為取消露出，不直接導覽
+      this.scrapbookRevealedTripId.set(null);
+      return;
+    }
     this.router.navigate(['/trips', trip.id]);
   }
 
   onCardPointerDown(e: PointerEvent, trip: Trip): void {
-    if (this.longPressedTripId()) return;
+    if (this.longPressedTripId() || this.scrapbookRevealedTripId()) return;
     this.longPressTriggered = false;
     this.longPressStartX = e.clientX;
     this.longPressStartY = e.clientY;
+    this.swipeAxis = null;
+    this.swipeDeltaX = 0;
     this.clearLongPressTimer();
     this.longPressTimer = setTimeout(() => {
       this.longPressTriggered = true;
@@ -1146,24 +1217,48 @@ export class TripsListComponent implements OnInit {
     }, TripsListComponent.LONG_PRESS_MS);
   }
 
-  onCardPointerMove(e: PointerEvent): void {
-    if (!this.longPressTimer) return;
+  onCardPointerMove(e: PointerEvent, trip: Trip): void {
     const dx = e.clientX - this.longPressStartX;
     const dy = e.clientY - this.longPressStartY;
-    if (
-      Math.abs(dx) > TripsListComponent.LONG_PRESS_MOVE_TOLERANCE_PX ||
-      Math.abs(dy) > TripsListComponent.LONG_PRESS_MOVE_TOLERANCE_PX
-    ) {
+
+    if (!this.swipeAxis) {
+      if (
+        Math.abs(dx) < TripsListComponent.LONG_PRESS_MOVE_TOLERANCE_PX &&
+        Math.abs(dy) < TripsListComponent.LONG_PRESS_MOVE_TOLERANCE_PX
+      ) {
+        return; // 意圖閥值：微幅抖動不判斷方向，也不打斷長按計時
+      }
+      // 已產生明確移動：不再是「按住不動」，取消長按計時，改判斷滑動軸向
       this.clearLongPressTimer();
+      // 只有觸控手勢才進入左滑露出膠捲的邏輯，滑鼠用 hover 走 CSS，避免互相干擾
+      this.swipeAxis = e.pointerType === 'touch' && Math.abs(dx) > Math.abs(dy) ? 'x' : 'y';
     }
+
+    if (this.swipeAxis !== 'x') return; // 垂直手勢：完全放手，讓瀏覽器原生捲動接手
+    this.swipeDeltaX = dx;
+    this.scrapbookRevealedTripId.set(
+      dx <= -TripsListComponent.SCRAPBOOK_REVEAL_PX ? trip.id : null,
+    );
   }
 
-  onCardPointerUp(): void {
+  onCardPointerUp(e: PointerEvent, trip: Trip): void {
     this.clearLongPressTimer();
+    if (this.swipeAxis === 'x' && this.swipeDeltaX <= -TripsListComponent.SCRAPBOOK_FULL_SWIPE_PX) {
+      // 滑到底：直接進入行程剪貼簿，並播放過場動畫（動畫起點取已露出的膠捲按鈕位置）
+      this.longPressTriggered = true; // 吃掉緊接而來的補發 click
+      const btn = (e.target as HTMLElement)
+        ?.closest('.trip-card-wrap')
+        ?.querySelector<HTMLElement>('.scrapbook-btn');
+      this.enterScrapbook(trip, btn);
+    }
+    this.swipeAxis = null;
+    this.swipeDeltaX = 0;
   }
 
   onCardPointerCancel(): void {
     this.clearLongPressTimer();
+    this.swipeAxis = null;
+    this.swipeDeltaX = 0;
   }
 
   private clearLongPressTimer(): void {
@@ -1180,6 +1275,21 @@ export class TripsListComponent implements OnInit {
   onDeleteBtnClick(trip: Trip, e: MouseEvent): void {
     e.stopPropagation();
     void this.confirmDeleteTrip(trip);
+  }
+
+  // ── 行程剪貼簿：網頁 hover／手機左滑露出膠捲，點擊後播放過場動畫再導頁 ──
+  onScrapbookBtnClick(trip: Trip, e: MouseEvent): void {
+    e.stopPropagation();
+    this.enterScrapbook(trip, e.currentTarget as HTMLElement);
+  }
+
+  private enterScrapbook(trip: Trip, originEl?: HTMLElement | null): void {
+    this.scrapbookRevealedTripId.set(null);
+    const rect = originEl?.getBoundingClientRect();
+    const origin = rect ? { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 } : null;
+    void this.pageTransition.playFilmReel(origin, () =>
+      this.router.navigate(['/trips', trip.id, 'scrapbook']),
+    );
   }
 
   // ── 日期顯示 ──────────────────────────────────────────

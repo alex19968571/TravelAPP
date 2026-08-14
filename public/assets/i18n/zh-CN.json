@@ -300,5 +300,9 @@
     "routeOption": "路线 {{n}}",
     "viaStops": "{{n}} 站",
     "thisRouteSelected": "已选择此方案"
+  },
+  "scrapbook": {
+    "title": "行程剪贴簿",
+    "comingSoon": "此功能开发中，敬请期待"
   }
 }

@@ -300,5 +300,9 @@
     "routeOption": "ルート {{n}}",
     "viaStops": "{{n}} 駅",
     "thisRouteSelected": "このルートを選択済み"
+  },
+  "scrapbook": {
+    "title": "旅のスクラップブック",
+    "comingSoon": "近日公開予定"
   }
 }

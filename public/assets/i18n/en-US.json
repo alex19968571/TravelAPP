@@ -300,5 +300,9 @@
     "routeOption": "Route {{n}}",
     "viaStops": "{{n}} stops",
     "thisRouteSelected": "This Route Selected"
+  },
+  "scrapbook": {
+    "title": "Trip Scrapbook",
+    "comingSoon": "Coming soon"
   }
 }

@@ -52,6 +52,13 @@ export const routes: Routes = [
           import('./features/trips/trip-members.component').then((m) => m.TripMembersComponent),
       },
       {
+        path: 'trips/:id/scrapbook',
+        loadComponent: () =>
+          import('./features/trips/trip-scrapbook.component').then(
+            (m) => m.TripScrapbookComponent,
+          ),
+      },
+      {
         path: 'exchange',
         loadComponent: () =>
           import('./features/exchange/exchange.component').then((m) => m.ExchangeComponent),
