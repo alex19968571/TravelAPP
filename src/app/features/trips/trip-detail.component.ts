@@ -1390,7 +1390,12 @@ export class TripDetailComponent implements OnInit, AfterViewInit {
     const mins = item.next_transport_minutes ?? 0;
     this.tHours.set(Math.floor(mins / 60));
     this.tMins.set(mins % 60);
-    this.tTimeTab.set(this.canAutoCalc(mode) ? 'system' : 'custom');
+    const useSystem = this.canAutoCalc(mode);
+    this.tTimeTab.set(useSystem ? 'system' : 'custom');
+    if (useSystem) {
+      // 先前已用「系統」模式儲存過交通方式：重新查詢路線清單，並反白當初選定的方案
+      void this.tAutoCalc(mins > 0 ? mins : null);
+    }
   }
 
   closeTransportModal(): void {
@@ -1462,7 +1467,8 @@ export class TripDetailComponent implements OnInit, AfterViewInit {
     }
   }
 
-  async tAutoCalc(): Promise<void> {
+  /** @param preselectDurationMin 重新開啟已儲存過的交通設定時，用來比對並反白先前選定的路線 */
+  async tAutoCalc(preselectDurationMin?: number | null): Promise<void> {
     const from = this.editingTransportFrom();
     const to = this.editingTransportTo();
     const mode = this.tMode();
@@ -1481,7 +1487,10 @@ export class TripDetailComponent implements OnInit, AfterViewInit {
       );
       this.tRouteOptions.set(routes);
       this.tCalcFailed.set(!routes?.length);
-      if (routes?.length) this.selectRoute(0);
+      if (routes?.length) {
+        const matchIdx = routes.findIndex((r) => r.durationMin === preselectDurationMin);
+        this.selectRoute(matchIdx >= 0 ? matchIdx : 0);
+      }
     } finally {
       this.tCalcing.set(false);
     }

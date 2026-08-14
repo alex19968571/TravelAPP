@@ -215,19 +215,14 @@ const CURRENCY_OPTIONS = [
         <div class="trips-grid">
           @for (trip of filteredTrips(); track trip.id) {
             <div class="trip-card-wrap">
-              <button
-                class="swipe-delete"
-                [class.revealed]="swipedTripId() === trip.id"
-                (click)="confirmDeleteTrip(trip)"
-              >
-                {{ 'trips.delete' | transloco }}
-              </button>
               <div
                 class="trip-card card"
-                [class.swiped]="swipedTripId() === trip.id"
-                (touchstart)="onTouchStart($event)"
-                (touchmove)="onTouchMove($event)"
-                (touchend)="onTouchEnd($event, trip)"
+                (pointerdown)="onCardPointerDown($event, trip)"
+                (pointermove)="onCardPointerMove($event)"
+                (pointerup)="onCardPointerUp()"
+                (pointerleave)="onCardPointerCancel()"
+                (pointercancel)="onCardPointerCancel()"
+                (contextmenu)="$event.preventDefault()"
                 (click)="onCardClick(trip)"
               >
                 <button class="info-btn" (click)="openEditTrip(trip); $event.stopPropagation()">
@@ -273,6 +268,19 @@ const CURRENCY_OPTIONS = [
                   >
                 </div>
               </div>
+
+              @if (longPressedTripId() === trip.id) {
+                <div class="delete-overlay" (click)="cancelLongPress()">
+                  <button
+                    type="button"
+                    class="delete-overlay-btn"
+                    [attr.aria-label]="'trips.delete' | transloco"
+                    (click)="onDeleteBtnClick(trip, $event)"
+                  >
+                    🗑
+                  </button>
+                </div>
+              }
             </div>
           }
         </div>
@@ -611,7 +619,7 @@ const CURRENCY_OPTIONS = [
         gap: 1rem;
       }
 
-      /* ── 行程卡片 + 左滑刪除 ── */
+      /* ── 行程卡片 + 長按刪除 ── */
       .trip-card-wrap {
         position: relative;
         overflow: hidden;
@@ -620,32 +628,38 @@ const CURRENCY_OPTIONS = [
         transform: translateZ(0);
         -webkit-transform: translateZ(0);
       }
-      .trip-card-wrap::after {
-        content: '';
+      .delete-overlay {
         position: absolute;
-        right: -10px;
-        top: 50%;
-        transform: translateY(-50%);
-        width: 20px;
-        height: 20px;
-        border-radius: 50%;
-        background: var(--bg);
-        z-index: 2;
+        inset: 0;
+        z-index: 10;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(0, 0, 0, 0.55);
+        border-radius: inherit;
+        animation: delete-overlay-fade-in 0.15s ease;
       }
-      .swipe-delete {
-        position: absolute;
-        top: 0;
-        right: 0;
-        bottom: 0;
-        width: 88px;
+      @keyframes delete-overlay-fade-in {
+        from {
+          opacity: 0;
+        }
+        to {
+          opacity: 1;
+        }
+      }
+      .delete-overlay-btn {
+        width: 52px;
+        height: 52px;
+        border-radius: 50%;
+        border: none;
         background: #e53e3e;
         color: white;
-        border: none;
-        font-size: 0.9rem;
-        font-weight: 600;
+        font-size: 1.4rem;
         cursor: pointer;
-        display: none;
-        visibility: hidden;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
       }
       .trip-card.card {
         padding: 0;
@@ -658,9 +672,10 @@ const CURRENCY_OPTIONS = [
           box-shadow 0.2s ease;
         overflow: hidden;
         -webkit-tap-highlight-color: transparent;
-        /* 允許瀏覽器原生處理垂直捲動，水平方向交給 JS 判斷，
-           避免左滑刪除手勢與上下捲動互相搶奪。 */
-        touch-action: pan-y;
+        /* 長按觸發刪除確認時，避免手機瀏覽器跳出文字選取/放大鏡選單 */
+        -webkit-user-select: none;
+        user-select: none;
+        -webkit-touch-callout: none;
       }
       .trip-card.card:hover,
       .trip-card.card:active {
@@ -785,17 +800,6 @@ const CURRENCY_OPTIONS = [
       @media (hover: none) and (pointer: coarse) {
         .desktop-only {
           display: none !important;
-        }
-        .swipe-delete {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-        }
-        .swipe-delete.revealed {
-          visibility: visible;
-        }
-        .trip-card.swiped {
-          transform: translateX(-88px);
         }
       }
 
@@ -1017,13 +1021,16 @@ export class TripsListComponent implements OnInit {
   joinCode = signal('');
   joinError = signal(false);
   joining = signal(false);
-  swipedTripId = signal<string | null>(null);
+  /** 目前處於「長按刪除確認」狀態（反黑＋垃圾桶按鈕）的行程 id */
+  longPressedTripId = signal<string | null>(null);
   editingTrip = signal<Trip | null>(null);
 
-  private touchStartX = 0;
-  private touchStartY = 0;
-  private touchDeltaX = 0;
-  private touchAxis: 'x' | 'y' | null = null;
+  private static readonly LONG_PRESS_MS = 500;
+  private static readonly LONG_PRESS_MOVE_TOLERANCE_PX = 10;
+  private longPressTimer: ReturnType<typeof setTimeout> | null = null;
+  private longPressTriggered = false;
+  private longPressStartX = 0;
+  private longPressStartY = 0;
 
   form = this.fb.group({
     title: ['', [Validators.required, Validators.maxLength(100)]],
@@ -1112,46 +1119,67 @@ export class TripsListComponent implements OnInit {
     await this.loadTrips();
   }
 
-  // ── 卡片互動 ──────────────────────────────────────────
+  // ── 卡片互動：長按進入刪除確認態 ──────────────────────────
   onCardClick(trip: Trip): void {
+    // 長按剛觸發後，手指放開瀏覽器仍會補一個 click，這裡吃掉避免誤觸導覽
+    if (this.longPressTriggered) {
+      this.longPressTriggered = false;
+      return;
+    }
+    if (this.longPressedTripId()) {
+      // 有卡片正處於刪除確認態時，點其他地方先取消，不直接導覽
+      this.longPressedTripId.set(null);
+      return;
+    }
     this.router.navigate(['/trips', trip.id]);
   }
 
-  onTouchStart(e: TouchEvent): void {
-    this.touchStartX = e.touches[0].clientX;
-    this.touchStartY = e.touches[0].clientY;
-    this.touchDeltaX = 0;
-    this.touchAxis = null;
+  onCardPointerDown(e: PointerEvent, trip: Trip): void {
+    if (this.longPressedTripId()) return;
+    this.longPressTriggered = false;
+    this.longPressStartX = e.clientX;
+    this.longPressStartY = e.clientY;
+    this.clearLongPressTimer();
+    this.longPressTimer = setTimeout(() => {
+      this.longPressTriggered = true;
+      this.longPressedTripId.set(trip.id);
+    }, TripsListComponent.LONG_PRESS_MS);
   }
 
-  onTouchMove(e: TouchEvent): void {
-    const deltaX = e.touches[0].clientX - this.touchStartX;
-    const deltaY = e.touches[0].clientY - this.touchStartY;
-
-    // 手勢方向尚未鎖定時，依前幾個像素的移動量判斷是左右滑動還是上下捲動，
-    // 避免手指些微斜移就誤觸左滑刪除，或被瀏覽器原生垂直捲動打斷水平手勢。
-    if (!this.touchAxis) {
-      if (Math.abs(deltaX) < 8 && Math.abs(deltaY) < 8) return;
-      this.touchAxis = Math.abs(deltaX) > Math.abs(deltaY) ? 'x' : 'y';
-    }
-
-    if (this.touchAxis === 'x') {
-      this.touchDeltaX = deltaX;
+  onCardPointerMove(e: PointerEvent): void {
+    if (!this.longPressTimer) return;
+    const dx = e.clientX - this.longPressStartX;
+    const dy = e.clientY - this.longPressStartY;
+    if (
+      Math.abs(dx) > TripsListComponent.LONG_PRESS_MOVE_TOLERANCE_PX ||
+      Math.abs(dy) > TripsListComponent.LONG_PRESS_MOVE_TOLERANCE_PX
+    ) {
+      this.clearLongPressTimer();
     }
   }
 
-  onTouchEnd(e: TouchEvent, trip: Trip): void {
-    if (this.touchAxis !== 'x') return;
-    if (this.touchDeltaX < -40) {
-      e.preventDefault();
-      this.swipedTripId.set(trip.id);
-      return;
+  onCardPointerUp(): void {
+    this.clearLongPressTimer();
+  }
+
+  onCardPointerCancel(): void {
+    this.clearLongPressTimer();
+  }
+
+  private clearLongPressTimer(): void {
+    if (this.longPressTimer) {
+      clearTimeout(this.longPressTimer);
+      this.longPressTimer = null;
     }
-    if (this.swipedTripId() === trip.id) {
-      e.preventDefault();
-      this.swipedTripId.set(null);
-      return;
-    }
+  }
+
+  cancelLongPress(): void {
+    this.longPressedTripId.set(null);
+  }
+
+  onDeleteBtnClick(trip: Trip, e: MouseEvent): void {
+    e.stopPropagation();
+    void this.confirmDeleteTrip(trip);
   }
 
   // ── 日期顯示 ──────────────────────────────────────────
@@ -1211,9 +1239,13 @@ export class TripsListComponent implements OnInit {
   }
 
   async confirmDeleteTrip(trip: Trip): Promise<void> {
-    if (!confirm(this.transloco.translate('trips.deleteConfirm'))) return;
+    if (!confirm(this.transloco.translate('trips.deleteConfirm'))) {
+      // 取消刪除：該行程卡片恢復原樣式（反黑消失）
+      this.longPressedTripId.set(null);
+      return;
+    }
     await this.tripService.delete(trip.id);
-    this.swipedTripId.set(null);
+    this.longPressedTripId.set(null);
     this.editingTrip.set(null);
     await this.loadTrips();
   }
