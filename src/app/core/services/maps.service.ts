@@ -27,6 +27,8 @@ export interface RouteOption {
   summary: string;
   overviewPolyline: string;
   steps: RouteStep[];
+  /** 大眾運輸預估票價（Google 僅部分地區提供，可能為 undefined） */
+  fareText?: string;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -234,18 +236,27 @@ export class MapsService {
       );
       const routes = result.routes ?? [];
       if (!routes.length) return null;
-      return routes
-        .map((r) => {
-          const leg = r.legs[0];
-          return {
-            durationMin: Math.round((leg?.duration?.value ?? 0) / 60),
-            distanceText: leg?.distance?.text ?? '',
-            summary: r.summary || '',
-            overviewPolyline: r.overview_polyline ?? '',
-            steps: (leg?.steps ?? []).map((s) => this.mapDirectionsStep(s)),
-          };
-        })
-        .sort((a, b) => a.durationMin - b.durationMin);
+      const options: RouteOption[] = routes.map((r) => {
+        const leg = r.legs[0];
+        return {
+          durationMin: Math.round((leg?.duration?.value ?? 0) / 60),
+          distanceText: leg?.distance?.text ?? '',
+          summary: r.summary || '',
+          overviewPolyline: r.overview_polyline ?? '',
+          steps: (leg?.steps ?? []).map((s) => this.mapDirectionsStep(s)),
+          fareText: r.fare?.text,
+        };
+      });
+      // Google 有時會回傳多筆內容完全相同的「替代路線」（同一路線、不同 metadata），
+      // 依路線圖形（或缺少圖形時退回時間+距離+摘要）去重，避免畫面上出現重複選項
+      const seen = new Set<string>();
+      const deduped = options.filter((o) => {
+        const key = o.overviewPolyline || `${o.durationMin}|${o.distanceText}|${o.summary}`;
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
+      return deduped.sort((a, b) => a.durationMin - b.durationMin);
     } catch (err) {
       // ZERO_RESULTS／逾時屬於預期中的「查無路線」情境，不視為錯誤
       const status = (err as { code?: string })?.code;

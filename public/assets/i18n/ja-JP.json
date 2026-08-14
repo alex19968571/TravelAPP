@@ -298,6 +298,7 @@
     "minute": "分",
     "calcFailed": "ルートが見つかりませんでした。時間を手動で入力してください",
     "routeOption": "ルート {{n}}",
-    "viaStops": "{{n}} 駅"
+    "viaStops": "{{n}} 駅",
+    "thisRouteSelected": "このルートを選択済み"
   }
 }

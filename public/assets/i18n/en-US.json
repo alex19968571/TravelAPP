@@ -298,6 +298,7 @@
     "minute": "m",
     "calcFailed": "No route found. Please enter the time manually.",
     "routeOption": "Route {{n}}",
-    "viaStops": "{{n}} stops"
+    "viaStops": "{{n}} stops",
+    "thisRouteSelected": "This Route Selected"
   }
 }

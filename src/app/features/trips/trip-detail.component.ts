@@ -254,58 +254,132 @@ const TRANSPORT_OPTIONS: { mode: TransportMode; icon: string }[] = [
     <!-- ── 交通方式設定 Modal ── -->
     @if (editingTransportFrom()) {
       <div class="modal-backdrop" (click)="closeTransportModal()">
-        <div class="modal-card modal-card-compact" (click)="$event.stopPropagation()">
-          <h3>{{ 'transport.editTitle' | transloco }}</h3>
-
-          <!-- 交通方式下拉選單 -->
-          <div class="field-group">
-            <app-dropdown-select
-              [options]="transportOptions()"
-              [placeholder]="'transport.pleaseSelect' | transloco"
-              [ngModel]="tMode()"
-              (ngModelChange)="onTModeChange($event)"
-            ></app-dropdown-select>
-          </div>
-
-          @if (tMode()) {
-            <!-- 系統 / 自訂 標籤頁 -->
-            <div class="time-tabs">
+        @if (currentDetailRoute(); as route) {
+          <!-- 路線詳情「頁」：地圖 + 逐步說明（點路線列後跳轉至此） -->
+          <div
+            class="modal-card modal-card-compact route-detail-card"
+            (click)="$event.stopPropagation()"
+          >
+            <div class="detail-page-header">
               <button
-                class="time-tab"
-                [class.active]="tTimeTab() === 'system'"
-                [disabled]="!canAutoCalc(tMode())"
-                (click)="tTimeTab.set('system')"
+                type="button"
+                class="icon-circle detail-back-btn"
+                [attr.aria-label]="'common.back' | transloco"
+                (click)="closeRouteDetail()"
               >
-                {{ 'transport.system' | transloco }}
+                ‹
               </button>
-              <button
-                class="time-tab"
-                [class.active]="tTimeTab() === 'custom'"
-                (click)="tTimeTab.set('custom')"
-              >
-                {{ 'transport.customTime' | transloco }}
-              </button>
+              <h3>
+                {{
+                  route.summary ||
+                    ('transport.routeOption' | transloco: { n: (tExpandedRouteIdx() ?? 0) + 1 })
+                }}
+              </h3>
             </div>
 
-            @if (tTimeTab() === 'system') {
-              <div class="tab-content">
-                @if (canAutoCalc(tMode())) {
-                  <button class="btn-auto-calc" [disabled]="tCalcing()" (click)="tAutoCalc()">
-                    {{
-                      tCalcing()
-                        ? ('transport.calculating' | transloco)
-                        : ('transport.autoCalc' | transloco)
-                    }}
-                  </button>
-                  @if (tRouteOptions()?.length) {
-                    <div class="route-options">
-                      @for (r of tRouteOptions(); track $index; let ri = $index) {
-                        <div class="route-option-wrap">
+            <div class="route-detail-map-big" #routeDetailMapEl></div>
+
+            <div class="route-detail-summary-bar">
+              <span class="route-detail-total-time">{{
+                formatDurationNoPlus(route.durationMin)
+              }}</span>
+              @if (route.distanceText) {
+                <span class="route-distance">· {{ route.distanceText }}</span>
+              }
+              @if (route.fareText) {
+                <span class="route-detail-fare">{{ route.fareText }}</span>
+              }
+            </div>
+
+            <div class="route-steps route-steps-big">
+              @for (s of route.steps; track $index) {
+                <div class="step-row">
+                  <span class="step-icon">{{ stepIcon(s.mode) }}</span>
+                  <div class="step-body">
+                    @if (s.mode === 'transit' && s.transit) {
+                      <span class="step-line-badge" [style.background]="s.transit.lineColor">{{
+                        s.transit.lineShortName || s.transit.lineName
+                      }}</span>
+                      <span class="step-text">
+                        {{ s.transit.departureStop }} → {{ s.transit.arrivalStop }}
+                        @if (s.transit.numStops) {
+                          <span class="step-stops"
+                            >({{
+                              'transport.viaStops' | transloco: { n: s.transit.numStops }
+                            }})</span
+                          >
+                        }
+                      </span>
+                    } @else {
+                      <span class="step-text">{{ s.instructions }}</span>
+                    }
+                  </div>
+                  <span class="step-duration">{{ s.durationText }}</span>
+                </div>
+              }
+            </div>
+
+            <div class="modal-actions">
+              <button class="btn-secondary" (click)="closeRouteDetail()">
+                {{ 'common.back' | transloco }}
+              </button>
+              <button class="btn-primary" (click)="closeRouteDetail()">
+                {{ 'transport.thisRouteSelected' | transloco }}
+              </button>
+            </div>
+          </div>
+        } @else {
+          <div class="modal-card modal-card-compact" (click)="$event.stopPropagation()">
+            <h3>{{ 'transport.editTitle' | transloco }}</h3>
+
+            <!-- 交通方式下拉選單 -->
+            <div class="field-group">
+              <app-dropdown-select
+                [options]="transportOptions()"
+                [placeholder]="'transport.pleaseSelect' | transloco"
+                [ngModel]="tMode()"
+                (ngModelChange)="onTModeChange($event)"
+              ></app-dropdown-select>
+            </div>
+
+            @if (tMode()) {
+              <!-- 系統 / 自訂 標籤頁 -->
+              <div class="time-tabs">
+                <button
+                  class="time-tab"
+                  [class.active]="tTimeTab() === 'system'"
+                  [disabled]="!canAutoCalc(tMode())"
+                  (click)="tTimeTab.set('system')"
+                >
+                  {{ 'transport.system' | transloco }}
+                </button>
+                <button
+                  class="time-tab"
+                  [class.active]="tTimeTab() === 'custom'"
+                  (click)="tTimeTab.set('custom')"
+                >
+                  {{ 'transport.customTime' | transloco }}
+                </button>
+              </div>
+
+              @if (tTimeTab() === 'system') {
+                <div class="tab-content">
+                  @if (canAutoCalc(tMode())) {
+                    <button class="btn-auto-calc" [disabled]="tCalcing()" (click)="tAutoCalc()">
+                      {{
+                        tCalcing()
+                          ? ('transport.calculating' | transloco)
+                          : ('transport.autoCalc' | transloco)
+                      }}
+                    </button>
+                    @if (tRouteOptions()?.length) {
+                      <div class="route-options">
+                        @for (r of tRouteOptions(); track $index; let ri = $index) {
                           <button
                             type="button"
                             class="route-option"
                             [class.selected]="tSelectedRouteIdx() === ri"
-                            (click)="toggleRouteDetail(ri)"
+                            (click)="viewRouteDetail(ri)"
                           >
                             <span class="route-summary">{{
                               r.summary || ('transport.routeOption' | transloco: { n: ri + 1 })
@@ -317,97 +391,56 @@ const TRANSPORT_OPTIONS: { mode: TransportMode; icon: string }[] = [
                               @if (r.distanceText) {
                                 <span class="route-distance">· {{ r.distanceText }}</span>
                               }
-                              <span
-                                class="route-expand-caret"
-                                [class.flipped]="tExpandedRouteIdx() === ri"
-                                >▾</span
-                              >
+                              <span class="route-nav-caret">›</span>
                             </span>
                           </button>
-
-                          @if (tExpandedRouteIdx() === ri) {
-                            <div class="route-detail">
-                              <div class="route-detail-map" #routeDetailMapEl></div>
-                              <div class="route-steps">
-                                @for (s of r.steps; track $index) {
-                                  <div class="step-row">
-                                    <span class="step-icon">{{ stepIcon(s.mode) }}</span>
-                                    <div class="step-body">
-                                      @if (s.mode === 'transit' && s.transit) {
-                                        <span
-                                          class="step-line-badge"
-                                          [style.background]="s.transit.lineColor"
-                                          >{{ s.transit.lineShortName || s.transit.lineName }}</span
-                                        >
-                                        <span class="step-text">
-                                          {{ s.transit.departureStop }} →
-                                          {{ s.transit.arrivalStop }}
-                                          @if (s.transit.numStops) {
-                                            <span class="step-stops"
-                                              >({{
-                                                'transport.viaStops'
-                                                  | transloco: { n: s.transit.numStops }
-                                              }})</span
-                                            >
-                                          }
-                                        </span>
-                                      } @else {
-                                        <span class="step-text">{{ s.instructions }}</span>
-                                      }
-                                    </div>
-                                    <span class="step-duration">{{ s.durationText }}</span>
-                                  </div>
-                                }
-                              </div>
-                            </div>
-                          }
-                        </div>
-                      }
-                    </div>
-                  } @else if (tCalcFailed()) {
-                    <p class="no-auto-msg">{{ 'transport.calcFailed' | transloco }}</p>
+                        }
+                      </div>
+                    } @else if (tCalcFailed()) {
+                      <p class="no-auto-msg">{{ 'transport.calcFailed' | transloco }}</p>
+                    }
+                  } @else {
+                    <p class="no-auto-msg">{{ 'transport.noAutoCalc' | transloco }}</p>
                   }
-                } @else {
-                  <p class="no-auto-msg">{{ 'transport.noAutoCalc' | transloco }}</p>
-                }
-              </div>
-            } @else {
-              <div class="tab-content">
-                <div class="time-picker">
-                  <input
-                    type="number"
-                    class="time-num"
-                    min="0"
-                    max="99"
-                    [ngModel]="tHours()"
-                    (ngModelChange)="tHours.set(+$event || 0)"
-                    placeholder="0"
-                  />
-                  <span class="time-sep">{{ 'transport.hour' | transloco }}</span>
-                  <input
-                    type="number"
-                    class="time-num"
-                    min="0"
-                    max="59"
-                    [ngModel]="tMins()"
-                    (ngModelChange)="tMins.set(+$event || 0)"
-                    placeholder="0"
-                  />
-                  <span class="time-sep">{{ 'transport.minute' | transloco }}</span>
                 </div>
-              </div>
+              } @else {
+                <div class="tab-content">
+                  <div class="time-picker">
+                    <input
+                      type="number"
+                      class="time-num"
+                      min="0"
+                      max="99"
+                      [ngModel]="tHours()"
+                      (ngModelChange)="tHours.set(+$event || 0)"
+                      placeholder="0"
+                    />
+                    <span class="time-sep">{{ 'transport.hour' | transloco }}</span>
+                    <input
+                      type="number"
+                      class="time-num"
+                      min="0"
+                      max="59"
+                      [ngModel]="tMins()"
+                      (ngModelChange)="tMins.set(+$event || 0)"
+                      placeholder="0"
+                    />
+                    <span class="time-sep">{{ 'transport.minute' | transloco }}</span>
+                  </div>
+                </div>
+              }
             }
-          }
 
-          <div class="modal-actions">
-            <button class="btn-secondary" (click)="closeTransportModal()">
-              {{ 'common.cancel' | transloco }}
-            </button>
-            <button class="btn-primary" [disabled]="tSaving()" (click)="saveTransport()">
-              {{ tSaving() ? ('common.loading' | transloco) : ('common.save' | transloco) }}
-            </button>
+            <div class="modal-actions">
+              <button class="btn-secondary" (click)="closeTransportModal()">
+                {{ 'common.cancel' | transloco }}
+              </button>
+              <button class="btn-primary" [disabled]="tSaving()" (click)="saveTransport()">
+                {{ tSaving() ? ('common.loading' | transloco) : ('common.save' | transloco) }}
+              </button>
+            </div>
           </div>
-        </div>
+        }
       </div>
     }
   `,
@@ -950,37 +983,73 @@ const TRANSPORT_OPTIONS: { mode: TransportMode; icon: string }[] = [
       .route-distance {
         margin-left: 0.15rem;
       }
-      .route-expand-caret {
+      .route-nav-caret {
         display: inline-block;
         margin-left: 0.3rem;
-        font-size: 0.7rem;
-        transition: transform 0.2s;
-      }
-      .route-expand-caret.flipped {
-        transform: rotate(180deg);
+        font-size: 1rem;
+        color: var(--text-secondary);
       }
 
-      .route-option-wrap {
-        display: flex;
-        flex-direction: column;
-      }
-      .route-detail {
-        margin-top: -0.5rem;
-        padding: 0.75rem 0.875rem 0.625rem;
-        border: 1.5px solid var(--accent);
-        border-top: none;
-        border-radius: 0 0 10px 10px;
-        background: var(--surface);
-        display: flex;
-        flex-direction: column;
-        gap: 0.75rem;
-      }
-      .route-detail-map {
-        width: 100%;
-        height: 140px;
-        border-radius: 8px;
+      /* ── 路線詳情「頁」：跳轉呈現，取代選單畫面 ── */
+      .route-detail-card {
+        max-width: 480px;
+        padding: 0;
         overflow: hidden;
+      }
+      .detail-page-header {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 1rem 1.25rem 0;
+        flex-shrink: 0;
+      }
+      .detail-page-header h3 {
+        flex: 1;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .detail-back-btn {
+        width: 32px;
+        height: 32px;
+        flex-shrink: 0;
+        font-size: 1.3rem;
+        line-height: 1;
+        color: var(--accent);
+      }
+      .route-detail-map-big {
+        width: 100%;
+        height: 200px;
         background: var(--bg);
+        flex-shrink: 0;
+      }
+      .route-detail-summary-bar {
+        display: flex;
+        align-items: baseline;
+        gap: 0.3rem;
+        padding: 0.75rem 1.25rem 0;
+        flex-shrink: 0;
+      }
+      .route-detail-total-time {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: var(--accent);
+      }
+      .route-detail-fare {
+        margin-left: auto;
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: var(--text-secondary);
+      }
+      .route-steps-big {
+        flex: 1;
+        min-height: 0;
+        padding: 0.75rem 1.25rem 1rem;
+        overflow-y: auto;
+      }
+      .route-detail-card .modal-actions {
+        padding: 0 1.25rem 1.25rem;
       }
       .route-steps {
         display: flex;
@@ -1099,8 +1168,15 @@ export class TripDetailComponent implements OnInit, AfterViewInit {
   tCalcFailed = signal(false);
   tRouteOptions = signal<RouteOption[] | null>(null);
   tSelectedRouteIdx = signal<number | null>(null);
+  /** 目前正在檢視詳情「頁」的路線索引；非 null 時取代選單畫面，顯示地圖＋逐步說明 */
   tExpandedRouteIdx = signal<number | null>(null);
   tSaving = signal(false);
+
+  currentDetailRoute = computed<RouteOption | null>(() => {
+    const idx = this.tExpandedRouteIdx();
+    if (idx === null) return null;
+    return this.tRouteOptions()?.[idx] ?? null;
+  });
 
   transportOpts = TRANSPORT_OPTIONS;
 
@@ -1342,10 +1418,14 @@ export class TripDetailComponent implements OnInit, AfterViewInit {
     this.tCalcResult.set(routes[idx].durationMin);
   }
 
-  /** 點擊路線列：同時選取該方案，並展開/收合地圖與逐步說明（手風琴，同時最多展開一個） */
-  toggleRouteDetail(idx: number): void {
+  /** 點擊路線列：選取該方案，並切換到路線詳情「頁」（地圖＋逐步說明） */
+  viewRouteDetail(idx: number): void {
     this.selectRoute(idx);
-    this.tExpandedRouteIdx.set(this.tExpandedRouteIdx() === idx ? null : idx);
+    this.tExpandedRouteIdx.set(idx);
+  }
+
+  closeRouteDetail(): void {
+    this.tExpandedRouteIdx.set(null);
   }
 
   stepIcon(mode: RouteOption['steps'][number]['mode']): string {
