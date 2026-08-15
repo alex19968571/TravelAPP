@@ -733,8 +733,9 @@ const CURRENCY_OPTIONS = [
         position: absolute;
         top: 10px;
         bottom: 10px;
-        /* 緊貼卡片右邊緣，中間不留任何空隙，滑鼠才能連續從卡片滑到膠捲上而不中斷 hover */
-        right: -84px;
+        /* 預設／第一階段：大部分藏在卡片後面（z-index 比卡片低），只露出一小截，
+           露出的那一截跟卡片邊緣是連續的（沒有空隙），滑鼠才能連續滑過去不中斷 hover。 */
+        right: -18px;
         width: 84px;
         z-index: 0;
         border: none;
@@ -744,7 +745,9 @@ const CURRENCY_OPTIONS = [
         box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
         opacity: 0;
         pointer-events: none;
-        transition: opacity 0.2s ease;
+        transition:
+          opacity 0.2s ease,
+          right 0.25s ease;
         /* 只在上下留打孔的位置，左右不留黑邊，讓畫面格能撐滿整個寬度 */
         padding: 12px 0;
         overflow: hidden;
@@ -791,14 +794,18 @@ const CURRENCY_OPTIONS = [
         pointer-events: auto;
       }
       @media (hover: hover) and (pointer: fine) {
-        /* 第一階段：滑鼠移入登機證任一處，膠捲先突出顯示，卡片不縮小 */
+        /* 第一階段：滑鼠移入登機證任一處，膠捲先露出一小截（大部分仍藏在卡片後面），卡片不縮小 */
         .trip-card-slot:hover .scrapbook-btn {
           opacity: 1;
           pointer-events: auto;
         }
-        /* 第二階段：滑鼠移到膠捲本體上，登機證才往左等比縮小一些 */
+        /* 第二階段：滑鼠移到膠捲露出的那一小截上，膠捲整個滑出來，登機證往左等比縮小並加上陰影 */
+        .trip-card-slot:has(.scrapbook-btn:hover) .scrapbook-btn {
+          right: -84px;
+        }
         .trip-card-slot:has(.scrapbook-btn:hover) .trip-card.card {
           transform: translateX(-38px) scale(0.97);
+          box-shadow: 0 18px 36px var(--shadow);
         }
       }
       .trip-card-body {
