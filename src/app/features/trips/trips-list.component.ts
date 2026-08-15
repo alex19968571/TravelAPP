@@ -1180,6 +1180,9 @@ export class TripsListComponent implements OnInit {
   /** true 時代表手指正在即時拖曳中（此時卡片不套用 CSS transition，才能 1:1 跟手）；
    *  放開手指後改為 false，讓收斂到 0 或 1 的動畫可以套用 transition 平滑過渡 */
   isLiveDragging = signal(false);
+  /** true 僅在「確定進入」的收尾動畫階段：這時卡片才需要淡出；
+   *  拖曳過程中卡片必須維持完全不透明，才能確實蓋住膠捲、不會露出後方頁面背景。 */
+  isCommitting = signal(false);
   editingTrip = signal<Trip | null>(null);
 
   private static readonly LONG_PRESS_MS = 500;
@@ -1298,14 +1301,19 @@ export class TripsListComponent implements OnInit {
     this.router.navigate(['/trips', trip.id]);
   }
 
-  /** 卡片即時跟手位移＋淡出樣式；非拖曳中的卡片回傳 null 交由 CSS 預設樣式處理 */
+  /** 卡片即時跟手位移樣式；非拖曳中的卡片回傳 null 交由 CSS 預設樣式處理。
+   *  拖曳過程中卡片維持完全不透明（只做位移），確保畫面內的部分持續蓋住膠捲、
+   *  不會透出後方頁面背景；只有放開手指確定進入時，才在收尾動畫套用淡出。 */
   cardDragStyle(trip: Trip): Record<string, string> | null {
     if (this.dragTripId() !== trip.id) return null;
     const p = this.dragProgress();
-    return {
+    const style: Record<string, string> = {
       transform: `translateX(${-p * TripsListComponent.SCRAPBOOK_MAX_DRAG_PX}px)`,
-      opacity: `${1 - p}`,
     };
+    if (this.isCommitting()) {
+      style['opacity'] = `${1 - p}`;
+    }
+    return style;
   }
 
   /** 膠捲在拖曳中才需要蓋過 opacity:0 的預設隱藏樣式；實際「越拖越長」的效果是卡片位移自然露出的 */
@@ -1320,6 +1328,7 @@ export class TripsListComponent implements OnInit {
     this.longPressStartX = e.clientX;
     this.longPressStartY = e.clientY;
     this.swipeAxis = null;
+    this.isCommitting.set(false);
     this.clearLongPressTimer();
     this.longPressTimer = setTimeout(() => {
       this.longPressTriggered = true;
@@ -1379,11 +1388,13 @@ export class TripsListComponent implements OnInit {
 
   /** 拖曳超過門檻放開：動畫補完到底（卡片淡出、膠捲完全展開），完成後播放過場動畫並導頁 */
   private commitScrapbookDrag(trip: Trip, target: HTMLElement): void {
+    this.isCommitting.set(true); // 確定進入才淡出，拖曳過程本身不淡出
     this.dragProgress.set(1);
     const btn = target?.closest('.trip-card-slot')?.querySelector<HTMLElement>('.scrapbook-btn');
     setTimeout(() => {
       this.dragTripId.set(null);
       this.dragProgress.set(0);
+      this.isCommitting.set(false);
       this.enterScrapbook(trip, btn);
     }, 220); // 對應卡片 transform/opacity 的 CSS transition 時長，讓收斂動畫播完再導頁
   }
