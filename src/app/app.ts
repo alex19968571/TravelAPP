@@ -25,10 +25,10 @@ const TAB_HOME_ROUTES = ['/trips', '/exchange', '/settings', '/account'];
         class="film-reel-transition"
         [class.expand]="transition.phase() === 'expand' || transition.phase() === 'fade'"
         [class.fade]="transition.phase() === 'fade'"
-        [style.top.px]="transition.origin()?.y ?? viewportCenterY() - 28"
-        [style.left.px]="transition.origin()?.x ?? viewportCenterX() - 28"
-        [style.width.px]="transition.origin()?.width ?? 56"
-        [style.height.px]="transition.origin()?.height ?? 56"
+        [style.top.px]="isExpanded() ? 0 : (transition.origin()?.y ?? viewportCenterY() - 28)"
+        [style.left.px]="isExpanded() ? 0 : (transition.origin()?.x ?? viewportCenterX() - 28)"
+        [style.width]="isExpanded() ? '100vw' : (transition.origin()?.width ?? 56) + 'px'"
+        [style.height]="isExpanded() ? '100vh' : (transition.origin()?.height ?? 56) + 'px'"
       >
         <span class="film-reel-icon">🎞️</span>
       </div>
@@ -59,10 +59,9 @@ const TAB_HOME_ROUTES = ['/trips', '/exchange', '/settings', '/account'];
           border-radius 0.42s cubic-bezier(0.22, 1, 0.36, 1);
       }
       .film-reel-transition.expand {
-        top: 0;
-        left: 0;
-        width: 100vw;
-        height: 100vh;
+        /* top/left/width/height 改由 inline style 依 phase 直接算出目標值來驅動 transition
+           （inline style 的優先權必定蓋過這裡的 class 規則，寫在這裡永遠不會生效，
+           之前就是因為這樣才卡住沒有真的長到滿版）。這裡只留 inline style 沒處理的部分。 */
         border-radius: 0;
       }
       .film-reel-transition.fade {
@@ -93,6 +92,11 @@ export class App {
 
   viewportCenterY(): number {
     return window.innerHeight / 2;
+  }
+
+  isExpanded(): boolean {
+    const p = this.transition.phase();
+    return p === 'expand' || p === 'fade';
   }
 
   constructor() {
