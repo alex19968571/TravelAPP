@@ -215,7 +215,80 @@ const CURRENCY_OPTIONS = [
 
         <div class="trips-grid">
           @for (trip of filteredTrips(); track trip.id) {
-            <div class="trip-card-wrap">
+            <div class="trip-card-slot">
+              <div class="trip-card-wrap">
+                <div
+                  class="trip-card card"
+                  [class.reveal-scrapbook]="scrapbookRevealedTripId() === trip.id"
+                  (pointerdown)="onCardPointerDown($event, trip)"
+                  (pointermove)="onCardPointerMove($event, trip)"
+                  (pointerup)="onCardPointerUp($event, trip)"
+                  (pointerleave)="onCardPointerCancel()"
+                  (pointercancel)="onCardPointerCancel()"
+                  (contextmenu)="$event.preventDefault()"
+                  (click)="onCardClick(trip)"
+                >
+                  <button
+                    class="info-btn"
+                    (click)="openEditTrip(trip); $event.stopPropagation()"
+                  >
+                    ⓘ
+                  </button>
+                  <div class="trip-card-body">
+                    <div class="trip-info">
+                      <div class="trip-route">{{ trip.target_timezone }}</div>
+                      <h3>{{ trip.title }}</h3>
+                    </div>
+                    <div class="trip-stub">
+                      @if (formatDateRange(trip); as range) {
+                        <div class="trip-dates">{{ range }}</div>
+                      }
+                      <div class="trip-currency">{{ trip.base_currency }}</div>
+                    </div>
+                  </div>
+                  <div class="trip-perf-h"></div>
+                  <div class="trip-nav">
+                    <a
+                      [routerLink]="['/trips', trip.id]"
+                      class="nav-btn"
+                      (click)="$event.stopPropagation()"
+                      >{{ 'trips.itinerary' | transloco }}</a
+                    >
+                    <a
+                      [routerLink]="['/trips', trip.id, 'shopping']"
+                      class="nav-btn"
+                      (click)="$event.stopPropagation()"
+                      >{{ 'trips.shopping' | transloco }}</a
+                    >
+                    <a
+                      [routerLink]="['/trips', trip.id, 'expenses']"
+                      class="nav-btn"
+                      (click)="$event.stopPropagation()"
+                      >{{ 'trips.expenses' | transloco }}</a
+                    >
+                    <a
+                      [routerLink]="['/trips', trip.id, 'members']"
+                      class="nav-btn"
+                      (click)="$event.stopPropagation()"
+                      >{{ 'tripDetail.members' | transloco }}</a
+                    >
+                  </div>
+                </div>
+
+                @if (longPressedTripId() === trip.id) {
+                  <div class="delete-overlay" (click)="cancelLongPress()">
+                    <button
+                      type="button"
+                      class="delete-overlay-btn"
+                      [attr.aria-label]="'trips.delete' | transloco"
+                      (click)="onDeleteBtnClick(trip, $event)"
+                    >
+                      🗑
+                    </button>
+                  </div>
+                }
+              </div>
+
               <button
                 type="button"
                 class="scrapbook-btn"
@@ -223,73 +296,6 @@ const CURRENCY_OPTIONS = [
                 [attr.aria-label]="'scrapbook.title' | transloco"
                 (click)="onScrapbookBtnClick(trip, $event)"
               ></button>
-              <div
-                class="trip-card card"
-                [class.reveal-scrapbook]="scrapbookRevealedTripId() === trip.id"
-                (pointerdown)="onCardPointerDown($event, trip)"
-                (pointermove)="onCardPointerMove($event, trip)"
-                (pointerup)="onCardPointerUp($event, trip)"
-                (pointerleave)="onCardPointerCancel()"
-                (pointercancel)="onCardPointerCancel()"
-                (contextmenu)="$event.preventDefault()"
-                (click)="onCardClick(trip)"
-              >
-                <button class="info-btn" (click)="openEditTrip(trip); $event.stopPropagation()">
-                  ⓘ
-                </button>
-                <div class="trip-card-body">
-                  <div class="trip-info">
-                    <div class="trip-route">{{ trip.target_timezone }}</div>
-                    <h3>{{ trip.title }}</h3>
-                  </div>
-                  <div class="trip-stub">
-                    @if (formatDateRange(trip); as range) {
-                      <div class="trip-dates">{{ range }}</div>
-                    }
-                    <div class="trip-currency">{{ trip.base_currency }}</div>
-                  </div>
-                </div>
-                <div class="trip-perf-h"></div>
-                <div class="trip-nav">
-                  <a
-                    [routerLink]="['/trips', trip.id]"
-                    class="nav-btn"
-                    (click)="$event.stopPropagation()"
-                    >{{ 'trips.itinerary' | transloco }}</a
-                  >
-                  <a
-                    [routerLink]="['/trips', trip.id, 'shopping']"
-                    class="nav-btn"
-                    (click)="$event.stopPropagation()"
-                    >{{ 'trips.shopping' | transloco }}</a
-                  >
-                  <a
-                    [routerLink]="['/trips', trip.id, 'expenses']"
-                    class="nav-btn"
-                    (click)="$event.stopPropagation()"
-                    >{{ 'trips.expenses' | transloco }}</a
-                  >
-                  <a
-                    [routerLink]="['/trips', trip.id, 'members']"
-                    class="nav-btn"
-                    (click)="$event.stopPropagation()"
-                    >{{ 'tripDetail.members' | transloco }}</a
-                  >
-                </div>
-              </div>
-
-              @if (longPressedTripId() === trip.id) {
-                <div class="delete-overlay" (click)="cancelLongPress()">
-                  <button
-                    type="button"
-                    class="delete-overlay-btn"
-                    [attr.aria-label]="'trips.delete' | transloco"
-                    (click)="onDeleteBtnClick(trip, $event)"
-                  >
-                    🗑
-                  </button>
-                </div>
-              }
             </div>
           }
         </div>
@@ -626,13 +632,19 @@ const CURRENCY_OPTIONS = [
       .trips-grid {
         display: grid;
         gap: 1rem;
+        /* 保留右側 gutter：讓行程剪貼簿膠捲可以露出在卡片外面，
+           又不會被 .page-container / .page-scroll 的捲動裁切吃掉
+          （那兩層有設 overflow，裁切範圍就是本容器的 box，padding 內側仍在範圍內）。 */
+        padding-right: 100px;
       }
 
       /* ── 行程卡片 + 長按刪除 ── */
+      .trip-card-slot {
+        position: relative;
+      }
       .trip-card-wrap {
         position: relative;
-        /* 改為可見：讓行程剪貼簿膠捲能露出到卡片右側外面，而不是被裁掉 */
-        overflow: visible;
+        overflow: hidden;
         border-radius: 16px;
         -webkit-tap-highlight-color: transparent;
         transform: translateZ(0);
@@ -720,8 +732,8 @@ const CURRENCY_OPTIONS = [
       /* ── 行程剪貼簿：橫向底片膠捲，露出到卡片右側外面（網頁分兩階段 hover／手機左滑） ── */
       .scrapbook-btn {
         position: absolute;
-        top: 6%;
-        bottom: 6%;
+        top: 10px;
+        bottom: 10px;
         right: -84px;
         width: 76px;
         z-index: 0;
@@ -762,12 +774,12 @@ const CURRENCY_OPTIONS = [
       }
       @media (hover: hover) and (pointer: fine) {
         /* 第一階段：滑鼠移入登機證任一處，膠捲先突出顯示，卡片不縮小 */
-        .trip-card-wrap:hover .scrapbook-btn {
+        .trip-card-slot:hover .scrapbook-btn {
           opacity: 1;
           pointer-events: auto;
         }
         /* 第二階段：滑鼠移到膠捲本體上，登機證才往左等比縮小一些 */
-        .trip-card-wrap:has(.scrapbook-btn:hover) .trip-card.card {
+        .trip-card-slot:has(.scrapbook-btn:hover) .trip-card.card {
           transform: translateX(-38px) scale(0.97);
         }
       }
@@ -971,6 +983,14 @@ const CURRENCY_OPTIONS = [
         }
         .trip-card.card {
           flex-wrap: wrap;
+        }
+        /* 手機螢幕較窄，膠捲露出的 gutter 縮小，避免卡片被吃掉太多寬度 */
+        .trips-grid {
+          padding-right: 56px;
+        }
+        .scrapbook-btn {
+          right: -48px;
+          width: 40px;
         }
       }
     `,
@@ -1282,7 +1302,7 @@ export class TripsListComponent implements OnInit {
       // 滑到底：直接進入行程剪貼簿，並播放過場動畫（動畫起點取已露出的膠捲按鈕位置）
       this.longPressTriggered = true; // 吃掉緊接而來的補發 click
       const btn = (e.target as HTMLElement)
-        ?.closest('.trip-card-wrap')
+        ?.closest('.trip-card-slot')
         ?.querySelector<HTMLElement>('.scrapbook-btn');
       this.enterScrapbook(trip, btn);
     }
