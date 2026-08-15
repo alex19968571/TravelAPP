@@ -1,6 +1,8 @@
 import { Component, HostListener, inject } from '@angular/core';
 import { RouterOutlet, Router } from '@angular/router';
 import { Location } from '@angular/common';
+import { SwUpdate, VersionReadyEvent } from '@angular/service-worker';
+import { filter } from 'rxjs';
 import { PageTransitionService } from './core/services/page-transition.service';
 
 /** 邊緣觸控起點需在螢幕最左側幾 px 內，才視為「邊緣滑動」手勢 */
@@ -107,6 +109,18 @@ export class App {
       { passive: false },
     );
     document.addEventListener('gesturestart', (e: Event) => e.preventDefault());
+
+    // PWA 版本更新偵測：預設 Service Worker 只會在背景下載新版本，
+    // 使用者要手動重新整理兩次才會真正吃到最新部署，導致改完 push 上去、
+    // 使用者卻一直看到舊畫面。這裡偵測到新版本下載完成就直接自動重整，
+    // 確保每次部署後使用者下一次操作就能拿到最新版本。
+    const swUpdate = inject(SwUpdate);
+    if (swUpdate.isEnabled) {
+      swUpdate.versionUpdates
+        .pipe(filter((evt): evt is VersionReadyEvent => evt.type === 'VERSION_READY'))
+        .subscribe(() => document.location.reload());
+      void swUpdate.checkForUpdate();
+    }
   }
 
   // 獨立安裝的 PWA（standalone 模式）沒有瀏覽器原生的邊緣滑動返回手勢，
