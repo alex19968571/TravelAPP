@@ -228,10 +228,7 @@ const CURRENCY_OPTIONS = [
                   (contextmenu)="$event.preventDefault()"
                   (click)="onCardClick(trip)"
                 >
-                  <button
-                    class="info-btn"
-                    (click)="openEditTrip(trip); $event.stopPropagation()"
-                  >
+                  <button class="info-btn" (click)="openEditTrip(trip); $event.stopPropagation()">
                     ⓘ
                   </button>
                   <div class="trip-card-body">
@@ -295,7 +292,9 @@ const CURRENCY_OPTIONS = [
                 [class.revealed]="scrapbookRevealedTripId() === trip.id"
                 [attr.aria-label]="'scrapbook.title' | transloco"
                 (click)="onScrapbookBtnClick(trip, $event)"
-              ></button>
+              >
+                <span class="film-frame"></span>
+              </button>
             </div>
           }
         </div>
@@ -734,39 +733,48 @@ const CURRENCY_OPTIONS = [
         position: absolute;
         top: 10px;
         bottom: 10px;
-        right: -84px;
-        width: 76px;
+        right: -92px;
+        width: 84px;
         z-index: 0;
         border: none;
-        border-radius: 6px;
+        border-radius: 4px;
         cursor: pointer;
-        background:
-          repeating-linear-gradient(180deg, transparent 0 30px, rgba(255, 255, 255, 0.3) 30px 31px),
-          #161616;
+        background: #161616;
         box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
         opacity: 0;
         pointer-events: none;
-        transform: rotate(-4deg);
         transition: opacity 0.2s ease;
+        /* 上下留出打孔的位置，中間留給畫面窗格 */
+        padding: 14px 12px;
       }
-      /* 左右兩排底片打孔，沿整個高度排列 */
+      /* 上下兩排底片打孔，橫向排列（正確的水平底片方向） */
       .scrapbook-btn::before,
       .scrapbook-btn::after {
         content: '';
         position: absolute;
-        top: 4px;
-        bottom: 4px;
-        width: 6px;
+        left: 6px;
+        right: 6px;
+        height: 6px;
         background-image: radial-gradient(circle, #fff 0 1.6px, transparent 1.8px);
-        background-size: 6px 12px;
-        background-repeat: repeat-y;
-        background-position: center 3px;
+        background-size: 11px 6px;
+        background-repeat: repeat-x;
+        background-position: 2px center;
       }
       .scrapbook-btn::before {
-        left: 2px;
+        top: 3px;
       }
       .scrapbook-btn::after {
-        right: 2px;
+        bottom: 3px;
+      }
+      /* 畫面窗格：底片中間曝光的那一格，左右留深色邊框暗示相鄰格 */
+      .film-frame {
+        display: block;
+        width: 100%;
+        height: 100%;
+        background: var(--bg);
+        border-left: 4px solid #161616;
+        border-right: 4px solid #161616;
+        box-sizing: border-box;
       }
       .scrapbook-btn.revealed {
         opacity: 1;
