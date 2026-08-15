@@ -714,7 +714,7 @@ const CURRENCY_OPTIONS = [
         box-shadow: 0 18px 36px var(--shadow);
       }
       .trip-card.card.reveal-scrapbook {
-        transform: translateX(-38px) scale(0.97);
+        transform: translateX(-38px);
       }
       /* 登機證右側中間的圓形撕票缺口裝飾：掛在卡片本身，縮小時會跟著卡片一起移動 */
       .trip-card.card::after {
@@ -798,6 +798,8 @@ const CURRENCY_OPTIONS = [
       .scrapbook-btn.revealed {
         opacity: 1;
         pointer-events: auto;
+        /* 跟 .reveal-scrapbook 卡片套用完全相同的位移，兩者才會同步、不留空白 */
+        transform: translateX(-38px);
       }
       @media (hover: hover) and (pointer: fine) {
         /* 第一階段：滑鼠移入登機證任一處，膠捲先露出一小截（大部分仍藏在卡片後面），卡片不縮小 */
