@@ -1386,17 +1386,17 @@ export class TripsListComponent implements OnInit {
     this.swipeAxis = null;
   }
 
-  /** 拖曳超過門檻放開：動畫補完到底（卡片淡出、膠捲完全展開），完成後播放過場動畫並導頁 */
+  /** 拖曳超過門檻放開：動畫補完到底（卡片淡出、膠捲完全展開），完成後播放過場動畫並導頁。
+   *  這裡刻意不搶先重置 dragTripId／dragProgress——維持卡片淡出＋膠捲展開的畫面，
+   *  讓全螢幕過場動畫直接接續當下已展開的膠捲往下長，不會有中途跳回原狀的割裂感；
+   *  等真正導頁後，這個元件會被 Angular 整個銷毀，不需要手動清狀態。 */
   private commitScrapbookDrag(trip: Trip, target: HTMLElement): void {
     this.isCommitting.set(true); // 確定進入才淡出，拖曳過程本身不淡出
     this.dragProgress.set(1);
     const btn = target?.closest('.trip-card-slot')?.querySelector<HTMLElement>('.scrapbook-btn');
     setTimeout(() => {
-      this.dragTripId.set(null);
-      this.dragProgress.set(0);
-      this.isCommitting.set(false);
       this.enterScrapbook(trip, btn);
-    }, 220); // 對應卡片 transform/opacity 的 CSS transition 時長，讓收斂動畫播完再導頁
+    }, 220); // 對應卡片 transform/opacity 的 CSS transition 時長，讓收斂動畫播完再接續過場
   }
 
   /** 拖曳未達門檻放開：卡片彈回原位、膠捲被登機證重新蓋過去 */
@@ -1432,7 +1432,10 @@ export class TripsListComponent implements OnInit {
 
   private enterScrapbook(trip: Trip, originEl?: HTMLElement | null): void {
     const rect = originEl?.getBoundingClientRect();
-    const origin = rect ? { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 } : null;
+    // 傳完整矩形（而非只有中心點），過場遮罩才能直接從膠捲目前實際的大小/位置長成滿版
+    const origin = rect
+      ? { x: rect.left, y: rect.top, width: rect.width, height: rect.height }
+      : null;
     void this.pageTransition.playFilmReel(origin, () =>
       this.router.navigate(['/trips', trip.id, 'scrapbook']),
     );

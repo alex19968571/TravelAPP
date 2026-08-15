@@ -17,14 +17,18 @@ const TAB_HOME_ROUTES = ['/trips', '/exchange', '/settings', '/account'];
   imports: [RouterOutlet],
   template: `
     <router-outlet />
-    <!-- 跨頁面過場動畫遮罩：掛在根層級，不會隨路由切換被銷毀 -->
+    <!-- 跨頁面過場動畫遮罩：掛在根層級，不會隨路由切換被銷毀。
+         起始矩形直接吃觸發元素目前的實際大小/位置，銜接手機版拖曳到底時
+         已經展開的膠捲，長成滿版時才不會有位置/尺寸跳動的割裂感。 -->
     @if (transition.phase() !== 'hidden') {
       <div
         class="film-reel-transition"
         [class.expand]="transition.phase() === 'expand' || transition.phase() === 'fade'"
         [class.fade]="transition.phase() === 'fade'"
-        [style.--ox]="(transition.origin()?.x ?? viewportCenterX()) + 'px'"
-        [style.--oy]="(transition.origin()?.y ?? viewportCenterY()) + 'px'"
+        [style.top.px]="transition.origin()?.y ?? viewportCenterY() - 28"
+        [style.left.px]="transition.origin()?.x ?? viewportCenterX() - 28"
+        [style.width.px]="transition.origin()?.width ?? 56"
+        [style.height.px]="transition.origin()?.height ?? 56"
       >
         <span class="film-reel-icon">🎞️</span>
       </div>
@@ -38,13 +42,9 @@ const TAB_HOME_ROUTES = ['/trips', '/exchange', '/settings', '/account'];
       }
       .film-reel-transition {
         position: fixed;
-        top: var(--oy);
-        left: var(--ox);
-        width: 56px;
-        height: 56px;
-        margin: -28px 0 0 -28px;
-        border-radius: 50%;
-        background: #111;
+        /* 深色機身＋小圓角，跟 .scrapbook-btn 的外觀一致，起始瞬間才會像同一個東西的延續 */
+        border-radius: 4px;
+        background: #161616;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -56,7 +56,6 @@ const TAB_HOME_ROUTES = ['/trips', '/exchange', '/settings', '/account'];
           left 0.42s cubic-bezier(0.22, 1, 0.36, 1),
           width 0.42s cubic-bezier(0.22, 1, 0.36, 1),
           height 0.42s cubic-bezier(0.22, 1, 0.36, 1),
-          margin 0.42s cubic-bezier(0.22, 1, 0.36, 1),
           border-radius 0.42s cubic-bezier(0.22, 1, 0.36, 1);
       }
       .film-reel-transition.expand {
@@ -64,7 +63,6 @@ const TAB_HOME_ROUTES = ['/trips', '/exchange', '/settings', '/account'];
         left: 0;
         width: 100vw;
         height: 100vh;
-        margin: 0;
         border-radius: 0;
       }
       .film-reel-transition.fade {
