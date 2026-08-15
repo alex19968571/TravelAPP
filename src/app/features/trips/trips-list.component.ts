@@ -733,7 +733,8 @@ const CURRENCY_OPTIONS = [
         position: absolute;
         top: 10px;
         bottom: 10px;
-        right: -92px;
+        /* 緊貼卡片右邊緣，中間不留任何空隙，滑鼠才能連續從卡片滑到膠捲上而不中斷 hover */
+        right: -84px;
         width: 84px;
         z-index: 0;
         border: none;
@@ -744,16 +745,17 @@ const CURRENCY_OPTIONS = [
         opacity: 0;
         pointer-events: none;
         transition: opacity 0.2s ease;
-        /* 上下留出打孔的位置，中間留給畫面窗格 */
-        padding: 14px 12px;
+        /* 只在上下留打孔的位置，左右不留黑邊，讓畫面格能撐滿整個寬度 */
+        padding: 12px 0;
+        overflow: hidden;
       }
       /* 上下兩排底片打孔，橫向排列（正確的水平底片方向） */
       .scrapbook-btn::before,
       .scrapbook-btn::after {
         content: '';
         position: absolute;
-        left: 6px;
-        right: 6px;
+        left: 4px;
+        right: 4px;
         height: 6px;
         background-image: radial-gradient(circle, #fff 0 1.6px, transparent 1.8px);
         background-size: 11px 6px;
@@ -766,15 +768,23 @@ const CURRENCY_OPTIONS = [
       .scrapbook-btn::after {
         bottom: 3px;
       }
-      /* 畫面窗格：底片中間曝光的那一格，左右留深色邊框暗示相鄰格 */
+      /* 畫面窗格：兩格並排的底片畫面，中間一條分隔線 */
       .film-frame {
         display: block;
+        position: relative;
         width: 100%;
         height: 100%;
         background: var(--bg);
-        border-left: 4px solid #161616;
-        border-right: 4px solid #161616;
-        box-sizing: border-box;
+      }
+      .film-frame::after {
+        content: '';
+        position: absolute;
+        left: 50%;
+        top: 0;
+        bottom: 0;
+        width: 4px;
+        margin-left: -2px;
+        background: #161616;
       }
       .scrapbook-btn.revealed {
         opacity: 1;
@@ -997,7 +1007,7 @@ const CURRENCY_OPTIONS = [
           padding-right: 56px;
         }
         .scrapbook-btn {
-          right: -48px;
+          right: -40px;
           width: 40px;
         }
       }
