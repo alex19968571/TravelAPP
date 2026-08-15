@@ -631,25 +631,12 @@ const CURRENCY_OPTIONS = [
       /* ── 行程卡片 + 長按刪除 ── */
       .trip-card-wrap {
         position: relative;
-        overflow: hidden;
+        /* 改為可見：讓行程剪貼簿膠捲能露出到卡片右側外面，而不是被裁掉 */
+        overflow: visible;
         border-radius: 16px;
         -webkit-tap-highlight-color: transparent;
         transform: translateZ(0);
         -webkit-transform: translateZ(0);
-      }
-      /* 登機證右側中間的圓形撕票缺口裝飾 */
-      .trip-card-wrap::after {
-        content: '';
-        position: absolute;
-        right: -10px;
-        top: 50%;
-        transform: translateY(-50%);
-        width: 20px;
-        height: 20px;
-        border-radius: 50%;
-        background: var(--bg);
-        z-index: 2;
-        pointer-events: none;
       }
       .delete-overlay {
         position: absolute;
@@ -692,9 +679,12 @@ const CURRENCY_OPTIONS = [
         display: flex;
         flex-direction: column;
         background: var(--surface);
+        border-radius: 16px;
         transition:
           transform 0.2s ease,
           box-shadow 0.2s ease;
+        /* 卡片自己保留裁切：內部縮圖/hover 效果需要方角被裁成圓角，
+           缺口裝飾則利用這層裁切「咬」出一個洞。 */
         overflow: hidden;
         -webkit-tap-highlight-color: transparent;
         /* 長按刪除／左滑露出膠捲手勢期間，避免手機瀏覽器跳出文字選取/放大鏡選單；
@@ -712,61 +702,73 @@ const CURRENCY_OPTIONS = [
       .trip-card.card.reveal-scrapbook {
         transform: translateX(-38px) scale(0.97);
       }
+      /* 登機證右側中間的圓形撕票缺口裝飾：掛在卡片本身，縮小時會跟著卡片一起移動 */
+      .trip-card.card::after {
+        content: '';
+        position: absolute;
+        right: -15px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        background: var(--bg);
+        z-index: 2;
+        pointer-events: none;
+      }
 
-      /* ── 行程剪貼簿：橫向底片膠捲（網頁 hover／手機左滑露出，像從登機證掉出來） ── */
+      /* ── 行程剪貼簿：橫向底片膠捲，露出到卡片右側外面（網頁分兩階段 hover／手機左滑） ── */
       .scrapbook-btn {
         position: absolute;
-        top: 50%;
-        right: 4px;
-        width: 96px;
-        height: 42px;
+        top: 6%;
+        bottom: 6%;
+        right: -84px;
+        width: 76px;
         z-index: 0;
         border: none;
-        border-radius: 3px;
+        border-radius: 6px;
         cursor: pointer;
         background:
-          repeating-linear-gradient(90deg, transparent 0 25px, rgba(255, 255, 255, 0.3) 25px 26px),
+          repeating-linear-gradient(180deg, transparent 0 30px, rgba(255, 255, 255, 0.3) 30px 31px),
           #161616;
-        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
         opacity: 0;
         pointer-events: none;
-        transform: translateY(-50%) translateX(18px) rotate(-6deg);
-        transition:
-          opacity 0.2s ease,
-          transform 0.2s ease;
+        transform: rotate(-4deg);
+        transition: opacity 0.2s ease;
       }
-      /* 上下兩排底片打孔（水平膠捲的正確方向：孔在上緣與下緣，一排排橫向排列） */
+      /* 左右兩排底片打孔，沿整個高度排列 */
       .scrapbook-btn::before,
       .scrapbook-btn::after {
         content: '';
         position: absolute;
-        left: 3px;
-        right: 3px;
-        height: 6px;
+        top: 4px;
+        bottom: 4px;
+        width: 6px;
         background-image: radial-gradient(circle, #fff 0 1.6px, transparent 1.8px);
-        background-size: 12px 6px;
-        background-repeat: repeat-x;
-        background-position: 2px center;
+        background-size: 6px 12px;
+        background-repeat: repeat-y;
+        background-position: center 3px;
       }
       .scrapbook-btn::before {
-        top: 2px;
+        left: 2px;
       }
       .scrapbook-btn::after {
-        bottom: 2px;
+        right: 2px;
       }
       .scrapbook-btn.revealed {
         opacity: 1;
         pointer-events: auto;
-        transform: translateY(-50%) translateX(0) rotate(-3deg);
       }
       @media (hover: hover) and (pointer: fine) {
-        .trip-card-wrap:hover .trip-card.card {
-          transform: translateX(-38px) scale(0.97);
-        }
+        /* 第一階段：滑鼠移入登機證任一處，膠捲先突出顯示，卡片不縮小 */
         .trip-card-wrap:hover .scrapbook-btn {
           opacity: 1;
           pointer-events: auto;
-          transform: translateY(-50%) translateX(0) rotate(-3deg);
+        }
+        /* 第二階段：滑鼠移到膠捲本體上，登機證才往左等比縮小一些 */
+        .trip-card-wrap:has(.scrapbook-btn:hover) .trip-card.card {
+          transform: translateX(-38px) scale(0.97);
         }
       }
       .trip-card-body {
