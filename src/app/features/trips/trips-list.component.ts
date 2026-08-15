@@ -643,11 +643,14 @@ const CURRENCY_OPTIONS = [
       }
       .trip-card-wrap {
         position: relative;
+        /* 不能再用 transform:translateZ(0) 做 GPU 層提升——那會讓這層自己形成新的
+           stacking context，導致裡面卡片的 z-index:1 只在該 context 內比較，
+           永遠贏不了外層 .scrapbook-btn 的 z-index:0，膠捲反而蓋在卡片上面。
+           改用明確的 z-index 讓卡片這層在 .trip-card-slot 底下正確排到膠捲之上。 */
+        z-index: 1;
         overflow: hidden;
         border-radius: 16px;
         -webkit-tap-highlight-color: transparent;
-        transform: translateZ(0);
-        -webkit-transform: translateZ(0);
       }
       .delete-overlay {
         position: absolute;
@@ -747,7 +750,8 @@ const CURRENCY_OPTIONS = [
         pointer-events: none;
         transition:
           opacity 0.2s ease,
-          right 0.25s ease;
+          right 0.25s ease,
+          transform 0.25s ease;
         /* 只在上下留打孔的位置，左右不留黑邊，讓畫面格能撐滿整個寬度 */
         padding: 12px 0;
         overflow: hidden;
@@ -771,13 +775,15 @@ const CURRENCY_OPTIONS = [
       .scrapbook-btn::after {
         bottom: 3px;
       }
-      /* 畫面窗格：兩格並排的底片畫面，中間一條分隔線 */
+      /* 畫面窗格：兩格並排的底片畫面，中間一條分隔線。
+         固定用亮色（不用 var(--bg)），底片本身的視覺不應該跟著深色模式變暗——
+         不管淺色或深色主題，底片都要維持「黑色機身＋白色畫面格」的樣子。 */
       .film-frame {
         display: block;
         position: relative;
         width: 100%;
         height: 100%;
-        background: var(--bg);
+        background: #f2ede1;
       }
       .film-frame::after {
         content: '';
@@ -800,11 +806,13 @@ const CURRENCY_OPTIONS = [
           pointer-events: auto;
         }
         /* 第二階段：滑鼠移到膠捲露出的那一小截上，膠捲整個滑出來，登機證往左等比縮小並加上陰影 */
+        /* 膠捲跟卡片套用「完全相同」的 translateX，兩者才會同步位移、中間不會露出空白 */
         .trip-card-slot:has(.scrapbook-btn:hover) .scrapbook-btn {
           right: -84px;
+          transform: translateX(-38px);
         }
         .trip-card-slot:has(.scrapbook-btn:hover) .trip-card.card {
-          transform: translateX(-38px) scale(0.97);
+          transform: translateX(-38px);
           box-shadow: 0 18px 36px var(--shadow);
         }
       }
