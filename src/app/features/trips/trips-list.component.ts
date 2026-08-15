@@ -219,7 +219,8 @@ const CURRENCY_OPTIONS = [
               <div class="trip-card-wrap">
                 <div
                   class="trip-card card"
-                  [class.reveal-scrapbook]="scrapbookRevealedTripId() === trip.id"
+                  [class.dragging]="isLiveDragging() && dragTripId() === trip.id"
+                  [ngStyle]="cardDragStyle(trip)"
                   (pointerdown)="onCardPointerDown($event, trip)"
                   (pointermove)="onCardPointerMove($event, trip)"
                   (pointerup)="onCardPointerUp($event, trip)"
@@ -289,7 +290,8 @@ const CURRENCY_OPTIONS = [
               <button
                 type="button"
                 class="scrapbook-btn"
-                [class.revealed]="scrapbookRevealedTripId() === trip.id"
+                [class.dragging]="isLiveDragging() && dragTripId() === trip.id"
+                [ngStyle]="reelDragStyle(trip)"
                 [attr.aria-label]="'scrapbook.title' | transloco"
                 (click)="onScrapbookBtnClick(trip, $event)"
               >
@@ -696,12 +698,13 @@ const CURRENCY_OPTIONS = [
         border-radius: 16px;
         transition:
           transform 0.2s ease,
+          opacity 0.2s ease,
           box-shadow 0.2s ease;
         /* 卡片自己保留裁切：內部縮圖/hover 效果需要方角被裁成圓角，
            缺口裝飾則利用這層裁切「咬」出一個洞。 */
         overflow: hidden;
         -webkit-tap-highlight-color: transparent;
-        /* 長按刪除／左滑露出膠捲手勢期間，避免手機瀏覽器跳出文字選取/放大鏡選單；
+        /* 長按刪除／左滑拖曳膠捲手勢期間，避免手機瀏覽器跳出文字選取/放大鏡選單；
            水平方向交給 JS 判斷，垂直方向仍讓瀏覽器原生捲動處理。 */
         -webkit-user-select: none;
         user-select: none;
@@ -713,8 +716,9 @@ const CURRENCY_OPTIONS = [
         transform: translateY(-4px);
         box-shadow: 0 18px 36px var(--shadow);
       }
-      .trip-card.card.reveal-scrapbook {
-        transform: translateX(-38px);
+      /* 即時拖曳中：關閉 transition，讓卡片位移／淡出 1:1 跟手，不要有動畫延遲 */
+      .trip-card.card.dragging {
+        transition: none;
       }
       /* 登機證右側中間的圓形撕票缺口裝飾：掛在卡片本身，縮小時會跟著卡片一起移動 */
       .trip-card.card::after {
@@ -795,11 +799,9 @@ const CURRENCY_OPTIONS = [
         margin-left: -2px;
         background: #161616;
       }
-      .scrapbook-btn.revealed {
-        opacity: 1;
-        pointer-events: auto;
-        /* 跟 .reveal-scrapbook 卡片套用完全相同的位移，兩者才會同步、不留空白 */
-        transform: translateX(-38px);
+      /* 即時拖曳中：關閉 transition，跟卡片一樣不要有動畫延遲 */
+      .scrapbook-btn.dragging {
+        transition: none;
       }
       @media (hover: hover) and (pointer: fine) {
         /* 第一階段：滑鼠移入登機證任一處，膠捲先露出一小截（大部分仍藏在卡片後面），卡片不縮小 */
@@ -1019,13 +1021,16 @@ const CURRENCY_OPTIONS = [
         .trip-card.card {
           flex-wrap: wrap;
         }
-        /* 手機螢幕較窄，膠捲露出的 gutter 縮小，避免卡片被吃掉太多寬度 */
+        /* 手機版不額外保留 gutter（桌機版的 100px 在這裡重設為 0），
+           登機證維持正常滿版寬度；膠捲改成貼齊卡片（.trip-card-wrap）右邊緣、
+           完全包在原本的卡片範圍內，拖曳時純粹靠卡片本身左移露出，
+           不需要跟桌機版一樣的外側留白空間。 */
         .trips-grid {
-          padding-right: 56px;
+          padding-right: 0;
         }
         .scrapbook-btn {
-          right: -40px;
-          width: 40px;
+          right: 0;
+          width: 110px;
         }
       }
     `,
@@ -1168,23 +1173,27 @@ export class TripsListComponent implements OnInit {
   joining = signal(false);
   /** 目前處於「長按刪除確認」狀態（反黑＋垃圾桶按鈕）的行程 id */
   longPressedTripId = signal<string | null>(null);
-  /** 目前露出「行程剪貼簿」膠捲按鈕的行程 id（手機左滑露出／網頁 hover 用 CSS 直接處理） */
-  scrapbookRevealedTripId = signal<string | null>(null);
+  /** 手機左滑手勢正在互動（含放開後的完成/彈回動畫）中的行程 id；網頁版 hover 純用 CSS 處理，不吃這裡 */
+  dragTripId = signal<string | null>(null);
+  /** 左滑進度 0~1，即時對應手指拖曳距離；放開後動畫收斂到 0（取消）或 1（進入行程剪貼簿） */
+  dragProgress = signal(0);
+  /** true 時代表手指正在即時拖曳中（此時卡片不套用 CSS transition，才能 1:1 跟手）；
+   *  放開手指後改為 false，讓收斂到 0 或 1 的動畫可以套用 transition 平滑過渡 */
+  isLiveDragging = signal(false);
   editingTrip = signal<Trip | null>(null);
 
   private static readonly LONG_PRESS_MS = 500;
   private static readonly LONG_PRESS_MOVE_TOLERANCE_PX = 10;
-  /** 左滑超過此距離：露出膠捲按鈕（停留態，需再點一下才進入） */
-  private static readonly SCRAPBOOK_REVEAL_PX = 24;
-  /** 左滑超過此距離：放開手指直接進入行程剪貼簿（含過場動畫） */
-  private static readonly SCRAPBOOK_FULL_SWIPE_PX = 90;
+  /** 左滑最大拖曳距離（px），對應 dragProgress = 1（完全展開） */
+  private static readonly SCRAPBOOK_MAX_DRAG_PX = 110;
+  /** 放開手指時，拖曳進度需超過此比例才視為「確定進入」，否則彈回 */
+  private static readonly SCRAPBOOK_COMMIT_RATIO = 0.6;
   private longPressTimer: ReturnType<typeof setTimeout> | null = null;
   private longPressTriggered = false;
   private longPressStartX = 0;
   private longPressStartY = 0;
   /** 移動超過容忍值後鎖定的手勢軸向；僅觸控手勢才會判斷左滑膠捲（滑鼠用 hover，不吃這條路徑） */
   private swipeAxis: 'x' | 'y' | null = null;
-  private swipeDeltaX = 0;
 
   form = this.fb.group({
     title: ['', [Validators.required, Validators.maxLength(100)]],
@@ -1273,9 +1282,9 @@ export class TripsListComponent implements OnInit {
     await this.loadTrips();
   }
 
-  // ── 卡片互動：長按進入刪除確認態／觸控左滑露出行程剪貼簿膠捲 ──────
+  // ── 卡片互動：長按進入刪除確認態／觸控左滑即時跟手拖曳出行程剪貼簿膠捲 ──
   onCardClick(trip: Trip): void {
-    // 長按或左滑剛觸發後，手指放開瀏覽器仍會補一個 click，這裡吃掉避免誤觸導覽
+    // 長按或拖曳剛觸發後，手指放開瀏覽器仍會補一個 click，這裡吃掉避免誤觸導覽
     if (this.longPressTriggered) {
       this.longPressTriggered = false;
       return;
@@ -1285,21 +1294,32 @@ export class TripsListComponent implements OnInit {
       this.longPressedTripId.set(null);
       return;
     }
-    if (this.scrapbookRevealedTripId() === trip.id) {
-      // 膠捲已露出時，點卡片本體視為取消露出，不直接導覽
-      this.scrapbookRevealedTripId.set(null);
-      return;
-    }
+    if (this.dragTripId() === trip.id) return; // 拖曳/收斂動畫進行中，不觸發導覽
     this.router.navigate(['/trips', trip.id]);
   }
 
+  /** 卡片即時跟手位移＋淡出樣式；非拖曳中的卡片回傳 null 交由 CSS 預設樣式處理 */
+  cardDragStyle(trip: Trip): Record<string, string> | null {
+    if (this.dragTripId() !== trip.id) return null;
+    const p = this.dragProgress();
+    return {
+      transform: `translateX(${-p * TripsListComponent.SCRAPBOOK_MAX_DRAG_PX}px)`,
+      opacity: `${1 - p}`,
+    };
+  }
+
+  /** 膠捲在拖曳中才需要蓋過 opacity:0 的預設隱藏樣式；實際「越拖越長」的效果是卡片位移自然露出的 */
+  reelDragStyle(trip: Trip): Record<string, string> | null {
+    if (this.dragTripId() !== trip.id) return null;
+    return { opacity: '1', 'pointer-events': this.dragProgress() > 0.05 ? 'auto' : 'none' };
+  }
+
   onCardPointerDown(e: PointerEvent, trip: Trip): void {
-    if (this.longPressedTripId() || this.scrapbookRevealedTripId()) return;
+    if (this.longPressedTripId() || this.dragTripId()) return;
     this.longPressTriggered = false;
     this.longPressStartX = e.clientX;
     this.longPressStartY = e.clientY;
     this.swipeAxis = null;
-    this.swipeDeltaX = 0;
     this.clearLongPressTimer();
     this.longPressTimer = setTimeout(() => {
       this.longPressTriggered = true;
@@ -1320,35 +1340,61 @@ export class TripsListComponent implements OnInit {
       }
       // 已產生明確移動：不再是「按住不動」，取消長按計時，改判斷滑動軸向
       this.clearLongPressTimer();
-      // 只有觸控手勢才進入左滑露出膠捲的邏輯，滑鼠用 hover 走 CSS，避免互相干擾
+      // 只有觸控手勢才進入左滑拖曳膠捲的邏輯，滑鼠用 hover 走 CSS，避免互相干擾
       this.swipeAxis = e.pointerType === 'touch' && Math.abs(dx) > Math.abs(dy) ? 'x' : 'y';
+      if (this.swipeAxis === 'x') {
+        this.isLiveDragging.set(true);
+        this.dragTripId.set(trip.id);
+      }
     }
 
     if (this.swipeAxis !== 'x') return; // 垂直手勢：完全放手，讓瀏覽器原生捲動接手
-    this.swipeDeltaX = dx;
-    this.scrapbookRevealedTripId.set(
-      dx <= -TripsListComponent.SCRAPBOOK_REVEAL_PX ? trip.id : null,
-    );
+    // 即時跟手：只吃左滑（dx 為負），依拖曳距離換算成 0~1 的進度，往右滑會自然回到 0
+    const px = Math.min(Math.max(-dx, 0), TripsListComponent.SCRAPBOOK_MAX_DRAG_PX);
+    this.dragProgress.set(px / TripsListComponent.SCRAPBOOK_MAX_DRAG_PX);
   }
 
   onCardPointerUp(e: PointerEvent, trip: Trip): void {
     this.clearLongPressTimer();
-    if (this.swipeAxis === 'x' && this.swipeDeltaX <= -TripsListComponent.SCRAPBOOK_FULL_SWIPE_PX) {
-      // 滑到底：直接進入行程剪貼簿，並播放過場動畫（動畫起點取已露出的膠捲按鈕位置）
-      this.longPressTriggered = true; // 吃掉緊接而來的補發 click
-      const btn = (e.target as HTMLElement)
-        ?.closest('.trip-card-slot')
-        ?.querySelector<HTMLElement>('.scrapbook-btn');
-      this.enterScrapbook(trip, btn);
+    if (this.swipeAxis === 'x' && this.dragTripId() === trip.id) {
+      this.isLiveDragging.set(false); // 放開後改走 CSS transition，收斂動畫才會平滑
+      if (this.dragProgress() >= TripsListComponent.SCRAPBOOK_COMMIT_RATIO) {
+        this.longPressTriggered = true; // 吃掉緊接而來的補發 click
+        this.commitScrapbookDrag(trip, e.target as HTMLElement);
+      } else {
+        this.cancelScrapbookDrag();
+      }
     }
     this.swipeAxis = null;
-    this.swipeDeltaX = 0;
   }
 
   onCardPointerCancel(): void {
     this.clearLongPressTimer();
+    if (this.swipeAxis === 'x') {
+      this.isLiveDragging.set(false);
+      this.cancelScrapbookDrag();
+    }
     this.swipeAxis = null;
-    this.swipeDeltaX = 0;
+  }
+
+  /** 拖曳超過門檻放開：動畫補完到底（卡片淡出、膠捲完全展開），完成後播放過場動畫並導頁 */
+  private commitScrapbookDrag(trip: Trip, target: HTMLElement): void {
+    this.dragProgress.set(1);
+    const btn = target?.closest('.trip-card-slot')?.querySelector<HTMLElement>('.scrapbook-btn');
+    setTimeout(() => {
+      this.dragTripId.set(null);
+      this.dragProgress.set(0);
+      this.enterScrapbook(trip, btn);
+    }, 220); // 對應卡片 transform/opacity 的 CSS transition 時長，讓收斂動畫播完再導頁
+  }
+
+  /** 拖曳未達門檻放開：卡片彈回原位、膠捲被登機證重新蓋過去 */
+  private cancelScrapbookDrag(): void {
+    this.dragProgress.set(0);
+    setTimeout(() => {
+      // 等彈回動畫播完才清掉 dragTripId，避免中途瞬間跳回無拖曳樣式造成閃爍
+      this.dragTripId.set(null);
+    }, 220);
   }
 
   private clearLongPressTimer(): void {
@@ -1367,14 +1413,13 @@ export class TripsListComponent implements OnInit {
     void this.confirmDeleteTrip(trip);
   }
 
-  // ── 行程剪貼簿：網頁 hover／手機左滑露出膠捲，點擊後播放過場動畫再導頁 ──
+  // ── 行程剪貼簿：網頁 hover／手機左滑拖曳，點擊或拖曳完成後播放過場動畫再導頁 ──
   onScrapbookBtnClick(trip: Trip, e: MouseEvent): void {
     e.stopPropagation();
     this.enterScrapbook(trip, e.currentTarget as HTMLElement);
   }
 
   private enterScrapbook(trip: Trip, originEl?: HTMLElement | null): void {
-    this.scrapbookRevealedTripId.set(null);
     const rect = originEl?.getBoundingClientRect();
     const origin = rect ? { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 } : null;
     void this.pageTransition.playFilmReel(origin, () =>
