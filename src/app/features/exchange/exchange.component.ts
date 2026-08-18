@@ -5,6 +5,7 @@ import {
   AfterViewInit,
   signal,
   computed,
+  effect,
   HostListener,
   ViewChild,
   ElementRef,
@@ -151,6 +152,9 @@ const KEYPAD_ROWS: string[][] = [
         align-items: center;
         justify-content: center;
         overflow: hidden;
+      }
+      .page-container::-webkit-scrollbar {
+        display: none;
       }
       .scale-wrap {
         width: 100%;
@@ -440,6 +444,15 @@ export class ExchangeComponent implements OnInit, AfterViewInit {
   history = signal<string[]>([]);
 
   convertedAmount = computed(() => (parseFloat(this.displayAmount()) || 0) * this.rate());
+
+  constructor() {
+    /** 標題列切換目的地時，換匯左側國家即時跟著更新（即使本頁面已停留在畫面上） */
+    effect(() => {
+      const c = this.pref.country();
+      this.leftCountry.set(c);
+      this.refreshRate();
+    });
+  }
 
   currentLine = computed(() => {
     const op = this.pendingOp();

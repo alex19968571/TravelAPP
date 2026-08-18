@@ -1,9 +1,9 @@
-import { Component, inject, computed, signal, OnInit } from '@angular/core';
+import { Component, inject, computed, signal, HostListener, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, RouterOutlet } from '@angular/router';
 import { TranslocoModule } from '@jsverse/transloco';
 import { UserProfileService, parseAvatar } from '../services/user-profile.service';
-import { PreferenceService } from '../services/preference.service';
+import { PreferenceService, COUNTRIES, Country } from '../services/preference.service';
 import { NearbySpotsService, NearbySpotsResult } from '../services/nearby-spots.service';
 
 @Component({
@@ -18,10 +18,27 @@ import { NearbySpotsService, NearbySpotsResult } from '../services/nearby-spots.
           <span class="logo-text">Tt</span>
         </a>
         <div class="top-right">
-          <div class="dest-indicator">
-            <span class="dest-label">{{ 'common.destination' | transloco }}</span>
-            <span class="fi fi-{{ pref.country().code.toLowerCase() }}"></span>
-            <span class="dest-code">{{ pref.country().code }}</span>
+          <div class="dest-picker" [class.open]="showDestPicker()">
+            <button class="dest-trigger" type="button" (click)="toggleDestPicker($event)">
+              <span class="dest-label">{{ 'common.destination' | transloco }}</span>
+              <span class="fi fi-{{ pref.country().code.toLowerCase() }}"></span>
+              <span class="dest-code">{{ pref.country().code }}</span>
+              <span class="caret" [class.flipped]="showDestPicker()">▾</span>
+            </button>
+            <div class="dest-dropdown">
+              @for (c of countries; track c.code) {
+                <button
+                  type="button"
+                  class="dest-option"
+                  [class.selected]="c.code === pref.countryCode()"
+                  (click)="selectDest(c)"
+                >
+                  <span class="fi fi-{{ c.code.toLowerCase() }}"></span>
+                  <span class="cname">{{ c.nativeName }}</span>
+                  <span class="currency-badge">{{ c.currency }}</span>
+                </button>
+              }
+            </div>
           </div>
           <div class="clock">{{ pref.clockDisplay() }}</div>
         </div>
@@ -184,7 +201,10 @@ import { NearbySpotsService, NearbySpotsResult } from '../services/nearby-spots.
         align-items: center;
         gap: 0.5rem;
       }
-      .dest-indicator {
+      .dest-picker {
+        position: relative;
+      }
+      .dest-trigger {
         display: flex;
         align-items: center;
         gap: 0.3rem;
@@ -192,16 +212,94 @@ import { NearbySpotsService, NearbySpotsResult } from '../services/nearby-spots.
         font-weight: 600;
         color: var(--text-secondary);
         white-space: nowrap;
+        border: none;
+        background: transparent;
+        cursor: pointer;
+        padding: 0.25rem 0.3rem;
+        border-radius: 8px;
+        transition: background 0.15s;
+      }
+      .dest-trigger:hover {
+        background: var(--icon-bg);
       }
       .dest-label {
         font-size: 0.72rem;
         font-weight: 500;
         color: var(--text-secondary);
       }
-      .dest-indicator .fi {
+      .dest-trigger .fi {
         width: 1.15em;
         border-radius: 2px;
         flex-shrink: 0;
+      }
+      .dest-trigger .caret {
+        font-size: 0.65rem;
+        color: var(--text-secondary);
+        transition: transform 0.2s;
+      }
+      .dest-trigger .caret.flipped {
+        transform: rotate(180deg);
+      }
+      .dest-dropdown {
+        position: absolute;
+        top: calc(100% + 6px);
+        right: 0;
+        background: var(--surface);
+        border: 1.5px solid var(--border);
+        border-radius: 12px;
+        box-shadow: 0 8px 32px var(--shadow);
+        min-width: 190px;
+        max-height: 280px;
+        overflow-y: auto;
+        z-index: 100;
+        display: none;
+        scrollbar-width: thin;
+      }
+      .dest-picker.open .dest-dropdown {
+        display: block;
+      }
+      .dest-option {
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+        width: 100%;
+        padding: 0.625rem 1rem;
+        border: none;
+        background: transparent;
+        cursor: pointer;
+        text-align: left;
+        color: var(--text-primary);
+        font-size: 0.875rem;
+      }
+      .dest-option:hover {
+        background: var(--accent-light);
+      }
+      .dest-option.selected {
+        background: var(--accent-light);
+        color: var(--accent);
+        font-weight: 600;
+      }
+      .dest-option .fi {
+        width: 1.2em;
+        flex-shrink: 0;
+        border-radius: 2px;
+      }
+      .dest-option .cname {
+        flex: 1;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .dest-option .currency-badge {
+        font-size: 0.7rem;
+        padding: 0.1rem 0.4rem;
+        border-radius: 5px;
+        background: var(--accent-light);
+        color: var(--accent);
+        font-weight: 700;
+        flex-shrink: 0;
+      }
+      .dest-option.selected .currency-badge {
+        background: var(--surface);
       }
       .clock {
         font-size: 0.8rem;
@@ -483,6 +581,25 @@ export class AppShellComponent implements OnInit {
   avatarParsed = computed(() => parseAvatar(this.profile.avatarUrl()));
 
   nearbySpots = signal<NearbySpotsResult | null>(null);
+
+  countries = COUNTRIES;
+  showDestPicker = signal(false);
+
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(e: MouseEvent): void {
+    const el = document.querySelector('.dest-picker');
+    if (el && !el.contains(e.target as Node)) this.showDestPicker.set(false);
+  }
+
+  toggleDestPicker(e: MouseEvent): void {
+    e.stopPropagation();
+    this.showDestPicker.set(!this.showDestPicker());
+  }
+
+  selectDest(c: Country): void {
+    this.pref.setCountry(c.code);
+    this.showDestPicker.set(false);
+  }
 
   async ngOnInit(): Promise<void> {
     const result = await this.nearbySpotsService.findTodaysNearbySpots().catch(() => null);

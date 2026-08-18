@@ -1,13 +1,8 @@
-import { Component, inject, signal, HostListener, ViewChild, ElementRef } from '@angular/core';
+import { Component, inject, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { TranslocoModule } from '@jsverse/transloco';
-import {
-  PreferenceService,
-  COLOR_OPTIONS,
-  COUNTRIES,
-  Country,
-} from '../../core/services/preference.service';
+import { PreferenceService, COLOR_OPTIONS } from '../../core/services/preference.service';
 
 @Component({
   selector: 'app-settings',
@@ -15,33 +10,6 @@ import {
   imports: [CommonModule, RouterModule, TranslocoModule],
   template: `
     <div class="page-container">
-      <!-- 目的地國家 -->
-      <div class="card">
-        <h3>{{ 'settings.destCountry' | transloco }}</h3>
-        <p class="section-desc">{{ 'settings.destCountryDesc' | transloco }}</p>
-        <div class="country-picker-inline" [class.open]="showCountry()">
-          <button class="country-trigger" (click)="toggleCountry($event)">
-            <span class="fi fi-{{ pref.countryCode().toLowerCase() }}"></span>
-            <span class="cname">{{ pref.country().nativeName }}</span>
-            <span class="currency-badge">{{ pref.country().currency }}</span>
-            <span class="caret" [class.flipped]="showCountry()">▾</span>
-          </button>
-          <div class="country-dropdown">
-            @for (c of countries; track c.code) {
-              <button
-                class="country-option"
-                [class.selected]="c.code === pref.countryCode()"
-                (click)="selectCountry(c)"
-              >
-                <span class="fi fi-{{ c.code.toLowerCase() }}"></span>
-                <span class="cname">{{ c.nativeName }}</span>
-                <span class="currency-badge">{{ c.currency }}</span>
-              </button>
-            }
-          </div>
-        </div>
-      </div>
-
       <!-- 主題 -->
       <div class="card">
         <h3>{{ 'settings.theme' | transloco }}</h3>
@@ -204,100 +172,6 @@ import {
         margin: -0.75rem 0 1rem;
         color: var(--text-secondary);
         font-size: 0.85rem;
-      }
-
-      /* 國家選單 */
-      .country-picker-inline {
-        position: relative;
-      }
-      .country-trigger {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        width: 100%;
-        background: var(--bg);
-        color: var(--text-primary);
-        border: 1.5px solid var(--border);
-        border-radius: 12px;
-        padding: 0.75rem 1rem;
-        cursor: pointer;
-        font-size: 0.95rem;
-        transition: border-color 0.2s;
-        text-align: left;
-      }
-      .country-trigger:hover {
-        border-color: var(--accent);
-      }
-      .country-picker-inline.open .country-trigger {
-        border-color: var(--accent);
-        border-bottom-left-radius: 0;
-        border-bottom-right-radius: 0;
-      }
-      .fi {
-        width: 1.4em;
-        flex-shrink: 0;
-        border-radius: 2px;
-      }
-      .cname {
-        flex: 1;
-        font-weight: 500;
-      }
-      .currency-badge {
-        font-size: 0.75rem;
-        padding: 0.15rem 0.5rem;
-        border-radius: 6px;
-        background: var(--accent-light);
-        color: var(--accent);
-        font-weight: 600;
-      }
-      .caret {
-        font-size: 0.7rem;
-        color: var(--text-secondary);
-        transition: transform 0.2s;
-        margin-left: auto;
-      }
-      .caret.flipped {
-        transform: rotate(180deg);
-      }
-      .country-dropdown {
-        position: absolute;
-        left: 0;
-        right: 0;
-        background: var(--surface);
-        border: 1.5px solid var(--accent);
-        border-top: none;
-        border-bottom-left-radius: 12px;
-        border-bottom-right-radius: 12px;
-        max-height: 240px;
-        overflow-y: auto;
-        z-index: 100;
-        display: none;
-        scrollbar-width: thin;
-      }
-      .country-picker-inline.open .country-dropdown {
-        display: block;
-      }
-      .country-option {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        width: 100%;
-        padding: 0.625rem 1rem;
-        border: none;
-        background: transparent;
-        cursor: pointer;
-        text-align: left;
-        color: var(--text-primary);
-        font-size: 0.9rem;
-        transition: background 0.15s;
-      }
-      .country-option:hover {
-        background: var(--accent-light);
-      }
-      .country-option.selected {
-        background: var(--accent-light);
-        color: var(--accent);
-        font-weight: 600;
       }
 
       /* 主題 */
@@ -476,24 +350,6 @@ export class SettingsComponent {
 
   pref = inject(PreferenceService);
   colors = COLOR_OPTIONS;
-  countries = COUNTRIES;
-  showCountry = signal(false);
-
-  @HostListener('document:click', ['$event'])
-  onDocumentClick(e: MouseEvent): void {
-    const el = document.querySelector('.country-picker-inline');
-    if (el && !el.contains(e.target as Node)) this.showCountry.set(false);
-  }
-
-  toggleCountry(e: MouseEvent): void {
-    e.stopPropagation();
-    this.showCountry.set(!this.showCountry());
-  }
-
-  selectCountry(c: Country): void {
-    this.pref.setCountry(c.code);
-    this.showCountry.set(false);
-  }
 
   onCustomColor(e: Event): void {
     this.pref.setCustomColor((e.target as HTMLInputElement).value);

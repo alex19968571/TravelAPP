@@ -59,8 +59,6 @@
   },
   "settings": {
     "title": "Settings",
-    "destCountry": "Destination Country",
-    "destCountryDesc": "Affects the default currency for new trips and the shopping page",
     "theme": "Theme",
     "themeLight": "Light",
     "themeDark": "Dark",

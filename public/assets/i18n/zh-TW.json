@@ -59,8 +59,6 @@
   },
   "settings": {
     "title": "設定",
-    "destCountry": "目的地國家",
-    "destCountryDesc": "影響新建行程的預設幣別與購物頁幣別",
     "theme": "主題",
     "themeLight": "淺色",
     "themeDark": "深色",

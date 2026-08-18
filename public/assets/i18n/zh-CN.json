@@ -59,8 +59,6 @@
   },
   "settings": {
     "title": "设置",
-    "destCountry": "目的地国家",
-    "destCountryDesc": "影响新建行程的预设货币与购物页货币",
     "theme": "主题",
     "themeLight": "浅色",
     "themeDark": "深色",

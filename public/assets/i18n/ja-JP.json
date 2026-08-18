@@ -59,8 +59,6 @@
   },
   "settings": {
     "title": "設定",
-    "destCountry": "目的地の国",
-    "destCountryDesc": "新規旅程の基準通貨と買い物ページの通貨に影響します",
     "theme": "テーマ",
     "themeLight": "ライト",
     "themeDark": "ダーク",

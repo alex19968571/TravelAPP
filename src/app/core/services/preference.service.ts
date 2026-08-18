@@ -232,9 +232,12 @@ export class PreferenceService {
   readonly colorId = signal<string>(load('pref_color', 'gold'));
   readonly customColorHex = signal<string>(load('pref_custom_color', '#667eea'));
   readonly fontSize = signal<FontSize>(load('pref_fontSize', 'md'));
-  readonly countryCode = signal<string>(load('pref_country', 'TW'));
-  /** 當前所在國家（設定頁切換，影響 UI 語系與換算目標幣別） */
+  /** 當前所在國家（帳號頁切換，影響 UI 語系與換算目標幣別） */
   readonly homeCountryCode = signal<string>(load('pref_home_country', 'TW'));
+  /** 目的地國家（標題列切換）；尚未設定時預設帶入所在國家 */
+  readonly countryCode = signal<string>(
+    localStorage.getItem('pref_country') ?? this.homeCountryCode(),
+  );
   private readonly _now = signal<Date>(new Date());
 
   readonly country = computed(
