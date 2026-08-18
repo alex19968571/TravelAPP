@@ -261,13 +261,14 @@ import { NearbySpotsService, NearbySpotsResult } from '../services/nearby-spots.
       .dest-option {
         display: flex;
         align-items: center;
+        justify-content: center;
         gap: 0.6rem;
         width: 100%;
         padding: 0.625rem 1rem;
         border: none;
         background: transparent;
         cursor: pointer;
-        text-align: left;
+        text-align: center;
         color: var(--text-primary);
         font-size: 0.875rem;
       }
@@ -285,7 +286,6 @@ import { NearbySpotsService, NearbySpotsResult } from '../services/nearby-spots.
         border-radius: 2px;
       }
       .dest-option .cname {
-        flex: 1;
         overflow: hidden;
         text-overflow: ellipsis;
       }
