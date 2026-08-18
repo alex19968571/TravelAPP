@@ -634,11 +634,19 @@ export class FlightWatchComponent implements OnInit {
   form = this.fb.group({
     origin: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(3)]],
     destination: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(3)]],
-    depart_date: ['', Validators.required],
-    return_date: [''],
+    depart_date: [this.todayDateString(), Validators.required],
+    return_date: [this.todayDateString()],
     target_price: [null as number | null],
     currency: ['TWD', [Validators.required, Validators.minLength(3), Validators.maxLength(3)]],
   });
+
+  private todayDateString(): string {
+    const d = new Date();
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+  }
 
   async ngOnInit(): Promise<void> {
     this.form.patchValue({ currency: this.pref.homeCountry().currency });
@@ -658,7 +666,11 @@ export class FlightWatchComponent implements OnInit {
 
   closeAddModal(): void {
     this.showAddModal.set(false);
-    this.form.reset({ currency: this.pref.homeCountry().currency });
+    this.form.reset({
+      currency: this.pref.homeCountry().currency,
+      depart_date: this.todayDateString(),
+      return_date: this.todayDateString(),
+    });
     this.originQuery.set('');
     this.destinationQuery.set('');
     this.originFocused.set(false);
