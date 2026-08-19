@@ -1,4 +1,13 @@
-import { Component, inject, OnInit, signal, computed } from '@angular/core';
+import {
+  Component,
+  inject,
+  OnInit,
+  signal,
+  computed,
+  ViewChild,
+  ElementRef,
+  HostListener,
+} from '@angular/core';
 import { CommonModule, DecimalPipe } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { ReactiveFormsModule, FormsModule, FormBuilder, Validators } from '@angular/forms';
@@ -107,9 +116,7 @@ const CURRENCY_CODES = [
         <div class="header-mid">
           <h1>✈️ {{ 'flightWatch.title' | transloco }}</h1>
         </div>
-        <button class="btn-icon add-trigger" type="button" (click)="showAddModal.set(true)">
-          ＋
-        </button>
+        <button class="btn-icon add-trigger" type="button" (click)="openAddModal()">＋</button>
       </header>
 
       @if (showAddModal()) {
@@ -120,104 +127,106 @@ const CURRENCY_CODES = [
             class="card add-form modal-card modal-card-compact"
             (click)="$event.stopPropagation()"
           >
-            <div class="form-grid">
-              <div class="form-row span-2 route-row">
-                <div class="autocomplete-field">
-                  <label>{{ 'flightWatch.origin' | transloco }} *</label>
-                  <input
-                    [ngModel]="originQuery()"
-                    (ngModelChange)="onOriginQueryChange($event)"
-                    [ngModelOptions]="{ standalone: true }"
-                    (focus)="originFocused.set(true)"
-                    (blur)="onOriginBlur()"
-                    [placeholder]="'flightWatch.originPlaceholder' | transloco"
-                    autocomplete="off"
-                  />
-                  @if (originFocused() && originSuggestions().length) {
-                    <div class="suggestion-list">
-                      @for (a of originSuggestions(); track a.code) {
-                        <button
-                          type="button"
-                          class="suggestion-item"
-                          (mousedown)="$event.preventDefault()"
-                          (click)="selectOrigin(a)"
-                        >
-                          <span class="suggestion-city">{{ a.city }}</span>
-                          <span class="suggestion-meta">{{ a.country }} · {{ a.code }}</span>
-                        </button>
-                      }
-                    </div>
-                  }
+            <div class="scale-wrap" #scaleWrap>
+              <div class="form-grid">
+                <div class="form-row span-2 route-row">
+                  <div class="autocomplete-field">
+                    <label>{{ 'flightWatch.origin' | transloco }} *</label>
+                    <input
+                      [ngModel]="originQuery()"
+                      (ngModelChange)="onOriginQueryChange($event)"
+                      [ngModelOptions]="{ standalone: true }"
+                      (focus)="originFocused.set(true)"
+                      (blur)="onOriginBlur()"
+                      [placeholder]="'flightWatch.originPlaceholder' | transloco"
+                      autocomplete="off"
+                    />
+                    @if (originFocused() && originSuggestions().length) {
+                      <div class="suggestion-list">
+                        @for (a of originSuggestions(); track a.code) {
+                          <button
+                            type="button"
+                            class="suggestion-item"
+                            (mousedown)="$event.preventDefault()"
+                            (click)="selectOrigin(a)"
+                          >
+                            <span class="suggestion-city">{{ a.city }}</span>
+                            <span class="suggestion-meta">{{ a.country }} · {{ a.code }}</span>
+                          </button>
+                        }
+                      </div>
+                    }
+                  </div>
+                  <button
+                    type="button"
+                    class="swap-route-btn"
+                    (click)="swapRoute()"
+                    [attr.aria-label]="'flightWatch.swap' | transloco"
+                  >
+                    ⇄
+                  </button>
+                  <div class="autocomplete-field">
+                    <label>{{ 'flightWatch.destination' | transloco }} *</label>
+                    <input
+                      [ngModel]="destinationQuery()"
+                      (ngModelChange)="onDestinationQueryChange($event)"
+                      [ngModelOptions]="{ standalone: true }"
+                      (focus)="destinationFocused.set(true)"
+                      (blur)="onDestinationBlur()"
+                      [placeholder]="'flightWatch.destinationPlaceholder' | transloco"
+                      autocomplete="off"
+                    />
+                    @if (destinationFocused() && destinationSuggestions().length) {
+                      <div class="suggestion-list">
+                        @for (a of destinationSuggestions(); track a.code) {
+                          <button
+                            type="button"
+                            class="suggestion-item"
+                            (mousedown)="$event.preventDefault()"
+                            (click)="selectDestination(a)"
+                          >
+                            <span class="suggestion-city">{{ a.city }}</span>
+                            <span class="suggestion-meta">{{ a.country }} · {{ a.code }}</span>
+                          </button>
+                        }
+                      </div>
+                    }
+                  </div>
                 </div>
-                <button
-                  type="button"
-                  class="swap-route-btn"
-                  (click)="swapRoute()"
-                  [attr.aria-label]="'flightWatch.swap' | transloco"
-                >
-                  ⇄
+                <div class="form-row">
+                  <label>{{ 'flightWatch.departDate' | transloco }} *</label>
+                  <input formControlName="depart_date" type="date" />
+                </div>
+                <div class="form-row">
+                  <label>{{ 'flightWatch.returnDate' | transloco }}</label>
+                  <input formControlName="return_date" type="date" />
+                </div>
+                <div class="form-row span-2">
+                  <label>{{ 'flightWatch.targetPrice' | transloco }}</label>
+                  <div class="amount-input-wrap">
+                    <input
+                      formControlName="target_price"
+                      type="text"
+                      inputmode="decimal"
+                      class="amount-input-lg"
+                    />
+                    <app-dropdown-select
+                      class="amount-currency-badge"
+                      variant="badge"
+                      [options]="currencyDropdownOptions"
+                      formControlName="currency"
+                    ></app-dropdown-select>
+                  </div>
+                </div>
+              </div>
+              <div class="form-actions">
+                <button type="button" class="btn-secondary" (click)="closeAddModal()">
+                  {{ 'common.cancel' | transloco }}
                 </button>
-                <div class="autocomplete-field">
-                  <label>{{ 'flightWatch.destination' | transloco }} *</label>
-                  <input
-                    [ngModel]="destinationQuery()"
-                    (ngModelChange)="onDestinationQueryChange($event)"
-                    [ngModelOptions]="{ standalone: true }"
-                    (focus)="destinationFocused.set(true)"
-                    (blur)="onDestinationBlur()"
-                    [placeholder]="'flightWatch.destinationPlaceholder' | transloco"
-                    autocomplete="off"
-                  />
-                  @if (destinationFocused() && destinationSuggestions().length) {
-                    <div class="suggestion-list">
-                      @for (a of destinationSuggestions(); track a.code) {
-                        <button
-                          type="button"
-                          class="suggestion-item"
-                          (mousedown)="$event.preventDefault()"
-                          (click)="selectDestination(a)"
-                        >
-                          <span class="suggestion-city">{{ a.city }}</span>
-                          <span class="suggestion-meta">{{ a.country }} · {{ a.code }}</span>
-                        </button>
-                      }
-                    </div>
-                  }
-                </div>
+                <button type="submit" class="btn-primary" [disabled]="form.invalid">
+                  {{ 'flightWatch.addWatch' | transloco }}
+                </button>
               </div>
-              <div class="form-row">
-                <label>{{ 'flightWatch.departDate' | transloco }} *</label>
-                <input formControlName="depart_date" type="date" />
-              </div>
-              <div class="form-row">
-                <label>{{ 'flightWatch.returnDate' | transloco }}</label>
-                <input formControlName="return_date" type="date" />
-              </div>
-              <div class="form-row span-2">
-                <label>{{ 'flightWatch.targetPrice' | transloco }}</label>
-                <div class="amount-input-wrap">
-                  <input
-                    formControlName="target_price"
-                    type="text"
-                    inputmode="decimal"
-                    class="amount-input-lg"
-                  />
-                  <app-dropdown-select
-                    class="amount-currency-badge"
-                    variant="badge"
-                    [options]="currencyDropdownOptions"
-                    formControlName="currency"
-                  ></app-dropdown-select>
-                </div>
-              </div>
-            </div>
-            <div class="form-actions">
-              <button type="button" class="btn-secondary" (click)="closeAddModal()">
-                {{ 'common.cancel' | transloco }}
-              </button>
-              <button type="submit" class="btn-primary" [disabled]="form.invalid">
-                {{ 'flightWatch.addWatch' | transloco }}
-              </button>
             </div>
           </form>
         </div>
@@ -321,6 +330,8 @@ const CURRENCY_CODES = [
         margin-bottom: 1.5rem;
         flex-wrap: wrap;
         flex-shrink: 0;
+        /* 網頁版：跟「行程」頁面右側預留寬度一致，手機版在 @media (max-width: 600px) 內重設為 0 */
+        margin-right: 100px;
       }
       .header-mid {
         display: flex;
@@ -520,11 +531,14 @@ const CURRENCY_CODES = [
         max-width: 460px;
         width: 100%;
         max-height: 90vh;
-        overflow-y: auto;
-        scrollbar-width: none;
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+        justify-content: center;
       }
-      .modal-card::-webkit-scrollbar {
-        display: none;
+      .scale-wrap {
+        width: 100%;
+        transform-origin: center center;
       }
 
       .empty-state {
@@ -537,6 +551,14 @@ const CURRENCY_CODES = [
         display: flex;
         flex-direction: column;
         gap: 0.75rem;
+        /* 網頁版：跟「行程」頁面右側預留寬度一致，手機版在 @media (max-width: 600px) 內重設為 0 */
+        margin-right: 100px;
+      }
+      @media (max-width: 600px) {
+        .page-header,
+        .items-list {
+          margin-right: 0;
+        }
       }
       .item-card.card {
         padding: 1rem 1.25rem;
@@ -611,6 +633,8 @@ const CURRENCY_CODES = [
   ],
 })
 export class FlightWatchComponent implements OnInit {
+  @ViewChild('scaleWrap') scaleWrap?: ElementRef<HTMLElement>;
+
   private flightWatchService = inject(FlightWatchService);
   private flightPriceService = inject(FlightPriceService);
   private auth = inject(AuthService);
@@ -665,6 +689,25 @@ export class FlightWatchComponent implements OnInit {
 
   async loadWatches(): Promise<void> {
     this.watches.set(await this.flightWatchService.getAll(this.ownerId));
+  }
+
+  openAddModal(): void {
+    this.showAddModal.set(true);
+    setTimeout(() => this.applyScale());
+  }
+
+  @HostListener('window:resize')
+  applyScale(): void {
+    const el = this.scaleWrap?.nativeElement;
+    if (!el || !el.parentElement) return;
+    el.style.transform = 'none';
+    const contentH = el.scrollHeight;
+    const contentW = el.scrollWidth;
+    const availH = el.parentElement.clientHeight;
+    const availW = el.parentElement.clientWidth;
+    if (!contentH || !contentW) return;
+    const scale = Math.min(1, availH / contentH, availW / contentW);
+    el.style.transform = scale < 1 ? `scale(${scale})` : 'none';
   }
 
   closeAddModal(): void {

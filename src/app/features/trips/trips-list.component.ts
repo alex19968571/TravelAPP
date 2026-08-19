@@ -414,6 +414,9 @@ const CURRENCY_OPTIONS = [
         background: var(--bg);
         padding-top: 0.5rem;
         margin-top: -0.5rem;
+        /* 網頁版：跟 .trips-grid 的右側膠捲手勢留白 (padding-right: 100px) 對齊，
+           讓工具列與下方行程卡片右邊緣切齊，手機版在 @media (max-width: 600px) 內重設為 0 */
+        margin-right: 100px;
       }
       .filter-bar {
         display: flex;
@@ -566,6 +569,10 @@ const CURRENCY_OPTIONS = [
       .trip-form h3 {
         margin: 0 0 1rem;
         color: var(--text-primary);
+      }
+      .trip-form.card {
+        /* 網頁版：跟 .trips-grid 的右側留白對齊，手機版在 @media (max-width: 600px) 內重設為 0 */
+        margin-right: 100px;
       }
       .form-row {
         margin-bottom: 1rem;
@@ -1028,6 +1035,10 @@ const CURRENCY_OPTIONS = [
         .trips-grid {
           padding-right: 0;
         }
+        .list-toolbar,
+        .trip-form.card {
+          margin-right: 0;
+        }
         .scrapbook-btn {
           right: 0;
           width: 110px;
@@ -1254,6 +1265,9 @@ export class TripsListComponent implements OnInit {
   }
 
   async ngOnInit(): Promise<void> {
+    this.form.get('start_date_local')?.valueChanges.subscribe((value) => {
+      if (value) this.form.patchValue({ end_date_local: value }, { emitEvent: false });
+    });
     await this.loadTrips();
   }
 
