@@ -122,6 +122,12 @@ export class App {
         .pipe(filter((evt): evt is VersionReadyEvent => evt.type === 'VERSION_READY'))
         .subscribe(() => document.location.reload());
       void swUpdate.checkForUpdate();
+
+      // 手機瀏覽器常見情境是「切回背景的分頁/從主畫面重新開啟」而非整個重新啟動，
+      // 只在啟動當下檢查一次會漏掉這種情況，改為每次頁面重新可見時都再檢查一次新版本。
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') void swUpdate.checkForUpdate();
+      });
     }
   }
 

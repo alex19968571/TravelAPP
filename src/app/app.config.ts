@@ -24,7 +24,8 @@ export const appConfig: ApplicationConfig = {
     provideRouter(routes, withPreloading(PreloadAllModules)),
     provideServiceWorker('ngsw-worker.js', {
       enabled: !isDevMode(),
-      registrationStrategy: 'registerWhenStable:30000',
+      // 縮短原本 30 秒的註冊延遲，讓每次重整/重新開啟頁面都能更快偵測到新版本並自動重整
+      registrationStrategy: 'registerWhenStable:2000',
     }),
     provideTransloco({
       config: {
