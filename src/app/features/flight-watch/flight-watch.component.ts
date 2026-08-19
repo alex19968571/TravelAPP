@@ -650,6 +650,9 @@ export class FlightWatchComponent implements OnInit {
 
   async ngOnInit(): Promise<void> {
     this.form.patchValue({ currency: this.pref.homeCountry().currency });
+    this.form.get('depart_date')?.valueChanges.subscribe((value) => {
+      if (value) this.form.patchValue({ return_date: value }, { emitEvent: false });
+    });
     await this.loadWatches();
     for (const watch of this.watches()) {
       this.flightPriceService.refreshIfNeeded(watch).then(() => this.loadWatches());
