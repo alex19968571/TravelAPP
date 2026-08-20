@@ -123,11 +123,14 @@ const CURRENCY_CODES = [
         <div class="modal-backdrop" (click)="closeAddModal()">
           <form
             [formGroup]="form"
-            (ngSubmit)="addWatch()"
+            (ngSubmit)="submitWatch()"
             class="card add-form modal-card modal-card-compact"
             (click)="$event.stopPropagation()"
           >
             <div class="scale-wrap" #scaleWrap>
+              <h3 class="modal-title">
+                {{ (editingWatchId() ? 'flightWatch.editWatch' : 'flightWatch.title') | transloco }}
+              </h3>
               <div class="form-grid">
                 <div class="form-row span-2 route-row">
                   <div class="autocomplete-field">
@@ -224,7 +227,7 @@ const CURRENCY_CODES = [
                   {{ 'common.cancel' | transloco }}
                 </button>
                 <button type="submit" class="btn-primary" [disabled]="form.invalid">
-                  {{ 'flightWatch.addWatch' | transloco }}
+                  {{ (editingWatchId() ? 'common.save' : 'flightWatch.addWatch') | transloco }}
                 </button>
               </div>
             </div>
@@ -240,7 +243,7 @@ const CURRENCY_CODES = [
         }
         <div class="items-list">
           @for (watch of watches(); track watch.id) {
-            <div class="item-card card">
+            <div class="item-card card" (click)="openEditModal(watch)">
               <div class="item-main">
                 <div class="item-info">
                   <div class="item-title">{{ watch.origin }} → {{ watch.destination }}</div>
@@ -283,12 +286,16 @@ const CURRENCY_CODES = [
                 <button
                   class="refresh-btn"
                   type="button"
-                  (click)="recheck(watch)"
+                  (click)="recheck(watch); $event.stopPropagation()"
                   [disabled]="checking() === watch.id"
                 >
                   🔄 {{ 'flightWatch.recheck' | transloco }}
                 </button>
-                <button class="remove-btn" type="button" (click)="deleteWatch(watch.id)">
+                <button
+                  class="remove-btn"
+                  type="button"
+                  (click)="deleteWatch(watch.id); $event.stopPropagation()"
+                >
                   {{ 'flightWatch.delete' | transloco }}
                 </button>
               </div>
@@ -562,6 +569,13 @@ const CURRENCY_CODES = [
       }
       .item-card.card {
         padding: 1rem 1.25rem;
+        cursor: pointer;
+      }
+      .modal-title {
+        margin: 0 0 1rem;
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: var(--text-primary);
       }
       .item-main {
         display: flex;
@@ -644,6 +658,8 @@ export class FlightWatchComponent implements OnInit {
   watches = signal<FlightWatch[]>([]);
   showAddModal = signal(false);
   checking = signal<string | null>(null);
+  /** 非 null 時代表目前彈窗是在編輯這筆既有追蹤，而不是新增 */
+  editingWatchId = signal<string | null>(null);
 
   currencyDropdownOptions = CURRENCY_CODES.map((c) => ({ value: c, label: c }));
 
@@ -692,8 +708,32 @@ export class FlightWatchComponent implements OnInit {
   }
 
   openAddModal(): void {
+    this.editingWatchId.set(null);
     this.showAddModal.set(true);
     setTimeout(() => this.applyScale());
+  }
+
+  openEditModal(watch: FlightWatch): void {
+    this.editingWatchId.set(watch.id);
+    this.form.reset({
+      origin: watch.origin,
+      destination: watch.destination,
+      depart_date: watch.depart_date,
+      return_date: watch.return_date ?? watch.depart_date,
+      target_price: watch.target_price,
+      currency: watch.currency,
+    });
+    this.originQuery.set(this.airportLabel(watch.origin));
+    this.destinationQuery.set(this.airportLabel(watch.destination));
+    this.originFocused.set(false);
+    this.destinationFocused.set(false);
+    this.showAddModal.set(true);
+    setTimeout(() => this.applyScale());
+  }
+
+  private airportLabel(code: string): string {
+    const a = AIRPORTS.find((x) => x.code === code);
+    return a ? `${a.city} (${a.code})` : code;
   }
 
   @HostListener('window:resize')
@@ -712,6 +752,7 @@ export class FlightWatchComponent implements OnInit {
 
   closeAddModal(): void {
     this.showAddModal.set(false);
+    this.editingWatchId.set(null);
     this.form.reset({
       currency: this.pref.homeCountry().currency,
       depart_date: this.todayDateString(),
@@ -773,7 +814,42 @@ export class FlightWatchComponent implements OnInit {
     this.destinationQuery.set(oq);
   }
 
-  async addWatch(): Promise<void> {
+  async submitWatch(): Promise<void> {
+    const editingId = this.editingWatchId();
+    if (editingId) {
+      await this.updateWatch(editingId);
+    } else {
+      await this.addWatch();
+    }
+  }
+
+  private async updateWatch(id: string): Promise<void> {
+    if (this.form.invalid) return;
+    const v = this.form.value;
+    await this.flightWatchService.update(id, {
+      origin: v.origin!.toUpperCase(),
+      destination: v.destination!.toUpperCase(),
+      depart_date: v.depart_date!,
+      return_date: v.return_date || null,
+      target_price: v.target_price ? Number(v.target_price) : null,
+      currency: v.currency!.toUpperCase(),
+    });
+    this.closeAddModal();
+    await this.loadWatches();
+    const watch = this.watches().find((w) => w.id === id);
+    if (watch) {
+      this.checking.set(id);
+      const price = await this.flightPriceService.checkPrice(watch);
+      await this.flightWatchService.update(id, {
+        last_price: price,
+        last_checked_at: new Date().toISOString(),
+      });
+      this.checking.set(null);
+      await this.loadWatches();
+    }
+  }
+
+  private async addWatch(): Promise<void> {
     if (this.form.invalid) return;
     const v = this.form.value;
     const created = await this.flightWatchService.create({

@@ -277,6 +277,7 @@
     "targetPrice": "目标价格",
     "currency": "货币",
     "addWatch": "新增追踪",
+    "editWatch": "编辑追踪",
     "noWatches": "尚未追踪任何航班，点击右上角「＋」开始盯价吧！",
     "checking": "查询中...",
     "recheck": "重新检查",

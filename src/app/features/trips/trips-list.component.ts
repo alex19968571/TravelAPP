@@ -1420,6 +1420,9 @@ export class TripsListComponent implements OnInit {
   onDocumentClick(e: MouseEvent): void {
     const target = e.target as Node;
     if (!document.querySelector('.add-menu')?.contains(target)) this.showAddMenu.set(false);
+    if (!document.querySelector('.filter-country')?.contains(target)) {
+      this.showCountryPicker.set(false);
+    }
   }
 
   toggleAddMenu(): void {

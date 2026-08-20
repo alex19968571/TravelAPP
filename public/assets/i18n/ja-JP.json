@@ -242,6 +242,7 @@
     "targetPrice": "目標価格",
     "currency": "通貨",
     "addWatch": "追加",
+    "editWatch": "編集",
     "noWatches": "まだ追跡中の便がありません。右上の「＋」から始めましょう！",
     "checking": "検索中...",
     "recheck": "再検索",

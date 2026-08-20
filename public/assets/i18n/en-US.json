@@ -242,6 +242,7 @@
     "targetPrice": "Target Price",
     "currency": "Currency",
     "addWatch": "Add Watch",
+    "editWatch": "Edit Watch",
     "noWatches": "No fares tracked yet. Tap ＋ to start watching!",
     "checking": "Checking...",
     "recheck": "Recheck",

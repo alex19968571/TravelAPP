@@ -2,7 +2,6 @@ import {
   Component,
   ElementRef,
   EventEmitter,
-  HostListener,
   Input,
   OnDestroy,
   Output,
@@ -318,12 +317,19 @@ export class DropdownSelectComponent implements ControlValueAccessor, OnDestroy 
     if (DropdownSelectComponent.openInstance === this) {
       DropdownSelectComponent.openInstance = null;
     }
+    document.removeEventListener('click', this.onDocumentClick, true);
   }
 
-  @HostListener('document:click', ['$event'])
-  onDocumentClick(e: MouseEvent): void {
+  private onDocumentClick = (e: MouseEvent): void => {
     if (this.open() && !this.elRef.nativeElement.contains(e.target as Node)) {
       this.close();
     }
+  };
+
+  constructor() {
+    // 用「捕獲階段」監聽，才不會被彈出視窗（modal-card）外層常見的
+    // (click)="$event.stopPropagation()" 擋住、導致點擊視窗內其他地方時
+    // 這個下拉選單完全關不掉（stopPropagation 只會擋掉冒泡階段，擋不住捕獲階段）
+    document.addEventListener('click', this.onDocumentClick, true);
   }
 }

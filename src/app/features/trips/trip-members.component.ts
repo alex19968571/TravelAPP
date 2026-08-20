@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal, computed } from '@angular/core';
+import { Component, inject, OnInit, signal, computed, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { TranslocoModule } from '@jsverse/transloco';
@@ -501,6 +501,12 @@ export class TripMembersComponent implements OnInit {
   toggleInviteMenu(e: MouseEvent): void {
     e.stopPropagation();
     this.showInviteMenu.set(!this.showInviteMenu());
+  }
+
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(e: MouseEvent): void {
+    const target = e.target as Node;
+    if (!document.querySelector('.invite-menu')?.contains(target)) this.showInviteMenu.set(false);
   }
 
   openInviteModal(role: 'EDITOR' | 'VIEWER'): void {

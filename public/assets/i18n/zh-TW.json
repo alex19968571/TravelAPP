@@ -277,6 +277,7 @@
     "targetPrice": "目標價格",
     "currency": "幣別",
     "addWatch": "新增追蹤",
+    "editWatch": "編輯追蹤",
     "noWatches": "尚未追蹤任何航班，點擊右上角「＋」開始盯價吧！",
     "checking": "查詢中...",
     "recheck": "重新檢查",
