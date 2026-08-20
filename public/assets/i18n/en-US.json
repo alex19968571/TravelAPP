@@ -59,12 +59,12 @@
     "reminder": {
       "title": "Reminder",
       "when": "Notify at (multiple allowed)",
+      "whenPlaceholder": "Select notification timing",
       "monthFirst": "Start of month (1st of departure month)",
       "sevenDaysBefore": "7 days before",
       "oneDayBefore": "1 day before",
       "custom": "Custom",
-      "customDate": "Date",
-      "customTime": "Time",
+      "customDateTime": "Date & Time",
       "email": "Notification email",
       "enable": "Enable reminder",
       "needDate": "Please make sure the trip has a departure date, or pick a custom date and time"

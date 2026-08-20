@@ -42,7 +42,9 @@ export interface DropdownOption {
     >
       <button type="button" class="dropdown-trigger" (click)="toggle()">
         <span class="dropdown-label">{{ selectedLabel() }}</span>
-        <span class="caret" [class.flipped]="open()">▾</span>
+        <svg class="caret" [class.flipped]="open()" viewBox="0 0 24 24" width="10" height="10" fill="currentColor">
+          <path d="M12 15.5 4.5 8h15z" />
+        </svg>
       </button>
       <div
         class="dropdown-menu"
@@ -56,9 +58,16 @@ export interface DropdownOption {
           <button
             type="button"
             class="dropdown-option"
-            [class.selected]="opt.value === value"
+            [class.selected]="isSelected(opt.value)"
             (click)="select(opt.value)"
           >
+            @if (multiple) {
+              <svg class="option-check" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5">
+                @if (isSelected(opt.value)) {
+                  <path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round" />
+                }
+              </svg>
+            }
             {{ opt.label }}
           </button>
         }
@@ -148,7 +157,9 @@ export interface DropdownOption {
         display: block;
       }
       .dropdown-option {
-        display: block;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
         width: 100%;
         padding: 0.625rem 1rem;
         border: none;
@@ -166,6 +177,10 @@ export interface DropdownOption {
         color: var(--accent);
         font-weight: 600;
       }
+      .option-check {
+        flex-shrink: 0;
+        color: var(--accent);
+      }
     `,
   ],
 })
@@ -177,6 +192,8 @@ export class DropdownSelectComponent implements ControlValueAccessor, OnDestroy 
   @Input() options: DropdownOption[] = [];
   @Input() placeholder = '';
   @Input() variant: 'default' | 'badge' = 'default';
+  /** 開啟後可複選多個選項，值為陣列，選取後選單不會自動關閉 */
+  @Input() multiple = false;
   @Output() selectionChange = new EventEmitter<unknown>();
 
   value: unknown = null;
@@ -191,12 +208,21 @@ export class DropdownSelectComponent implements ControlValueAccessor, OnDestroy 
   private onTouchedFn: () => void = () => {};
 
   selectedLabel(): string {
+    if (this.multiple) {
+      const values = Array.isArray(this.value) ? this.value : [];
+      const labels = this.options.filter((o) => values.includes(o.value)).map((o) => o.label);
+      return labels.length ? labels.join('、') : this.placeholder;
+    }
     const found = this.options.find((o) => o.value === this.value);
     return found ? found.label : this.placeholder;
   }
 
+  isSelected(v: unknown): boolean {
+    return this.multiple ? Array.isArray(this.value) && this.value.includes(v) : v === this.value;
+  }
+
   writeValue(v: unknown): void {
-    this.value = v;
+    this.value = this.multiple ? (Array.isArray(v) ? v : []) : v;
   }
   registerOnChange(fn: (v: unknown) => void): void {
     this.onChangeFn = fn;
@@ -261,11 +287,16 @@ export class DropdownSelectComponent implements ControlValueAccessor, OnDestroy 
   }
 
   select(v: unknown): void {
-    this.value = v;
-    this.onChangeFn(v);
+    if (this.multiple) {
+      const current = Array.isArray(this.value) ? this.value : [];
+      this.value = current.includes(v) ? current.filter((x) => x !== v) : [...current, v];
+    } else {
+      this.value = v;
+    }
+    this.onChangeFn(this.value);
     this.onTouchedFn();
-    this.selectionChange.emit(v);
-    this.close();
+    this.selectionChange.emit(this.value);
+    if (!this.multiple) this.close();
   }
 
   ngOnDestroy(): void {

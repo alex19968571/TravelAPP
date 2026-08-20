@@ -367,86 +367,73 @@ const CURRENCY_OPTIONS = [
 
       @if (reminderTrip(); as rt) {
         <div class="modal-backdrop" (click)="closeReminderModal()">
-          <div class="modal-card reminder-modal" (click)="$event.stopPropagation()">
-            <div class="modal-header">
-              <h3>{{ 'trips.reminder.title' | transloco }}</h3>
-            </div>
-            <div class="form-row">
-              <label>{{ 'trips.reminder.when' | transloco }}</label>
-              <div class="reminder-options">
-                @for (opt of reminderOffsetOptions; track opt.value) {
-                  <button
-                    type="button"
-                    class="reminder-option"
-                    [class.selected]="isReminderOffsetSelected(opt.value)"
-                    (click)="toggleReminderOffset(opt.value)"
-                  >
-                    <span class="reminder-option-check">{{
-                      isReminderOffsetSelected(opt.value) ? '✓' : ''
-                    }}</span>
-                    {{ opt.labelKey | transloco }}
-                  </button>
-                }
+          <div
+            class="modal-card reminder-modal modal-card-compact"
+            (click)="$event.stopPropagation()"
+          >
+            <div class="scale-wrap" #reminderScaleWrap>
+              <div class="modal-header">
+                <h3>{{ 'trips.reminder.title' | transloco }}</h3>
               </div>
-            </div>
-            @if (isReminderOffsetSelected('custom')) {
-              <div class="form-row-grid">
+              <div class="form-row">
+                <label>{{ 'trips.reminder.when' | transloco }}</label>
+                <app-dropdown-select
+                  [options]="reminderOffsetDropdownOptions()"
+                  [multiple]="true"
+                  [placeholder]="'trips.reminder.whenPlaceholder' | transloco"
+                  [ngModel]="reminderSelectedOffsets()"
+                  (ngModelChange)="reminderSelectedOffsets.set($event); reminderSaveError.set(false)"
+                  name="reminderOffsets"
+                ></app-dropdown-select>
+              </div>
+              @if (isReminderOffsetSelected('custom')) {
                 <div class="form-row">
-                  <label>{{ 'trips.reminder.customDate' | transloco }}</label>
+                  <label>{{ 'trips.reminder.customDateTime' | transloco }}</label>
                   <input
-                    type="date"
-                    [ngModel]="reminderCustomDate()"
-                    (ngModelChange)="reminderCustomDate.set($event)"
-                    name="reminderCustomDate"
+                    type="datetime-local"
+                    [ngModel]="reminderCustomDateTime()"
+                    (ngModelChange)="reminderCustomDateTime.set($event)"
+                    name="reminderCustomDateTime"
                   />
                 </div>
-                <div class="form-row">
-                  <label>{{ 'trips.reminder.customTime' | transloco }}</label>
-                  <input
-                    type="time"
-                    [ngModel]="reminderCustomTime()"
-                    (ngModelChange)="reminderCustomTime.set($event)"
-                    name="reminderCustomTime"
-                  />
-                </div>
+              }
+              <div class="form-row">
+                <label>{{ 'trips.reminder.email' | transloco }}</label>
+                <input
+                  type="email"
+                  [ngModel]="reminderEmail()"
+                  (ngModelChange)="reminderEmail.set($event)"
+                  name="reminderEmail"
+                />
               </div>
-            }
-            <div class="form-row">
-              <label>{{ 'trips.reminder.email' | transloco }}</label>
-              <input
-                type="email"
-                [ngModel]="reminderEmail()"
-                (ngModelChange)="reminderEmail.set($event)"
-                name="reminderEmail"
-              />
-            </div>
-            <div class="form-row reminder-toggle-row">
-              <label>{{ 'trips.reminder.enable' | transloco }}</label>
-              <button
-                type="button"
-                class="pill-switch"
-                [class.on]="reminderEnabled()"
-                [attr.aria-pressed]="reminderEnabled()"
-                (click)="reminderEnabled.set(!reminderEnabled())"
-              >
-                <span class="pill-knob"></span>
-              </button>
-            </div>
-            @if (reminderSaveError()) {
-              <p class="reminder-error">{{ 'trips.reminder.needDate' | transloco }}</p>
-            }
-            <div class="form-actions">
-              <button type="button" class="btn-secondary" (click)="closeReminderModal()">
-                {{ 'common.cancel' | transloco }}
-              </button>
-              <button
-                type="button"
-                class="btn-primary"
-                [disabled]="savingReminder()"
-                (click)="saveReminder(rt)"
-              >
-                {{ 'common.save' | transloco }}
-              </button>
+              <div class="form-row reminder-toggle-row">
+                <label>{{ 'trips.reminder.enable' | transloco }}</label>
+                <button
+                  type="button"
+                  class="pill-switch"
+                  [class.on]="reminderEnabled()"
+                  [attr.aria-pressed]="reminderEnabled()"
+                  (click)="reminderEnabled.set(!reminderEnabled())"
+                >
+                  <span class="pill-knob"></span>
+                </button>
+              </div>
+              @if (reminderSaveError()) {
+                <p class="reminder-error">{{ 'trips.reminder.needDate' | transloco }}</p>
+              }
+              <div class="form-actions">
+                <button type="button" class="btn-secondary" (click)="closeReminderModal()">
+                  {{ 'common.cancel' | transloco }}
+                </button>
+                <button
+                  type="button"
+                  class="btn-primary"
+                  [disabled]="savingReminder()"
+                  (click)="saveReminder(rt)"
+                >
+                  {{ 'common.save' | transloco }}
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -1145,43 +1132,18 @@ const CURRENCY_OPTIONS = [
         grid-template-columns: 1fr;
       }
 
-      /* ── 提醒通知視窗 ── */
-      .reminder-modal {
-        max-width: 420px;
-      }
-      .reminder-modal .form-row-grid {
-        grid-template-columns: 1fr 1fr;
-      }
-      .reminder-options {
-        display: flex;
-        flex-direction: column;
-        gap: 0.4rem;
-      }
-      .reminder-option {
+      /* ── 提醒通知視窗（比照自動盯價彈窗：compact 不滿版 + 內容等比縮放不出捲軸） ── */
+      .reminder-modal.modal-card-compact {
+        max-width: 380px;
+        max-height: 90vh;
+        overflow: hidden;
         display: flex;
         align-items: center;
-        gap: 0.5rem;
+        justify-content: center;
+      }
+      .reminder-modal .scale-wrap {
         width: 100%;
-        padding: 0.55rem 0.75rem;
-        border: 1.5px solid var(--border);
-        border-radius: 10px;
-        background: var(--input-bg);
-        color: var(--text-primary);
-        cursor: pointer;
-        text-align: left;
-        font-size: 0.9rem;
-      }
-      .reminder-option.selected {
-        border-color: var(--accent);
-        background: var(--accent-light);
-        color: var(--accent);
-        font-weight: 600;
-      }
-      .reminder-option-check {
-        width: 1em;
-        flex-shrink: 0;
-        color: var(--accent);
-        font-weight: 700;
+        transform-origin: center center;
       }
       .reminder-toggle-row {
         display: flex;
@@ -1409,12 +1371,19 @@ export class TripsListComponent implements OnInit {
   ];
   reminderTrip = signal<Trip | null>(null);
   reminderSelectedOffsets = signal<ReminderOffsetType[]>([]);
-  reminderCustomDate = signal('');
-  reminderCustomTime = signal('');
+  reminderCustomDateTime = signal('');
   reminderEmail = signal('');
   reminderEnabled = signal(true);
   reminderSaveError = signal(false);
   savingReminder = signal(false);
+  @ViewChild('reminderScaleWrap') reminderScaleWrap?: ElementRef<HTMLElement>;
+
+  reminderOffsetDropdownOptions(): { value: ReminderOffsetType; label: string }[] {
+    return this.reminderOffsetOptions.map((o) => ({
+      value: o.value,
+      label: this.transloco.translate(o.labelKey),
+    }));
+  }
 
   private static readonly LONG_PRESS_MS = 500;
   private static readonly LONG_PRESS_MOVE_TOLERANCE_PX = 10;
@@ -1737,6 +1706,18 @@ export class TripsListComponent implements OnInit {
   }
 
   // ── 行程提醒通知 ──────────────────────────────────────────────
+  private nowDateTimeLocal(): string {
+    const d = new Date();
+    const pad = (n: number) => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  }
+
+  private dateTimeToLocalInput(iso: string): string {
+    const d = new Date(iso);
+    const pad = (n: number) => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  }
+
   async openReminderModal(trip: Trip): Promise<void> {
     const userId = this.auth.user()?.id ?? '';
     const existing = await this.tripReminderService.getForTrip(trip.id, userId);
@@ -1745,19 +1726,13 @@ export class TripsListComponent implements OnInit {
     this.reminderEmail.set(existing[0]?.notify_email ?? this.auth.user()?.email ?? '');
 
     const custom = existing.find((r) => r.offset_type === 'custom');
-    if (custom) {
-      const d = new Date(custom.notify_at_utc);
-      const pad = (n: number) => String(n).padStart(2, '0');
-      this.reminderCustomDate.set(
-        `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`,
-      );
-      this.reminderCustomTime.set(`${pad(d.getHours())}:${pad(d.getMinutes())}`);
-    } else {
-      this.reminderCustomDate.set('');
-      this.reminderCustomTime.set('');
-    }
+    // 預設帶入當前日期時間，不可留空（未設定自訂提醒時亦先備妥預設值，選取「其他」即可直接使用）
+    this.reminderCustomDateTime.set(
+      custom ? this.dateTimeToLocalInput(custom.notify_at_utc) : this.nowDateTimeLocal(),
+    );
     this.reminderSaveError.set(false);
     this.reminderTrip.set(trip);
+    setTimeout(() => this.applyReminderScale());
   }
 
   closeReminderModal(): void {
@@ -1768,12 +1743,18 @@ export class TripsListComponent implements OnInit {
     return this.reminderSelectedOffsets().includes(type);
   }
 
-  toggleReminderOffset(type: ReminderOffsetType): void {
-    const current = this.reminderSelectedOffsets();
-    this.reminderSelectedOffsets.set(
-      current.includes(type) ? current.filter((t) => t !== type) : [...current, type],
-    );
-    this.reminderSaveError.set(false);
+  @HostListener('window:resize')
+  applyReminderScale(): void {
+    const el = this.reminderScaleWrap?.nativeElement;
+    if (!el || !el.parentElement) return;
+    el.style.transform = 'none';
+    const contentH = el.scrollHeight;
+    const contentW = el.scrollWidth;
+    const availH = el.parentElement.clientHeight;
+    const availW = el.parentElement.clientWidth;
+    if (!contentH || !contentW) return;
+    const scale = Math.min(1, availH / contentH, availW / contentW);
+    el.style.transform = scale < 1 ? `scale(${scale})` : 'none';
   }
 
   async saveReminder(trip: Trip): Promise<void> {
@@ -1782,7 +1763,7 @@ export class TripsListComponent implements OnInit {
     const needsCustomDateTime = offsets.includes('custom');
     if (
       (needsStartDate && !trip.start_date_utc) ||
-      (needsCustomDateTime && (!this.reminderCustomDate() || !this.reminderCustomTime()))
+      (needsCustomDateTime && !this.reminderCustomDateTime())
     ) {
       this.reminderSaveError.set(true);
       return;
@@ -1794,9 +1775,7 @@ export class TripsListComponent implements OnInit {
         tripId: trip.id,
         userId: this.auth.user()?.id ?? '',
         offsetTypes: offsets,
-        customDateTimeLocal: needsCustomDateTime
-          ? `${this.reminderCustomDate()}T${this.reminderCustomTime()}`
-          : undefined,
+        customDateTimeLocal: needsCustomDateTime ? this.reminderCustomDateTime() : undefined,
         notifyEmail: this.reminderEmail().trim() || this.auth.user()?.email || '',
         enabled: this.reminderEnabled(),
         tripStartDateUtc: trip.start_date_utc,

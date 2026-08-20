@@ -59,12 +59,12 @@
     "reminder": {
       "title": "提醒通知",
       "when": "通知時間點（可複選）",
+      "whenPlaceholder": "請選擇通知時間點",
       "monthFirst": "當月份（去程月份 1 號）",
       "sevenDaysBefore": "7 天前",
       "oneDayBefore": "1 天前",
       "custom": "其他",
-      "customDate": "日期",
-      "customTime": "時間",
+      "customDateTime": "日期時間",
       "email": "通知信箱",
       "enable": "開啟提醒",
       "needDate": "請確認行程已設定去程日期，或已選擇「其他」的日期與時間"

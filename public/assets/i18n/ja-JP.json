@@ -59,12 +59,12 @@
     "reminder": {
       "title": "リマインダー",
       "when": "通知タイミング（複数選択可）",
+      "whenPlaceholder": "通知タイミングを選択",
       "monthFirst": "当月（出発月の1日）",
       "sevenDaysBefore": "7日前",
       "oneDayBefore": "1日前",
       "custom": "その他",
-      "customDate": "日付",
-      "customTime": "時刻",
+      "customDateTime": "日付と時刻",
       "email": "通知先メール",
       "enable": "リマインダーを有効化",
       "needDate": "旅程に出発日が設定されているか、「その他」の日付と時刻を選択してください"
