@@ -30,10 +30,14 @@ export class AuthService {
 
       if (event === 'SIGNED_IN' && session?.user) {
         this.syncEngine.syncDown(session.user.id);
-        // 若是從 /login 或首頁登入才強制導向 /trips；若是深連結（例如 /join/:code）
-        // 回來的登入，保留當前路由讓該頁面自行接手（例如加入行程後再導頁）
+        // 若是從 /login 或首頁登入才需要導頁；若是深連結（例如 /join/:code、mail 提醒連結）
+        // 回來的登入，優先導回 authGuard 記住的「原本要去的頁面」，沒有記錄才 fallback 回 /trips。
+        // （常見情境：點深連結時 session 還沒讀取完成，authGuard 誤判未登入先導去 /login，
+        //  登入完成後這裡若只寫死導回 /trips，會把原本要去的深連結頁面弄丟）
         if (this.router.url === '/login' || this.router.url === '/') {
-          this.router.navigate(['/trips']);
+          const pending = sessionStorage.getItem('pending_return_url');
+          sessionStorage.removeItem('pending_return_url');
+          this.router.navigateByUrl(pending && pending !== '/login' ? pending : '/trips');
         }
       } else if (event === 'SIGNED_OUT') {
         this.router.navigate(['/login']);
