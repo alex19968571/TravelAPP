@@ -19,6 +19,13 @@ const APP_BASE_URL = (
 // 避免此端點被任意呼叫濫用寄信額度
 const CRON_SECRET = Deno.env.get('CRON_SECRET') ?? '';
 
+// 前端（trip-reminder.service.ts 的 triggerImmediateCheck）會直接從瀏覽器呼叫這支函式，
+// 瀏覽器會先送 CORS 預檢請求，沒有這組標頭會被瀏覽器擋下（pg_cron 的伺服器對伺服器呼叫則不受影響）
+const CORS_HEADERS = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-cron-secret',
+};
+
 const OFFSET_LABEL: Record<string, string> = {
   month_first: '本月提醒',
   seven_days_before: '出發前 7 天提醒',
@@ -180,13 +187,16 @@ async function isAuthorized(req: Request): Promise<boolean> {
 }
 
 Deno.serve(async (req) => {
+  if (req.method === 'OPTIONS') {
+    return new Response('ok', { headers: CORS_HEADERS });
+  }
   if (req.method !== 'POST') {
-    return new Response('Method Not Allowed', { status: 405 });
+    return new Response('Method Not Allowed', { status: 405, headers: CORS_HEADERS });
   }
   if (!(await isAuthorized(req))) {
     return new Response(JSON.stringify({ error: 'Unauthorized' }), {
       status: 401,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
     });
   }
 
@@ -209,7 +219,7 @@ Deno.serve(async (req) => {
     console.error('[send-trip-reminders] query error', error);
     return new Response(JSON.stringify({ error: 'query failed' }), {
       status: 500,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
     });
   }
 
@@ -226,6 +236,6 @@ Deno.serve(async (req) => {
   }
 
   return new Response(JSON.stringify({ checked: due?.length ?? 0, sent: sentCount }), {
-    headers: { 'Content-Type': 'application/json' },
+    headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
   });
 });

@@ -211,6 +211,7 @@ const CURRENCY_CODES = [
                       formControlName="target_price"
                       type="text"
                       inputmode="decimal"
+                      autocomplete="off"
                       class="amount-input-lg"
                     />
                     <app-dropdown-select
