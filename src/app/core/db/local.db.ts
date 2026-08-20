@@ -10,6 +10,7 @@ import {
   BlobStoreItem,
   ExchangeRate,
   FlightWatch,
+  TripReminder,
 } from '../models';
 
 export class LocalDb extends Dexie {
@@ -23,6 +24,7 @@ export class LocalDb extends Dexie {
   blob_store!: Table<BlobStoreItem, string>;
   exchange_rates!: Table<ExchangeRate, string>;
   flight_watches!: Table<FlightWatch, string>;
+  trip_reminders!: Table<TripReminder, string>;
 
   constructor() {
     super('TravelAppDB');
@@ -44,6 +46,9 @@ export class LocalDb extends Dexie {
     // 會直接丟出 SchemaError 並讓整個 syncDown transaction 回滾。
     this.version(3).stores({
       sync_queue: 'id, status, created_at, table_name',
+    });
+    this.version(4).stores({
+      trip_reminders: 'id, trip_id, user_id, notify_at_utc',
     });
   }
 }

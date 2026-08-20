@@ -55,7 +55,20 @@
     "inviteCodePlaceholder": "e.g. AB12CD34",
     "join": "Join",
     "joining": "Joining...",
-    "joinError": "Invalid or expired invite code, please check and try again"
+    "joinError": "Invalid or expired invite code, please check and try again",
+    "reminder": {
+      "title": "Reminder",
+      "when": "Notify at (multiple allowed)",
+      "monthFirst": "Start of month (1st of departure month)",
+      "sevenDaysBefore": "7 days before",
+      "oneDayBefore": "1 day before",
+      "custom": "Custom",
+      "customDate": "Date",
+      "customTime": "Time",
+      "email": "Notification email",
+      "enable": "Enable reminder",
+      "needDate": "Please make sure the trip has a departure date, or pick a custom date and time"
+    }
   },
   "settings": {
     "title": "Settings",

@@ -4,7 +4,7 @@ import { debounceTime, filter, takeUntil } from 'rxjs/operators';
 import type { Table } from 'dexie';
 import { db } from '../db/local.db';
 import { SupabaseService } from './supabase.service';
-import { SyncQueueItem, Trip, ShoppingItem, Expense, FlightWatch } from '../models';
+import { SyncQueueItem, Trip, ShoppingItem, Expense, FlightWatch, TripReminder } from '../models';
 import { generateId } from '../utils/uuid.util';
 
 type TableName =
@@ -14,7 +14,8 @@ type TableName =
   | 'itinerary_items'
   | 'trip_members'
   | 'expense_splits'
-  | 'flight_watches';
+  | 'flight_watches'
+  | 'trip_reminders';
 
 const CONFLICT_FIELD: Partial<Record<TableName, string>> = {
   shopping_list: 'client_record_id',
@@ -49,15 +50,19 @@ export class SyncEngineService implements OnDestroy {
         { data: ownedTrips, error: ownedTripsErr },
         { data: members, error: membersErr },
         { data: flightWatches, error: flightWatchesErr },
+        { data: tripReminders, error: tripRemindersErr },
       ] = await Promise.all([
         this.supabase.from('trips').select('*').eq('owner_id', userId),
         this.supabase.from('trip_members').select('*').eq('user_id', userId),
         this.supabase.from('flight_watches').select('*').eq('owner_id', userId),
+        this.supabase.from('trip_reminders').select('*').eq('user_id', userId),
       ]);
       if (ownedTripsErr) console.error('[SyncEngine] fetch trips error', ownedTripsErr);
       if (membersErr) console.error('[SyncEngine] fetch trip_members error', membersErr);
       if (flightWatchesErr)
         console.error('[SyncEngine] fetch flight_watches error', flightWatchesErr);
+      if (tripRemindersErr)
+        console.error('[SyncEngine] fetch trip_reminders error', tripRemindersErr);
 
       // 除了自己擁有的行程，也要抓透過邀請碼／連結加入的行程
       const joinedTripIds = [
@@ -105,6 +110,7 @@ export class SyncEngineService implements OnDestroy {
           db.expenses,
           db.expense_splits,
           db.flight_watches,
+          db.trip_reminders,
           db.sync_queue,
         ],
         async () => {
@@ -141,6 +147,18 @@ export class SyncEngineService implements OnDestroy {
           }
           if (flightWatches?.length)
             await db.flight_watches.bulkPut(flightWatches as FlightWatch[]);
+
+          if (!tripRemindersErr) {
+            await this.pruneStale(
+              db.trip_reminders,
+              'trip_reminders',
+              'id',
+              await db.trip_reminders.where('user_id').equals(userId).toArray(),
+              new Set((tripReminders ?? []).map((r: any) => r.id)),
+            );
+          }
+          if (tripReminders?.length)
+            await db.trip_reminders.bulkPut(tripReminders as TripReminder[]);
 
           // 以伺服器資料為準：清掉「本機有、伺服器已無（例如已在其他裝置刪除）
           // 且不是尚待上傳的本機新資料」的記錄，避免多裝置間資料分歧。

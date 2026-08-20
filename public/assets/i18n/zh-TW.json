@@ -55,7 +55,20 @@
     "inviteCodePlaceholder": "例：AB12CD34",
     "join": "加入",
     "joining": "加入中...",
-    "joinError": "邀請碼無效或已失效，請確認後再試一次"
+    "joinError": "邀請碼無效或已失效，請確認後再試一次",
+    "reminder": {
+      "title": "提醒通知",
+      "when": "通知時間點（可複選）",
+      "monthFirst": "當月份（去程月份 1 號）",
+      "sevenDaysBefore": "7 天前",
+      "oneDayBefore": "1 天前",
+      "custom": "其他",
+      "customDate": "日期",
+      "customTime": "時間",
+      "email": "通知信箱",
+      "enable": "開啟提醒",
+      "needDate": "請確認行程已設定去程日期，或已選擇「其他」的日期與時間"
+    }
   },
   "settings": {
     "title": "設定",

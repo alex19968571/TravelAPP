@@ -1,2 +1,5 @@
 [functions.flight-price]
 verify_jwt = false
+
+[functions.send-trip-reminders]
+verify_jwt = false

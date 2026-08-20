@@ -117,6 +117,21 @@ export interface ExchangeRate {
   fetched_at: string;
 }
 
+export type ReminderOffsetType = 'month_first' | 'seven_days_before' | 'one_day_before' | 'custom';
+
+export interface TripReminder {
+  id: string;
+  trip_id: string;
+  user_id: string;
+  offset_type: ReminderOffsetType;
+  /** 實際寄信時間點（UTC），建立時依 offset_type 換算好存入，寄信端只需比對此欄位 */
+  notify_at_utc: string;
+  notify_email: string;
+  enabled: boolean;
+  sent_at_utc: string | null;
+  created_at_utc: string;
+}
+
 export interface FlightWatch {
   id: string;
   owner_id: string;

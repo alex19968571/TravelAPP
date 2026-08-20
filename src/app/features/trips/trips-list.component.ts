@@ -12,8 +12,10 @@ import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
 import { ReactiveFormsModule, FormsModule, FormBuilder, Validators } from '@angular/forms';
 import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
-import { Trip } from '../../core/models';
+import { ReminderOffsetType, Trip } from '../../core/models';
 import { TripService } from '../../core/services/trip.service';
+import { TripReminderService } from '../../core/services/trip-reminder.service';
+import { AuthService } from '../../core/services/auth.service';
 import { PreferenceService, COUNTRIES } from '../../core/services/preference.service';
 import { PageTransitionService } from '../../core/services/page-transition.service';
 import { DropdownSelectComponent } from '../../shared/components/dropdown-select/dropdown-select.component';
@@ -232,6 +234,18 @@ const CURRENCY_OPTIONS = [
                   <button class="info-btn" (click)="openEditTrip(trip); $event.stopPropagation()">
                     ⓘ
                   </button>
+                  <button
+                    class="reminder-btn"
+                    type="button"
+                    [attr.aria-label]="'trips.reminder.title' | transloco"
+                    (click)="openReminderModal(trip); $event.stopPropagation()"
+                  >
+                    <svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor">
+                      <path
+                        d="M12 2a6 6 0 0 0-6 6v3.09c0 .68-.24 1.34-.68 1.86L4 15h16l-1.32-2.05a3 3 0 0 1-.68-1.86V8a6 6 0 0 0-6-6zm0 20a2.5 2.5 0 0 0 2.45-2h-4.9A2.5 2.5 0 0 0 12 22z"
+                      />
+                    </svg>
+                  </button>
                   <div class="trip-card-body">
                     <div class="trip-info">
                       <div class="trip-route">{{ trip.target_timezone }}</div>
@@ -347,6 +361,93 @@ const CURRENCY_OPTIONS = [
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      }
+
+      @if (reminderTrip(); as rt) {
+        <div class="modal-backdrop" (click)="closeReminderModal()">
+          <div class="modal-card reminder-modal" (click)="$event.stopPropagation()">
+            <div class="modal-header">
+              <h3>{{ 'trips.reminder.title' | transloco }}</h3>
+            </div>
+            <div class="form-row">
+              <label>{{ 'trips.reminder.when' | transloco }}</label>
+              <div class="reminder-options">
+                @for (opt of reminderOffsetOptions; track opt.value) {
+                  <button
+                    type="button"
+                    class="reminder-option"
+                    [class.selected]="isReminderOffsetSelected(opt.value)"
+                    (click)="toggleReminderOffset(opt.value)"
+                  >
+                    <span class="reminder-option-check">{{
+                      isReminderOffsetSelected(opt.value) ? '✓' : ''
+                    }}</span>
+                    {{ opt.labelKey | transloco }}
+                  </button>
+                }
+              </div>
+            </div>
+            @if (isReminderOffsetSelected('custom')) {
+              <div class="form-row-grid">
+                <div class="form-row">
+                  <label>{{ 'trips.reminder.customDate' | transloco }}</label>
+                  <input
+                    type="date"
+                    [ngModel]="reminderCustomDate()"
+                    (ngModelChange)="reminderCustomDate.set($event)"
+                    name="reminderCustomDate"
+                  />
+                </div>
+                <div class="form-row">
+                  <label>{{ 'trips.reminder.customTime' | transloco }}</label>
+                  <input
+                    type="time"
+                    [ngModel]="reminderCustomTime()"
+                    (ngModelChange)="reminderCustomTime.set($event)"
+                    name="reminderCustomTime"
+                  />
+                </div>
+              </div>
+            }
+            <div class="form-row">
+              <label>{{ 'trips.reminder.email' | transloco }}</label>
+              <input
+                type="email"
+                [ngModel]="reminderEmail()"
+                (ngModelChange)="reminderEmail.set($event)"
+                name="reminderEmail"
+              />
+            </div>
+            <div class="form-row reminder-toggle-row">
+              <label>{{ 'trips.reminder.enable' | transloco }}</label>
+              <button
+                type="button"
+                class="pill-switch"
+                [class.on]="reminderEnabled()"
+                [attr.aria-pressed]="reminderEnabled()"
+                (click)="reminderEnabled.set(!reminderEnabled())"
+              >
+                <span class="pill-knob"></span>
+              </button>
+            </div>
+            @if (reminderSaveError()) {
+              <p class="reminder-error">{{ 'trips.reminder.needDate' | transloco }}</p>
+            }
+            <div class="form-actions">
+              <button type="button" class="btn-secondary" (click)="closeReminderModal()">
+                {{ 'common.cancel' | transloco }}
+              </button>
+              <button
+                type="button"
+                class="btn-primary"
+                [disabled]="savingReminder()"
+                (click)="saveReminder(rt)"
+              >
+                {{ 'common.save' | transloco }}
+              </button>
+            </div>
           </div>
         </div>
       }
@@ -922,6 +1023,29 @@ const CURRENCY_OPTIONS = [
       .info-btn:hover {
         background: var(--icon-bg-hover);
       }
+      .reminder-btn {
+        position: absolute;
+        top: 0.6rem;
+        left: 0.6rem;
+        z-index: 5;
+        width: 20px;
+        height: 20px;
+        border-radius: 6px;
+        background: var(--icon-bg);
+        color: #9ca3af;
+        border: none;
+        font-size: 0.72rem;
+        line-height: 1;
+        cursor: pointer;
+        padding: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: background 0.15s;
+      }
+      .reminder-btn:hover {
+        background: var(--icon-bg-hover);
+      }
       .trip-nav {
         display: flex;
       }
@@ -1021,6 +1145,87 @@ const CURRENCY_OPTIONS = [
         grid-template-columns: 1fr;
       }
 
+      /* ── 提醒通知視窗 ── */
+      .reminder-modal {
+        max-width: 420px;
+      }
+      .reminder-modal .form-row-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+      .reminder-options {
+        display: flex;
+        flex-direction: column;
+        gap: 0.4rem;
+      }
+      .reminder-option {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        width: 100%;
+        padding: 0.55rem 0.75rem;
+        border: 1.5px solid var(--border);
+        border-radius: 10px;
+        background: var(--input-bg);
+        color: var(--text-primary);
+        cursor: pointer;
+        text-align: left;
+        font-size: 0.9rem;
+      }
+      .reminder-option.selected {
+        border-color: var(--accent);
+        background: var(--accent-light);
+        color: var(--accent);
+        font-weight: 600;
+      }
+      .reminder-option-check {
+        width: 1em;
+        flex-shrink: 0;
+        color: var(--accent);
+        font-weight: 700;
+      }
+      .reminder-toggle-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+      .reminder-toggle-row label {
+        margin-bottom: 0;
+      }
+      .pill-switch {
+        position: relative;
+        width: 44px;
+        height: 24px;
+        border-radius: 999px;
+        border: none;
+        background: var(--border);
+        cursor: pointer;
+        padding: 0;
+        transition: background 0.2s ease;
+        flex-shrink: 0;
+      }
+      .pill-switch.on {
+        background: var(--accent);
+      }
+      .pill-knob {
+        position: absolute;
+        top: 2px;
+        left: 2px;
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        background: #fff;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+        transition: transform 0.2s ease;
+      }
+      .pill-switch.on .pill-knob {
+        transform: translateX(20px);
+      }
+      .reminder-error {
+        color: #e53e3e;
+        font-size: 0.85rem;
+        margin: -0.5rem 0 1rem;
+      }
+
       @media (max-width: 600px) {
         .form-row-grid {
           grid-template-columns: 1fr;
@@ -1051,6 +1256,8 @@ export class TripsListComponent implements OnInit {
   @ViewChild('avatarInput') avatarInputRef?: ElementRef<HTMLInputElement>;
 
   tripService = inject(TripService);
+  tripReminderService = inject(TripReminderService);
+  private auth = inject(AuthService);
   pref = inject(PreferenceService);
   fb = inject(FormBuilder);
   private router = inject(Router);
@@ -1192,6 +1399,22 @@ export class TripsListComponent implements OnInit {
    *  放開手指後改為 false，讓收斂到 0 或 1 的動畫可以套用 transition 平滑過渡 */
   isLiveDragging = signal(false);
   editingTrip = signal<Trip | null>(null);
+
+  // ── 行程提醒通知 ──────────────────────────────────────────────
+  reminderOffsetOptions: { value: ReminderOffsetType; labelKey: string }[] = [
+    { value: 'month_first', labelKey: 'trips.reminder.monthFirst' },
+    { value: 'seven_days_before', labelKey: 'trips.reminder.sevenDaysBefore' },
+    { value: 'one_day_before', labelKey: 'trips.reminder.oneDayBefore' },
+    { value: 'custom', labelKey: 'trips.reminder.custom' },
+  ];
+  reminderTrip = signal<Trip | null>(null);
+  reminderSelectedOffsets = signal<ReminderOffsetType[]>([]);
+  reminderCustomDate = signal('');
+  reminderCustomTime = signal('');
+  reminderEmail = signal('');
+  reminderEnabled = signal(true);
+  reminderSaveError = signal(false);
+  savingReminder = signal(false);
 
   private static readonly LONG_PRESS_MS = 500;
   private static readonly LONG_PRESS_MOVE_TOLERANCE_PX = 10;
@@ -1511,5 +1734,76 @@ export class TripsListComponent implements OnInit {
     this.longPressedTripId.set(null);
     this.editingTrip.set(null);
     await this.loadTrips();
+  }
+
+  // ── 行程提醒通知 ──────────────────────────────────────────────
+  async openReminderModal(trip: Trip): Promise<void> {
+    const userId = this.auth.user()?.id ?? '';
+    const existing = await this.tripReminderService.getForTrip(trip.id, userId);
+    this.reminderSelectedOffsets.set(existing.map((r) => r.offset_type));
+    this.reminderEnabled.set(existing.length ? existing.some((r) => r.enabled) : true);
+    this.reminderEmail.set(existing[0]?.notify_email ?? this.auth.user()?.email ?? '');
+
+    const custom = existing.find((r) => r.offset_type === 'custom');
+    if (custom) {
+      const d = new Date(custom.notify_at_utc);
+      const pad = (n: number) => String(n).padStart(2, '0');
+      this.reminderCustomDate.set(
+        `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`,
+      );
+      this.reminderCustomTime.set(`${pad(d.getHours())}:${pad(d.getMinutes())}`);
+    } else {
+      this.reminderCustomDate.set('');
+      this.reminderCustomTime.set('');
+    }
+    this.reminderSaveError.set(false);
+    this.reminderTrip.set(trip);
+  }
+
+  closeReminderModal(): void {
+    this.reminderTrip.set(null);
+  }
+
+  isReminderOffsetSelected(type: ReminderOffsetType): boolean {
+    return this.reminderSelectedOffsets().includes(type);
+  }
+
+  toggleReminderOffset(type: ReminderOffsetType): void {
+    const current = this.reminderSelectedOffsets();
+    this.reminderSelectedOffsets.set(
+      current.includes(type) ? current.filter((t) => t !== type) : [...current, type],
+    );
+    this.reminderSaveError.set(false);
+  }
+
+  async saveReminder(trip: Trip): Promise<void> {
+    const offsets = this.reminderSelectedOffsets();
+    const needsStartDate = offsets.some((o) => o !== 'custom');
+    const needsCustomDateTime = offsets.includes('custom');
+    if (
+      (needsStartDate && !trip.start_date_utc) ||
+      (needsCustomDateTime && (!this.reminderCustomDate() || !this.reminderCustomTime()))
+    ) {
+      this.reminderSaveError.set(true);
+      return;
+    }
+
+    this.savingReminder.set(true);
+    try {
+      await this.tripReminderService.saveForTrip({
+        tripId: trip.id,
+        userId: this.auth.user()?.id ?? '',
+        offsetTypes: offsets,
+        customDateTimeLocal: needsCustomDateTime
+          ? `${this.reminderCustomDate()}T${this.reminderCustomTime()}`
+          : undefined,
+        notifyEmail: this.reminderEmail().trim() || this.auth.user()?.email || '',
+        enabled: this.reminderEnabled(),
+        tripStartDateUtc: trip.start_date_utc,
+      });
+      this.closeReminderModal();
+    } finally {
+      this.savingReminder.set(false);
+    }
   }
 }
