@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { db } from '../db/local.db';
 import { SyncEngineService } from './sync-engine.service';
+import { SupabaseService } from './supabase.service';
 import { ReminderOffsetType, TripReminder } from '../models';
 import { generateId } from '../utils/uuid.util';
 
@@ -18,6 +19,7 @@ export interface SaveTripReminderParams {
 @Injectable({ providedIn: 'root' })
 export class TripReminderService {
   private sync = inject(SyncEngineService);
+  private supabase = inject(SupabaseService).client;
 
   async getForTrip(tripId: string, userId: string): Promise<TripReminder[]> {
     return db.trip_reminders
@@ -61,6 +63,16 @@ export class TripReminderService {
         'trip_reminders',
         reminder as unknown as Record<string, unknown>,
       );
+    }
+  }
+
+  /** 儲存提醒後立即觸發一次寄信檢查，避免使用者乾等到下一次排程（最多 1 分鐘）才寄出到期的提醒 */
+  async triggerImmediateCheck(): Promise<void> {
+    await this.sync.syncUp(); // 先確保剛存的提醒已同步上雲，Edge Function 才查得到
+    try {
+      await this.supabase.functions.invoke('send-trip-reminders', { body: {} });
+    } catch (err) {
+      console.error('[TripReminderService] triggerImmediateCheck error', err);
     }
   }
 

@@ -42,7 +42,14 @@ export interface DropdownOption {
     >
       <button type="button" class="dropdown-trigger" (click)="toggle()">
         <span class="dropdown-label">{{ selectedLabel() }}</span>
-        <svg class="caret" [class.flipped]="open()" viewBox="0 0 24 24" width="10" height="10" fill="currentColor">
+        <svg
+          class="caret"
+          [class.flipped]="open()"
+          viewBox="0 0 24 24"
+          width="10"
+          height="10"
+          fill="currentColor"
+        >
           <path d="M12 15.5 4.5 8h15z" />
         </svg>
       </button>
@@ -62,7 +69,15 @@ export interface DropdownOption {
             (click)="select(opt.value)"
           >
             @if (multiple) {
-              <svg class="option-check" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5">
+              <svg
+                class="option-check"
+                viewBox="0 0 24 24"
+                width="14"
+                height="14"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.5"
+              >
                 @if (isSelected(opt.value)) {
                   <path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round" />
                 }

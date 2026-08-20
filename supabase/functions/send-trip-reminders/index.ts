@@ -11,8 +11,12 @@ import { createClient } from 'jsr:@supabase/supabase-js@2';
 
 const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY') ?? '';
 const RESEND_FROM_EMAIL = Deno.env.get('RESEND_FROM_EMAIL') ?? 'onboarding@resend.dev';
-const APP_BASE_URL = Deno.env.get('APP_BASE_URL') ?? 'https://alex19968571.github.io/TravelAPP';
-// 僅允許帶有正確共用密鑰的排程呼叫觸發寄信，避免此端點被任意呼叫濫用寄信額度
+// 去除結尾斜線，避免跟後面手動補上的 '/trips/:id' 兜出雙斜線造成連結失效
+const APP_BASE_URL = (
+  Deno.env.get('APP_BASE_URL') ?? 'https://alex19968571.github.io/TravelAPP'
+).replace(/\/+$/, '');
+// 僅允許帶有正確共用密鑰的排程呼叫，或已登入使用者本人的請求（見 isAuthorized），
+// 避免此端點被任意呼叫濫用寄信額度
 const CRON_SECRET = Deno.env.get('CRON_SECRET') ?? '';
 
 const OFFSET_LABEL: Record<string, string> = {
@@ -59,11 +63,26 @@ async function sendReminderEmail(reminder: DueReminder): Promise<boolean> {
   return true;
 }
 
+// 驗證呼叫者：pg_cron 排程帶 CRON_SECRET，或前端使用者儲存提醒後帶自己的登入 JWT 立即觸發檢查
+async function isAuthorized(req: Request): Promise<boolean> {
+  if (CRON_SECRET && req.headers.get('x-cron-secret') === CRON_SECRET) return true;
+
+  const authHeader = req.headers.get('Authorization') ?? '';
+  if (!authHeader) return false;
+  const anonClient = createClient(
+    Deno.env.get('SUPABASE_URL')!,
+    Deno.env.get('SUPABASE_ANON_KEY')!,
+    { global: { headers: { Authorization: authHeader } } },
+  );
+  const { data, error } = await anonClient.auth.getUser();
+  return !error && !!data?.user;
+}
+
 Deno.serve(async (req) => {
   if (req.method !== 'POST') {
     return new Response('Method Not Allowed', { status: 405 });
   }
-  if (!CRON_SECRET || req.headers.get('x-cron-secret') !== CRON_SECRET) {
+  if (!(await isAuthorized(req))) {
     return new Response(JSON.stringify({ error: 'Unauthorized' }), {
       status: 401,
       headers: { 'Content-Type': 'application/json' },

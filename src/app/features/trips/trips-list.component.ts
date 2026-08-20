@@ -382,7 +382,9 @@ const CURRENCY_OPTIONS = [
                   [multiple]="true"
                   [placeholder]="'trips.reminder.whenPlaceholder' | transloco"
                   [ngModel]="reminderSelectedOffsets()"
-                  (ngModelChange)="reminderSelectedOffsets.set($event); reminderSaveError.set(false)"
+                  (ngModelChange)="
+                    reminderSelectedOffsets.set($event); reminderSaveError.set(false)
+                  "
                   name="reminderOffsets"
                 ></app-dropdown-select>
               </div>
@@ -1780,6 +1782,7 @@ export class TripsListComponent implements OnInit {
         enabled: this.reminderEnabled(),
         tripStartDateUtc: trip.start_date_utc,
       });
+      await this.tripReminderService.triggerImmediateCheck();
       this.closeReminderModal();
     } finally {
       this.savingReminder.set(false);
