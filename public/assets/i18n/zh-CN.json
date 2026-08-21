@@ -290,7 +290,11 @@
     "loadingDetails": "查询中，请稍候...",
     "noDetails": "暂时查无航班明细",
     "direct": "直飞",
-    "viaStops": "转机 {{count}} 次"
+    "viaStops": "转机 {{count}} 次",
+    "importToTrip": "导入到行程",
+    "selectTrip": "请选择行程",
+    "confirmImport": "确认导入",
+    "importSuccess": "已成功导入行程"
   },
   "nearby": {
     "message": "你的位置在 {{place}}，{{radius}} 公里内有 {{count}} 个景点"

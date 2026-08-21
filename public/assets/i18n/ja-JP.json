@@ -255,7 +255,11 @@
     "loadingDetails": "検索中です、しばらくお待ちください...",
     "noDetails": "フライト詳細が見つかりません",
     "direct": "直行便",
-    "viaStops": "経由 {{count}} 回"
+    "viaStops": "経由 {{count}} 回",
+    "importToTrip": "旅程にインポート",
+    "selectTrip": "旅程を選択してください",
+    "confirmImport": "インポートを確定",
+    "importSuccess": "旅程へのインポートが完了しました"
   },
   "nearby": {
     "message": "現在地：{{place}}、半径 {{radius}}km 以内に {{count}} 件のスポットがあります"

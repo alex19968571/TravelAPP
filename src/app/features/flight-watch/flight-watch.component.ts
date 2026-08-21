@@ -12,11 +12,12 @@ import { CommonModule, DecimalPipe } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { ReactiveFormsModule, FormsModule, FormBuilder, Validators } from '@angular/forms';
 import { TranslocoModule } from '@jsverse/transloco';
-import { FlightWatch } from '../../core/models';
+import { FlightWatch, Trip } from '../../core/models';
 import { FlightWatchService } from '../../core/services/flight-watch.service';
 import { FlightPriceService, FlightItinerary } from '../../core/services/flight-price.service';
 import { AuthService } from '../../core/services/auth.service';
-import { PreferenceService } from '../../core/services/preference.service';
+import { PreferenceService, COUNTRIES } from '../../core/services/preference.service';
+import { TripService } from '../../core/services/trip.service';
 import { DropdownSelectComponent } from '../../shared/components/dropdown-select/dropdown-select.component';
 
 interface Airport {
@@ -315,7 +316,26 @@ const CURRENCY_CODES = [
       @if (detailWatch(); as dw) {
         <div class="modal-backdrop" (click)="closeDetailModal()">
           <div class="modal-card detail-modal" (click)="$event.stopPropagation()">
-            <h3 class="modal-title">{{ dw.origin }} → {{ dw.destination }}</h3>
+            <div class="modal-header">
+              <h3 class="modal-title">{{ dw.origin }} → {{ dw.destination }}</h3>
+              <button
+                type="button"
+                class="close-x-btn"
+                [attr.aria-label]="'common.close' | transloco"
+                (click)="closeDetailModal()"
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  width="14"
+                  height="14"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2.5"
+                >
+                  <path d="M6 6l12 12M18 6L6 18" stroke-linecap="round" />
+                </svg>
+              </button>
+            </div>
             @if (loadingItineraries()) {
               <p class="detail-status">{{ 'flightWatch.loadingDetails' | transloco }}</p>
             } @else if (itineraries().length === 0) {
@@ -323,7 +343,11 @@ const CURRENCY_CODES = [
             } @else {
               <div class="itinerary-list">
                 @for (it of itineraries(); track $index) {
-                  <div class="itinerary-item">
+                  <div
+                    class="itinerary-item"
+                    [class.selected]="selectedItinerary() === it"
+                    (click)="selectItinerary(it)"
+                  >
                     <div class="itinerary-top">
                       <span class="itinerary-carriers">{{ it.carriers.join('、') }}</span>
                       <span class="itinerary-price">{{ it.priceLabel }}</span>
@@ -342,6 +366,30 @@ const CURRENCY_CODES = [
                       </div>
                     }
                   </div>
+                }
+              </div>
+            }
+            @if (selectedItinerary(); as sel) {
+              <div class="import-panel">
+                @if (importSuccess()) {
+                  <p class="import-success">{{ 'flightWatch.importSuccess' | transloco }}</p>
+                } @else {
+                  <label>{{ 'flightWatch.importToTrip' | transloco }}</label>
+                  <app-dropdown-select
+                    [options]="tripDropdownOptions()"
+                    [ngModel]="importTargetTripId()"
+                    (ngModelChange)="importTargetTripId.set($event)"
+                    name="importTargetTrip"
+                    [placeholder]="'flightWatch.selectTrip' | transloco"
+                  ></app-dropdown-select>
+                  <button
+                    type="button"
+                    class="btn-primary"
+                    [disabled]="!importTargetTripId() || importing()"
+                    (click)="confirmImport(sel)"
+                  >
+                    {{ 'flightWatch.confirmImport' | transloco }}
+                  </button>
                 }
               </div>
             }
@@ -708,6 +756,38 @@ const CURRENCY_CODES = [
         max-height: 85vh;
         overflow-y: auto;
         display: block;
+        background: var(--surface);
+        border-radius: 16px;
+        box-shadow: 0 12px 40px var(--shadow);
+        scrollbar-width: none;
+      }
+      .detail-modal::-webkit-scrollbar {
+        display: none;
+      }
+      .detail-modal .modal-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 1rem;
+      }
+      .detail-modal .modal-title {
+        margin: 0;
+      }
+      .close-x-btn {
+        flex-shrink: 0;
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        border: none;
+        background: var(--icon-bg);
+        color: var(--text-secondary);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .close-x-btn:hover {
+        background: var(--icon-bg-hover);
       }
       .detail-status {
         color: var(--text-secondary);
@@ -725,6 +805,32 @@ const CURRENCY_CODES = [
         border: 1.5px solid var(--border);
         border-radius: 12px;
         padding: 0.75rem 1rem;
+        cursor: pointer;
+        transition:
+          border-color 0.15s,
+          background 0.15s;
+      }
+      .itinerary-item.selected {
+        border-color: var(--accent);
+        background: var(--accent-light);
+      }
+      .import-panel {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        padding-top: 0.75rem;
+        margin-top: 0.75rem;
+        border-top: 1.5px solid var(--border);
+      }
+      .import-panel label {
+        font-size: 0.85rem;
+        color: var(--text-secondary);
+      }
+      .import-success {
+        color: #48bb78;
+        font-weight: 600;
+        text-align: center;
+        margin: 0;
       }
       .itinerary-top {
         display: flex;
@@ -783,6 +889,7 @@ export class FlightWatchComponent implements OnInit {
   private flightWatchService = inject(FlightWatchService);
   private flightPriceService = inject(FlightPriceService);
   private auth = inject(AuthService);
+  private tripService = inject(TripService);
   private fb = inject(FormBuilder);
   private pref = inject(PreferenceService);
 
@@ -794,6 +901,15 @@ export class FlightWatchComponent implements OnInit {
   detailWatch = signal<FlightWatch | null>(null);
   itineraries = signal<FlightItinerary[]>([]);
   loadingItineraries = signal(false);
+  myTrips = signal<Trip[]>([]);
+  selectedItinerary = signal<FlightItinerary | null>(null);
+  importTargetTripId = signal('');
+  importing = signal(false);
+  importSuccess = signal(false);
+
+  tripDropdownOptions(): { value: string; label: string }[] {
+    return this.myTrips().map((t) => ({ value: t.id, label: t.title }));
+  }
 
   currencyDropdownOptions = CURRENCY_CODES.map((c) => ({ value: c, label: c }));
 
@@ -1028,10 +1144,17 @@ export class FlightWatchComponent implements OnInit {
   async openDetailModal(watch: FlightWatch): Promise<void> {
     this.detailWatch.set(watch);
     this.itineraries.set([]);
+    this.selectedItinerary.set(null);
+    this.importTargetTripId.set('');
+    this.importSuccess.set(false);
     this.loadingItineraries.set(true);
     try {
-      const results = await this.flightPriceService.checkItineraries(watch);
+      const [results, trips] = await Promise.all([
+        this.flightPriceService.checkItineraries(watch),
+        this.tripService.getAll(),
+      ]);
       this.itineraries.set(results);
+      this.myTrips.set(trips);
     } finally {
       this.loadingItineraries.set(false);
     }
@@ -1040,6 +1163,46 @@ export class FlightWatchComponent implements OnInit {
   closeDetailModal(): void {
     this.detailWatch.set(null);
     this.itineraries.set([]);
+    this.selectedItinerary.set(null);
+    this.importTargetTripId.set('');
+    this.importSuccess.set(false);
+  }
+
+  selectItinerary(it: FlightItinerary): void {
+    this.selectedItinerary.set(this.selectedItinerary() === it ? null : it);
+    this.importTargetTripId.set('');
+  }
+
+  private countryInfoForAirport(code: string): { timezone: string; currency: string } | undefined {
+    const airport = AIRPORTS.find((a) => a.code === code);
+    if (!airport) return undefined;
+    const country = COUNTRIES.find((c) => c.nativeName === airport.country);
+    return country ? { timezone: country.timezone, currency: country.currency } : undefined;
+  }
+
+  async confirmImport(it: FlightItinerary): Promise<void> {
+    const tripId = this.importTargetTripId();
+    if (!tripId) return;
+    this.importing.set(true);
+    try {
+      const outbound = it.legs[0];
+      const inbound = it.legs[1];
+      const countryInfo = outbound ? this.countryInfoForAirport(outbound.to) : undefined;
+      await this.tripService.update(tripId, {
+        ...(outbound ? { start_date_utc: new Date(outbound.dep).toISOString() } : {}),
+        ...(inbound
+          ? { end_date_utc: new Date(inbound.arr).toISOString() }
+          : outbound
+            ? { end_date_utc: new Date(outbound.arr).toISOString() }
+            : {}),
+        ...(countryInfo?.timezone ? { target_timezone: countryInfo.timezone } : {}),
+        ...(countryInfo?.currency ? { base_currency: countryInfo.currency } : {}),
+      });
+      this.importSuccess.set(true);
+      setTimeout(() => this.closeDetailModal(), 1200);
+    } finally {
+      this.importing.set(false);
+    }
   }
 
   formatLegTime(iso: string): string {
