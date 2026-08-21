@@ -764,14 +764,17 @@ const CURRENCY_CODES = [
       .detail-modal {
         max-width: 480px;
         max-height: 85vh;
-        overflow: hidden;
+        overflow: visible;
         display: flex;
         flex-direction: column;
-        background: var(--surface);
-        border-radius: 16px;
-        box-shadow: 0 12px 40px var(--shadow);
+        align-items: stretch;
+        justify-content: flex-start;
+        background: transparent;
+        box-shadow: none;
       }
       .detail-modal-scroll {
+        flex: 1;
+        min-height: 0;
         overflow-y: auto;
         scrollbar-width: none;
         padding: 0 1.25rem 1.25rem;
@@ -785,8 +788,10 @@ const CURRENCY_CODES = [
         justify-content: center;
         position: relative;
         flex-shrink: 0;
+        width: 100%;
+        box-sizing: border-box;
         padding: 1.25rem 1.25rem 1rem;
-        background: var(--surface);
+        background: transparent;
         z-index: 1;
       }
       .detail-modal .modal-title {
@@ -845,6 +850,21 @@ const CURRENCY_CODES = [
       }
       .boarding-pass:active {
         transform: scale(0.98);
+      }
+      /* 登機證右側中間的圓形撕票缺口，做法參考「行程」頁登機證卡片（trips-list.component.ts .trip-card::after）：
+         缺口顏色需對齊此彈窗的背景（半透明遮罩），才能呈現「咬出一個洞」的效果 */
+      .boarding-pass::after {
+        content: '';
+        position: absolute;
+        right: -15px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        background: rgba(0, 0, 0, 0.45);
+        z-index: 2;
+        pointer-events: none;
       }
       .boarding-pass.selected {
         border-color: var(--accent);
