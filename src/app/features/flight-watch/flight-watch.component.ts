@@ -729,12 +729,16 @@ const CURRENCY_CODES = [
       .itinerary-top {
         display: flex;
         align-items: center;
+        flex-wrap: wrap;
+        gap: 0.25rem 0.75rem;
         justify-content: space-between;
         margin-bottom: 0.5rem;
       }
       .itinerary-carriers {
         font-weight: 600;
         color: var(--text-primary);
+        min-width: 0;
+        overflow-wrap: break-word;
         font-size: 0.9rem;
       }
       .itinerary-price {
@@ -742,18 +746,33 @@ const CURRENCY_CODES = [
         font-weight: 700;
         color: var(--accent);
       }
+      .itinerary-item {
+        max-width: 100%;
+        box-sizing: border-box;
+      }
       .itinerary-leg {
         display: flex;
         flex-wrap: wrap;
-        gap: 0.5rem;
+        gap: 0.2rem 0.5rem;
         font-size: 0.8rem;
         color: var(--text-secondary);
         padding: 0.2rem 0;
+        max-width: 100%;
       }
       .leg-route {
         font-weight: 600;
         color: var(--text-primary);
-        min-width: 70px;
+      }
+      .leg-time,
+      .leg-duration,
+      .leg-stops {
+        white-space: nowrap;
+      }
+      @media (max-width: 480px) {
+        .itinerary-leg {
+          flex-direction: column;
+          gap: 0.1rem;
+        }
       }
     `,
   ],
