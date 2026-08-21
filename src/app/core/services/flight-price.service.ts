@@ -3,6 +3,23 @@ import { FlightWatch } from '../models';
 import { FlightWatchService } from './flight-watch.service';
 import { SupabaseService } from './supabase.service';
 
+export interface FlightItineraryLeg {
+  from: string;
+  to: string;
+  dep: string;
+  arr: string;
+  durMin: number;
+  stops: number;
+}
+
+export interface FlightItinerary {
+  price: number;
+  priceLabel: string;
+  carriers: string[];
+  bucket: string;
+  legs: FlightItineraryLeg[];
+}
+
 @Injectable({ providedIn: 'root' })
 export class FlightPriceService {
   private flightWatchService = inject(FlightWatchService);
@@ -29,6 +46,26 @@ export class FlightPriceService {
     } catch (err) {
       console.warn('[FlightPrice] checkPrice failed', err);
       return null;
+    }
+  }
+
+  /** 即時查詢完整航班明細清單（航空公司、直飛/轉機、去回程時間），供「查看航班明細」彈窗使用 */
+  async checkItineraries(watch: FlightWatch): Promise<FlightItinerary[]> {
+    try {
+      const { data, error } = await this.supabase.functions.invoke('flight-price', {
+        body: {
+          origin: watch.origin,
+          destination: watch.destination,
+          depart_date: watch.depart_date,
+          return_date: watch.return_date,
+          currency: watch.currency,
+        },
+      });
+      if (error) throw error;
+      return Array.isArray(data?.itineraries) ? data.itineraries : [];
+    } catch (err) {
+      console.warn('[FlightPrice] checkItineraries failed', err);
+      return [];
     }
   }
 

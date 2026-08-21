@@ -250,7 +250,12 @@
     "priceUnavailable": "現在価格を取得できません",
     "originPlaceholder": "都市または空港を入力（例：台北）",
     "destinationPlaceholder": "都市または空港を入力（例：東京）",
-    "swap": "出発地と目的地を入れ替え"
+    "swap": "出発地と目的地を入れ替え",
+    "viewDetails": "詳細を見る",
+    "loadingDetails": "検索中です、しばらくお待ちください...",
+    "noDetails": "フライト詳細が見つかりません",
+    "direct": "直行便",
+    "viaStops": "経由 {{count}} 回"
   },
   "nearby": {
     "message": "現在地：{{place}}、半径 {{radius}}km 以内に {{count}} 件のスポットがあります"

@@ -250,7 +250,12 @@
     "priceUnavailable": "Price temporarily unavailable",
     "originPlaceholder": "Enter city or airport, e.g. Taipei",
     "destinationPlaceholder": "Enter city or airport, e.g. Tokyo",
-    "swap": "Swap origin and destination"
+    "swap": "Swap origin and destination",
+    "viewDetails": "View Details",
+    "loadingDetails": "Loading, please wait...",
+    "noDetails": "No flight details available",
+    "direct": "Direct",
+    "viaStops": "{{count}} stop(s)"
   },
   "nearby": {
     "message": "You're near {{place}} — {{count}} spot(s) within {{radius}} km"

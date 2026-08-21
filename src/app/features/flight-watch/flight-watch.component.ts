@@ -14,7 +14,7 @@ import { ReactiveFormsModule, FormsModule, FormBuilder, Validators } from '@angu
 import { TranslocoModule } from '@jsverse/transloco';
 import { FlightWatch } from '../../core/models';
 import { FlightWatchService } from '../../core/services/flight-watch.service';
-import { FlightPriceService } from '../../core/services/flight-price.service';
+import { FlightPriceService, FlightItinerary } from '../../core/services/flight-price.service';
 import { AuthService } from '../../core/services/auth.service';
 import { PreferenceService } from '../../core/services/preference.service';
 import { DropdownSelectComponent } from '../../shared/components/dropdown-select/dropdown-select.component';
@@ -285,6 +285,13 @@ const CURRENCY_CODES = [
               </div>
               <div class="item-actions">
                 <button
+                  class="detail-btn"
+                  type="button"
+                  (click)="openDetailModal(watch); $event.stopPropagation()"
+                >
+                  {{ 'flightWatch.viewDetails' | transloco }}
+                </button>
+                <button
                   class="refresh-btn"
                   type="button"
                   (click)="recheck(watch); $event.stopPropagation()"
@@ -304,6 +311,48 @@ const CURRENCY_CODES = [
           }
         </div>
       </div>
+
+      @if (detailWatch(); as dw) {
+        <div class="modal-backdrop" (click)="closeDetailModal()">
+          <div class="modal-card detail-modal" (click)="$event.stopPropagation()">
+            <h3 class="modal-title">{{ dw.origin }} → {{ dw.destination }}</h3>
+            @if (loadingItineraries()) {
+              <p class="detail-status">{{ 'flightWatch.loadingDetails' | transloco }}</p>
+            } @else if (itineraries().length === 0) {
+              <p class="detail-status">{{ 'flightWatch.noDetails' | transloco }}</p>
+            } @else {
+              <div class="itinerary-list">
+                @for (it of itineraries(); track $index) {
+                  <div class="itinerary-item">
+                    <div class="itinerary-top">
+                      <span class="itinerary-carriers">{{ it.carriers.join('、') }}</span>
+                      <span class="itinerary-price">{{ it.priceLabel }}</span>
+                    </div>
+                    @for (leg of it.legs; track $index) {
+                      <div class="itinerary-leg">
+                        <span class="leg-route">{{ leg.from }} → {{ leg.to }}</span>
+                        <span class="leg-time"
+                          >{{ formatLegTime(leg.dep) }} - {{ formatLegTime(leg.arr) }}</span
+                        >
+                        <span class="leg-duration">{{ formatDuration(leg.durMin) }}</span>
+                        <span class="leg-stops">{{
+                          (leg.stops === 0 ? 'flightWatch.direct' : 'flightWatch.viaStops')
+                            | transloco: { count: leg.stops }
+                        }}</span>
+                      </div>
+                    }
+                  </div>
+                }
+              </div>
+            }
+            <div class="form-actions">
+              <button type="button" class="btn-secondary" (click)="closeDetailModal()">
+                {{ 'common.close' | transloco }}
+              </button>
+            </div>
+          </div>
+        </div>
+      }
     </div>
   `,
   styles: [
@@ -645,6 +694,67 @@ const CURRENCY_CODES = [
         font-size: 0.875rem;
         margin-left: auto;
       }
+      .detail-btn {
+        cursor: pointer;
+        color: var(--text-secondary);
+        font-size: 0.875rem;
+        padding: 0.375rem 0.875rem;
+        border: 1.5px solid var(--border);
+        border-radius: 8px;
+        background: transparent;
+      }
+      .detail-modal {
+        max-width: 480px;
+        max-height: 85vh;
+        overflow-y: auto;
+        display: block;
+      }
+      .detail-status {
+        color: var(--text-secondary);
+        font-size: 0.9rem;
+        text-align: center;
+        padding: 2rem 0;
+      }
+      .itinerary-list {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+      }
+      .itinerary-item {
+        border: 1.5px solid var(--border);
+        border-radius: 12px;
+        padding: 0.75rem 1rem;
+      }
+      .itinerary-top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 0.5rem;
+      }
+      .itinerary-carriers {
+        font-weight: 600;
+        color: var(--text-primary);
+        font-size: 0.9rem;
+      }
+      .itinerary-price {
+        font-family: var(--font-mono);
+        font-weight: 700;
+        color: var(--accent);
+      }
+      .itinerary-leg {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        font-size: 0.8rem;
+        color: var(--text-secondary);
+        padding: 0.2rem 0;
+      }
+      .leg-route {
+        font-weight: 600;
+        color: var(--text-primary);
+        min-width: 70px;
+      }
     `,
   ],
 })
@@ -662,6 +772,9 @@ export class FlightWatchComponent implements OnInit {
   checking = signal<string | null>(null);
   /** 非 null 時代表目前彈窗是在編輯這筆既有追蹤，而不是新增 */
   editingWatchId = signal<string | null>(null);
+  detailWatch = signal<FlightWatch | null>(null);
+  itineraries = signal<FlightItinerary[]>([]);
+  loadingItineraries = signal(false);
 
   currencyDropdownOptions = CURRENCY_CODES.map((c) => ({ value: c, label: c }));
 
@@ -891,5 +1004,34 @@ export class FlightWatchComponent implements OnInit {
     if (!iso) return '';
     const d = new Date(iso);
     return `${d.getMonth() + 1}/${d.getDate()} ${d.getHours()}:${String(d.getMinutes()).padStart(2, '0')}`;
+  }
+
+  async openDetailModal(watch: FlightWatch): Promise<void> {
+    this.detailWatch.set(watch);
+    this.itineraries.set([]);
+    this.loadingItineraries.set(true);
+    try {
+      const results = await this.flightPriceService.checkItineraries(watch);
+      this.itineraries.set(results);
+    } finally {
+      this.loadingItineraries.set(false);
+    }
+  }
+
+  closeDetailModal(): void {
+    this.detailWatch.set(null);
+    this.itineraries.set([]);
+  }
+
+  formatLegTime(iso: string): string {
+    if (!iso) return '';
+    const d = new Date(iso);
+    return `${d.getMonth() + 1}/${d.getDate()} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+  }
+
+  formatDuration(durMin: number): string {
+    const h = Math.floor(durMin / 60);
+    const m = durMin % 60;
+    return `${h}h${String(m).padStart(2, '0')}m`;
   }
 }

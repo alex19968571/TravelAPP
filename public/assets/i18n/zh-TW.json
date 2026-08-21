@@ -285,7 +285,12 @@
     "priceUnavailable": "暫時無法取得報價",
     "originPlaceholder": "輸入城市或機場，例如：台北",
     "destinationPlaceholder": "輸入城市或機場，例如：東京",
-    "swap": "交換出發地與目的地"
+    "swap": "交換出發地與目的地",
+    "viewDetails": "查看明細",
+    "loadingDetails": "查詢中，請稍候...",
+    "noDetails": "暫時查無航班明細",
+    "direct": "直飛",
+    "viaStops": "轉機 {{count}} 次"
   },
   "nearby": {
     "message": "你的位置在 {{place}}，{{radius}} 公里內有 {{count}} 個景點"

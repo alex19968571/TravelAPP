@@ -39,7 +39,54 @@ function parsePriceString(raw: unknown): number | null {
   return isNaN(num) ? null : num;
 }
 
-async function fetchSkyscannerPrices(path: string, params: URLSearchParams): Promise<number[]> {
+interface ItineraryLeg {
+  from: string;
+  to: string;
+  dep: string;
+  arr: string;
+  durMin: number;
+  stops: number;
+}
+
+interface Itinerary {
+  price: number;
+  priceLabel: string;
+  carriers: string[];
+  bucket: string;
+  legs: ItineraryLeg[];
+}
+
+interface SkyscannerResult {
+  price: number | null;
+  itineraries: Itinerary[];
+}
+
+function mapSkyscannerResults(results: any[]): Itinerary[] {
+  return results
+    .map((it: any): Itinerary | null => {
+      const price = parsePriceString(it?.price) ?? it?.price_raw ?? null;
+      if (price === null) return null;
+      const legs: ItineraryLeg[] = (it?.legs ?? []).map((leg: any) => ({
+        from: leg?.from ?? '',
+        to: leg?.to ?? '',
+        dep: leg?.dep ?? '',
+        arr: leg?.arr ?? '',
+        durMin: typeof leg?.dur_min === 'number' ? leg.dur_min : 0,
+        stops: typeof leg?.stops === 'number' ? leg.stops : 0,
+      }));
+      return {
+        price,
+        priceLabel: typeof it?.price === 'string' ? it.price : `${price}`,
+        carriers: Array.isArray(it?.carriers) ? it.carriers : [],
+        bucket: it?.bucket ?? '',
+        legs,
+      };
+    })
+    .filter((it: Itinerary | null): it is Itinerary => it !== null)
+    .sort((a, b) => a.price - b.price);
+}
+
+async function fetchSkyscannerResults(path: string, params: URLSearchParams): Promise<Itinerary[]> {
   const res = await fetch(`https://${RAPIDAPI_HOST}${path}?${params}`, {
     headers: {
       'x-rapidapi-key': RAPIDAPI_KEY,
@@ -48,13 +95,11 @@ async function fetchSkyscannerPrices(path: string, params: URLSearchParams): Pro
   });
   if (!res.ok) throw new Error(`Skyscanner HTTP ${res.status}`);
   const data = await res.json();
-  return (data?.results ?? [])
-    .map((it: any) => parsePriceString(it?.price))
-    .filter((p: number | null): p is number => p !== null);
+  return mapSkyscannerResults(data?.results ?? []);
 }
 
-async function checkViaSkyscanner(q: FlightQuery): Promise<number | null> {
-  if (!RAPIDAPI_KEY) return null;
+async function checkViaSkyscanner(q: FlightQuery): Promise<SkyscannerResult> {
+  if (!RAPIDAPI_KEY) return { price: null, itineraries: [] };
   const common = {
     limit: '20',
     adults: '1',
@@ -65,8 +110,8 @@ async function checkViaSkyscanner(q: FlightQuery): Promise<number | null> {
   };
 
   // 有填回程日期 → 呼叫來回票 Search Round Trip Flights，否則呼叫單程票 Search One Way Flights
-  const prices = q.return_date
-    ? await fetchSkyscannerPrices(
+  const itineraries = q.return_date
+    ? await fetchSkyscannerResults(
         '/api/v1/roundtrip',
         new URLSearchParams({
           origin: q.origin,
@@ -76,7 +121,7 @@ async function checkViaSkyscanner(q: FlightQuery): Promise<number | null> {
           ...common,
         }),
       )
-    : await fetchSkyscannerPrices(
+    : await fetchSkyscannerResults(
         '/api/v1/search',
         new URLSearchParams({
           origin: q.origin,
@@ -86,7 +131,10 @@ async function checkViaSkyscanner(q: FlightQuery): Promise<number | null> {
         }),
       );
 
-  return prices.length ? Math.min(...prices) : null;
+  return {
+    price: itineraries.length ? itineraries[0].price : null,
+    itineraries: itineraries.slice(0, 20),
+  };
 }
 
 async function checkViaTequila(q: FlightQuery): Promise<number | null> {
@@ -139,8 +187,11 @@ Deno.serve(async (req) => {
     const query = (await req.json()) as FlightQuery;
 
     let price: number | null = null;
+    let itineraries: Itinerary[] = [];
     try {
-      price = await checkViaSkyscanner(query);
+      const result = await checkViaSkyscanner(query);
+      price = result.price;
+      itineraries = result.itineraries;
     } catch (err) {
       console.error('[flight-price] skyscanner failed', err);
     }
@@ -152,7 +203,7 @@ Deno.serve(async (req) => {
       }
     }
 
-    return new Response(JSON.stringify({ price }), {
+    return new Response(JSON.stringify({ price, itineraries }), {
       headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
     });
   } catch (err) {
