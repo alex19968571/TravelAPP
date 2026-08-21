@@ -9,7 +9,7 @@
 import { createClient } from 'jsr:@supabase/supabase-js@2';
 
 const RAPIDAPI_KEY = Deno.env.get('RAPIDAPI_KEY') ?? '';
-const RAPIDAPI_HOST = 'skyscanner89.p.rapidapi.com';
+const RAPIDAPI_HOST = 'skyscanner-flights4.p.rapidapi.com';
 const TEQUILA_API_KEY = Deno.env.get('TEQUILA_API_KEY') ?? '';
 const TEQUILA_SEARCH_URL = 'https://api.tequila.kiwi.com/v2/search';
 
@@ -31,23 +31,61 @@ function toDdMmYyyy(isoDate: string): string {
   return `${d}/${m}/${y}`;
 }
 
-async function checkViaSkyscanner(q: FlightQuery): Promise<number | null> {
-  if (!RAPIDAPI_KEY) return null;
-  const params = new URLSearchParams({
-    origin: q.origin,
-    destination: q.destination,
-    departureDate: q.depart_date,
-    ...(q.return_date ? { returnDate: q.return_date } : {}),
-    currency: q.currency,
-  });
-  const res = await fetch(`https://${RAPIDAPI_HOST}/flights/search-one-way?${params}`, {
-    headers: { 'X-RapidAPI-Key': RAPIDAPI_KEY, 'X-RapidAPI-Host': RAPIDAPI_HOST },
+/** 票價欄位在這支 API 是字串（例如 "$450.00" 或 "450"），統一去除非數字字元後解析 */
+function parsePriceString(raw: unknown): number | null {
+  if (typeof raw === 'number') return isNaN(raw) ? null : raw;
+  if (typeof raw !== 'string') return null;
+  const num = parseFloat(raw.replace(/[^0-9.]/g, ''));
+  return isNaN(num) ? null : num;
+}
+
+async function fetchSkyscannerPrices(path: string, params: URLSearchParams): Promise<number[]> {
+  const res = await fetch(`https://${RAPIDAPI_HOST}${path}?${params}`, {
+    headers: {
+      'x-rapidapi-key': RAPIDAPI_KEY,
+      'x-rapidapi-host': RAPIDAPI_HOST,
+    },
   });
   if (!res.ok) throw new Error(`Skyscanner HTTP ${res.status}`);
   const data = await res.json();
-  const prices: number[] = (data?.itineraries ?? data?.data?.itineraries ?? [])
-    .map((it: any) => it?.price?.raw ?? it?.pricing_options?.[0]?.price?.amount)
-    .filter((p: unknown): p is number => typeof p === 'number' && !isNaN(p));
+  return (data?.results ?? [])
+    .map((it: any) => parsePriceString(it?.price))
+    .filter((p: number | null): p is number => p !== null);
+}
+
+async function checkViaSkyscanner(q: FlightQuery): Promise<number | null> {
+  if (!RAPIDAPI_KEY) return null;
+  const common = {
+    limit: '20',
+    adults: '1',
+    currency: q.currency,
+    cabin: 'economy',
+    market: 'US',
+    locale: 'en-US',
+  };
+
+  // 有填回程日期 → 呼叫來回票 Search Round Trip Flights，否則呼叫單程票 Search One Way Flights
+  const prices = q.return_date
+    ? await fetchSkyscannerPrices(
+        '/api/v1/roundtrip',
+        new URLSearchParams({
+          origin: q.origin,
+          destination: q.destination,
+          date: q.depart_date,
+          return_date: q.return_date,
+          ...common,
+        }),
+      )
+    : await fetchSkyscannerPrices(
+        '/api/v1/search',
+        new URLSearchParams({
+          origin: q.origin,
+          destination: q.destination,
+          date: q.depart_date,
+          ...common,
+        }),
+      );
+
   return prices.length ? Math.min(...prices) : null;
 }
 
