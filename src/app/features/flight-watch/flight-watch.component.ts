@@ -16,7 +16,7 @@ import { FlightWatch, Trip } from '../../core/models';
 import { FlightWatchService } from '../../core/services/flight-watch.service';
 import { FlightPriceService, FlightItinerary } from '../../core/services/flight-price.service';
 import { AuthService } from '../../core/services/auth.service';
-import { PreferenceService, COUNTRIES } from '../../core/services/preference.service';
+import { PreferenceService } from '../../core/services/preference.service';
 import { TripService } from '../../core/services/trip.service';
 import { DropdownSelectComponent } from '../../shared/components/dropdown-select/dropdown-select.component';
 
@@ -84,6 +84,71 @@ const AIRPORTS: Airport[] = [
   { code: 'MEL', city: '墨爾本', country: '澳洲' },
   { code: 'AKL', city: '奧克蘭', country: '紐西蘭' },
 ];
+
+/**
+ * 機場代碼直接對應時區／幣別，供匯入行程時依「去程目的地機場」帶入使用。
+ * 不透過 AIRPORTS.country 字串比對 COUNTRIES.nativeName 間接查詢——
+ * 兩者的國家名稱書寫不一定一致（例如「南韓」對不上「한국」、「中國」對不上「中国」），
+ * 且 COUNTRIES 未涵蓋紐西蘭、香港、澳門、菲律賓、印度、卡達、荷蘭等地，會查不到值。
+ * 同一國家內時區可能不同（例如美國東西岸），故仍需以機場代碼為單位個別列出。
+ */
+const AIRPORT_TZ_CURRENCY: Record<string, { timezone: string; currency: string }> = {
+  TPE: { timezone: 'Asia/Taipei', currency: 'TWD' },
+  TSA: { timezone: 'Asia/Taipei', currency: 'TWD' },
+  KHH: { timezone: 'Asia/Taipei', currency: 'TWD' },
+  RMQ: { timezone: 'Asia/Taipei', currency: 'TWD' },
+  NRT: { timezone: 'Asia/Tokyo', currency: 'JPY' },
+  HND: { timezone: 'Asia/Tokyo', currency: 'JPY' },
+  KIX: { timezone: 'Asia/Tokyo', currency: 'JPY' },
+  NGO: { timezone: 'Asia/Tokyo', currency: 'JPY' },
+  FUK: { timezone: 'Asia/Tokyo', currency: 'JPY' },
+  CTS: { timezone: 'Asia/Tokyo', currency: 'JPY' },
+  OKA: { timezone: 'Asia/Tokyo', currency: 'JPY' },
+  ICN: { timezone: 'Asia/Seoul', currency: 'KRW' },
+  GMP: { timezone: 'Asia/Seoul', currency: 'KRW' },
+  PUS: { timezone: 'Asia/Seoul', currency: 'KRW' },
+  HKG: { timezone: 'Asia/Hong_Kong', currency: 'HKD' },
+  MFM: { timezone: 'Asia/Macau', currency: 'MOP' },
+  PVG: { timezone: 'Asia/Shanghai', currency: 'CNY' },
+  SHA: { timezone: 'Asia/Shanghai', currency: 'CNY' },
+  PEK: { timezone: 'Asia/Shanghai', currency: 'CNY' },
+  PKX: { timezone: 'Asia/Shanghai', currency: 'CNY' },
+  CAN: { timezone: 'Asia/Shanghai', currency: 'CNY' },
+  SZX: { timezone: 'Asia/Shanghai', currency: 'CNY' },
+  BKK: { timezone: 'Asia/Bangkok', currency: 'THB' },
+  DMK: { timezone: 'Asia/Bangkok', currency: 'THB' },
+  HKT: { timezone: 'Asia/Bangkok', currency: 'THB' },
+  CNX: { timezone: 'Asia/Bangkok', currency: 'THB' },
+  SGN: { timezone: 'Asia/Ho_Chi_Minh', currency: 'VND' },
+  HAN: { timezone: 'Asia/Ho_Chi_Minh', currency: 'VND' },
+  DAD: { timezone: 'Asia/Ho_Chi_Minh', currency: 'VND' },
+  SIN: { timezone: 'Asia/Singapore', currency: 'SGD' },
+  KUL: { timezone: 'Asia/Kuala_Lumpur', currency: 'MYR' },
+  CGK: { timezone: 'Asia/Jakarta', currency: 'IDR' },
+  DPS: { timezone: 'Asia/Makassar', currency: 'IDR' },
+  MNL: { timezone: 'Asia/Manila', currency: 'PHP' },
+  CEB: { timezone: 'Asia/Manila', currency: 'PHP' },
+  DEL: { timezone: 'Asia/Kolkata', currency: 'INR' },
+  BOM: { timezone: 'Asia/Kolkata', currency: 'INR' },
+  DXB: { timezone: 'Asia/Dubai', currency: 'AED' },
+  DOH: { timezone: 'Asia/Qatar', currency: 'QAR' },
+  IST: { timezone: 'Europe/Istanbul', currency: 'TRY' },
+  LHR: { timezone: 'Europe/London', currency: 'GBP' },
+  CDG: { timezone: 'Europe/Paris', currency: 'EUR' },
+  FRA: { timezone: 'Europe/Berlin', currency: 'EUR' },
+  FCO: { timezone: 'Europe/Rome', currency: 'EUR' },
+  AMS: { timezone: 'Europe/Amsterdam', currency: 'EUR' },
+  ZRH: { timezone: 'Europe/Zurich', currency: 'CHF' },
+  JFK: { timezone: 'America/New_York', currency: 'USD' },
+  LAX: { timezone: 'America/Los_Angeles', currency: 'USD' },
+  SFO: { timezone: 'America/Los_Angeles', currency: 'USD' },
+  SEA: { timezone: 'America/Los_Angeles', currency: 'USD' },
+  YVR: { timezone: 'America/Vancouver', currency: 'CAD' },
+  YYZ: { timezone: 'America/Toronto', currency: 'CAD' },
+  SYD: { timezone: 'Australia/Sydney', currency: 'AUD' },
+  MEL: { timezone: 'Australia/Melbourne', currency: 'AUD' },
+  AKL: { timezone: 'Pacific/Auckland', currency: 'NZD' },
+};
 
 const CURRENCY_CODES = [
   'TWD',
@@ -267,6 +332,27 @@ const CURRENCY_CODES = [
                 <div class="item-price">
                   @if (checking() === watch.id) {
                     <div class="amount">{{ 'flightWatch.checking' | transloco }}</div>
+                  } @else if (priceRange(watch.id); as range) {
+                    <div class="price-range-row">
+                      <span
+                        class="amount"
+                        [class.below-target]="
+                          watch.target_price != null && range.min.price <= watch.target_price
+                        "
+                      >
+                        {{ range.min.price | number: '1.0-0' }} {{ watch.currency }}
+                      </span>
+                      <span class="price-range-carrier">{{ range.min.carriers.join('、') }}</span>
+                    </div>
+                    @if (range.max.price !== range.min.price) {
+                      <div class="price-range-row">
+                        <span class="amount-secondary">
+                          {{ range.max.price | number: '1.0-0' }} {{ watch.currency }}
+                        </span>
+                        <span class="price-range-carrier">{{ range.max.carriers.join('、') }}</span>
+                      </div>
+                    }
+                    <div class="amount-checked">{{ formatCheckedAt(watch.last_checked_at) }}</div>
                   } @else if (watch.last_price !== null) {
                     <div
                       class="amount"
@@ -717,10 +803,33 @@ const CURRENCY_CODES = [
       .amount.below-target {
         color: #48bb78;
       }
+      .amount-secondary {
+        font-family: var(--font-mono);
+        font-variant-numeric: tabular-nums;
+        font-weight: 600;
+        color: var(--text-secondary);
+        font-size: 0.95rem;
+      }
+      .price-range-row {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+      }
+      .price-range-row + .price-range-row {
+        margin-top: 0.3rem;
+      }
+      .price-range-carrier {
+        font-size: 0.72rem;
+        color: var(--text-secondary);
+        margin-top: 0.1rem;
+        max-width: 180px;
+        text-align: right;
+        overflow-wrap: break-word;
+      }
       .amount-checked {
         font-size: 0.72rem;
         color: var(--text-secondary);
-        margin-top: 0.15rem;
+        margin-top: 0.3rem;
       }
       .amount-unavailable {
         font-size: 0.85rem;
@@ -847,6 +956,9 @@ const CURRENCY_CODES = [
           border-color 0.15s,
           box-shadow 0.15s,
           transform 0.1s;
+        /* 手機版預設點擊會出現一層半透明白色高亮，蓋住整張卡片看起來像「背景變全白」，
+           比照「行程」頁登機證卡片（trips-list.component.ts .trip-card）關閉這個預設效果 */
+        -webkit-tap-highlight-color: transparent;
       }
       .boarding-pass:active {
         transform: scale(0.98);
@@ -979,6 +1091,8 @@ export class FlightWatchComponent implements OnInit {
   watches = signal<FlightWatch[]>([]);
   showAddModal = signal(false);
   checking = signal<string | null>(null);
+  /** 各追蹤路線目前查到的最低/最高價航班（僅存於記憶體，重整頁面或當日已檢查過則需回退顯示 last_price） */
+  priceRanges = signal<Map<string, { min: FlightItinerary; max: FlightItinerary }>>(new Map());
   /** 非 null 時代表目前彈窗是在編輯這筆既有追蹤，而不是新增 */
   editingWatchId = signal<string | null>(null);
   detailWatch = signal<FlightWatch | null>(null);
@@ -1035,8 +1149,29 @@ export class FlightWatchComponent implements OnInit {
     });
     await this.loadWatches();
     for (const watch of this.watches()) {
-      this.flightPriceService.refreshIfNeeded(watch).then(() => this.loadWatches());
+      this.flightPriceService.refreshIfNeeded(watch).then((itineraries) => {
+        if (itineraries) this.setPriceRange(watch.id, itineraries);
+        this.loadWatches();
+      });
     }
+  }
+
+  /** 依查到的明細清單計算最低/最高價，更新對應追蹤路線的顯示用快取（僅存於記憶體） */
+  private setPriceRange(watchId: string, itineraries: FlightItinerary[]): void {
+    if (itineraries.length === 0) return;
+    let min = itineraries[0];
+    let max = itineraries[0];
+    for (const it of itineraries) {
+      if (it.price < min.price) min = it;
+      if (it.price > max.price) max = it;
+    }
+    const next = new Map(this.priceRanges());
+    next.set(watchId, { min, max });
+    this.priceRanges.set(next);
+  }
+
+  priceRange(watchId: string): { min: FlightItinerary; max: FlightItinerary } | undefined {
+    return this.priceRanges().get(watchId);
   }
 
   private get ownerId(): string {
@@ -1179,11 +1314,12 @@ export class FlightWatchComponent implements OnInit {
     const watch = this.watches().find((w) => w.id === id);
     if (watch) {
       this.checking.set(id);
-      const price = await this.flightPriceService.checkPrice(watch);
+      const { price, itineraries } = await this.flightPriceService.checkItinerariesWithPrice(watch);
       await this.flightWatchService.update(id, {
         last_price: price,
         last_checked_at: new Date().toISOString(),
       });
+      this.setPriceRange(id, itineraries);
       this.checking.set(null);
       await this.loadWatches();
     }
@@ -1204,18 +1340,20 @@ export class FlightWatchComponent implements OnInit {
     this.closeAddModal();
     await this.loadWatches();
     this.checking.set(created.id);
-    await this.flightPriceService.refreshIfNeeded(created);
+    const itineraries = await this.flightPriceService.refreshIfNeeded(created);
+    if (itineraries) this.setPriceRange(created.id, itineraries);
     this.checking.set(null);
     await this.loadWatches();
   }
 
   async recheck(watch: FlightWatch): Promise<void> {
     this.checking.set(watch.id);
-    const price = await this.flightPriceService.checkPrice(watch);
+    const { price, itineraries } = await this.flightPriceService.checkItinerariesWithPrice(watch);
     await this.flightWatchService.update(watch.id, {
       last_price: price,
       last_checked_at: new Date().toISOString(),
     });
+    this.setPriceRange(watch.id, itineraries);
     this.checking.set(null);
     await this.loadWatches();
   }
@@ -1275,10 +1413,7 @@ export class FlightWatchComponent implements OnInit {
   }
 
   private countryInfoForAirport(code: string): { timezone: string; currency: string } | undefined {
-    const airport = AIRPORTS.find((a) => a.code === code);
-    if (!airport) return undefined;
-    const country = COUNTRIES.find((c) => c.nativeName === airport.country);
-    return country ? { timezone: country.timezone, currency: country.currency } : undefined;
+    return AIRPORT_TZ_CURRENCY[code];
   }
 
   /** 產生預設行程名稱，若已有同名行程則加上流水號（新行程、新行程2、新行程3...） */
