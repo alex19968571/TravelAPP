@@ -9,7 +9,7 @@ import {
   HostListener,
 } from '@angular/core';
 import { CommonModule, DecimalPipe } from '@angular/common';
-import { RouterModule } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 import { ReactiveFormsModule, FormsModule, FormBuilder, Validators } from '@angular/forms';
 import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
 import { FlightWatch, Trip } from '../../core/models';
@@ -1085,6 +1085,7 @@ export class FlightWatchComponent implements OnInit {
   private fb = inject(FormBuilder);
   private pref = inject(PreferenceService);
   private transloco = inject(TranslocoService);
+  private router = inject(Router);
 
   private static readonly NEW_TRIP_VALUE = '__new__';
 
@@ -1445,18 +1446,23 @@ export class FlightWatchComponent implements OnInit {
         ...(countryInfo?.currency ? { base_currency: countryInfo.currency } : {}),
       };
 
+      let targetTripId = selectedValue;
       if (selectedValue === FlightWatchComponent.NEW_TRIP_VALUE) {
-        await this.tripService.create({
+        const created = await this.tripService.create({
           title: this.generateDefaultTripTitle(),
           target_timezone: countryInfo?.timezone ?? this.pref.homeCountry().timezone,
           base_currency: countryInfo?.currency ?? this.pref.homeCountry().currency,
           ...tripPatch,
         });
+        targetTripId = created.id;
       } else {
         await this.tripService.update(selectedValue, tripPatch);
       }
       this.importSuccess.set(true);
-      setTimeout(() => this.closeImportModal(), 1200);
+      setTimeout(() => {
+        this.closeDetailModal();
+        this.router.navigate(['/trips', targetTripId]);
+      }, 800);
     } finally {
       this.importing.set(false);
     }
