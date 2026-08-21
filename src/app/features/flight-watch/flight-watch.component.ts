@@ -11,7 +11,7 @@ import {
 import { CommonModule, DecimalPipe } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { ReactiveFormsModule, FormsModule, FormBuilder, Validators } from '@angular/forms';
-import { TranslocoModule } from '@jsverse/transloco';
+import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
 import { FlightWatch, Trip } from '../../core/models';
 import { FlightWatchService } from '../../core/services/flight-watch.service';
 import { FlightPriceService, FlightItinerary } from '../../core/services/flight-price.service';
@@ -336,70 +336,80 @@ const CURRENCY_CODES = [
                 </svg>
               </button>
             </div>
-            @if (loadingItineraries()) {
-              <p class="detail-status">{{ 'flightWatch.loadingDetails' | transloco }}</p>
-            } @else if (itineraries().length === 0) {
-              <p class="detail-status">{{ 'flightWatch.noDetails' | transloco }}</p>
-            } @else {
-              <div class="itinerary-list">
-                @for (it of itineraries(); track $index) {
-                  <div
-                    class="itinerary-item"
-                    [class.selected]="selectedItinerary() === it"
-                    (click)="selectItinerary(it)"
-                  >
-                    <div class="itinerary-top">
-                      <span class="itinerary-carriers">{{ it.carriers.join('、') }}</span>
-                      <span class="itinerary-price">{{ it.priceLabel }}</span>
-                    </div>
-                    @for (leg of it.legs; track $index) {
-                      <div class="itinerary-leg">
-                        <span class="leg-route">{{ leg.from }} → {{ leg.to }}</span>
-                        <span class="leg-time"
-                          >{{ formatLegTime(leg.dep) }} - {{ formatLegTime(leg.arr) }}</span
-                        >
-                        <span class="leg-duration">{{ formatDuration(leg.durMin) }}</span>
-                        <span class="leg-stops">{{
-                          (leg.stops === 0 ? 'flightWatch.direct' : 'flightWatch.viaStops')
-                            | transloco: { count: leg.stops }
-                        }}</span>
+            <div class="detail-modal-scroll">
+              @if (loadingItineraries()) {
+                <p class="detail-status">{{ 'flightWatch.loadingDetails' | transloco }}</p>
+              } @else if (itineraries().length === 0) {
+                <p class="detail-status">{{ 'flightWatch.noDetails' | transloco }}</p>
+              } @else {
+                <div class="itinerary-list">
+                  @for (it of itineraries(); track $index) {
+                    <div
+                      class="boarding-pass"
+                      [class.selected]="selectedItinerary() === it"
+                      (click)="selectItinerary(it)"
+                    >
+                      <div class="boarding-pass-header">
+                        <span class="boarding-pass-carriers">{{ it.carriers.join('、') }}</span>
+                        <span class="boarding-pass-price">{{ it.priceLabel }}</span>
                       </div>
-                    }
-                  </div>
-                }
-              </div>
-            }
-            @if (selectedItinerary(); as sel) {
-              <div class="import-panel">
-                @if (importSuccess()) {
-                  <p class="import-success">{{ 'flightWatch.importSuccess' | transloco }}</p>
-                } @else {
-                  <label>{{ 'flightWatch.importToTrip' | transloco }}</label>
-                  <app-dropdown-select
-                    [options]="tripDropdownOptions()"
-                    [ngModel]="importTargetTripId()"
-                    (ngModelChange)="importTargetTripId.set($event)"
-                    name="importTargetTrip"
-                    [placeholder]="'flightWatch.selectTrip' | transloco"
-                  ></app-dropdown-select>
+                      <div class="boarding-pass-divider"></div>
+                      <div class="boarding-pass-legs">
+                        @for (leg of it.legs; track $index) {
+                          <div class="itinerary-leg">
+                            <span class="leg-route">{{ leg.from }} → {{ leg.to }}</span>
+                            <span class="leg-time"
+                              >{{ formatLegTime(leg.dep) }} - {{ formatLegTime(leg.arr) }}</span
+                            >
+                            <span class="leg-duration">{{ formatDuration(leg.durMin) }}</span>
+                            <span class="leg-stops">{{
+                              (leg.stops === 0 ? 'flightWatch.direct' : 'flightWatch.viaStops')
+                                | transloco: { count: leg.stops }
+                            }}</span>
+                          </div>
+                        }
+                      </div>
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+          </div>
+        </div>
+      }
+
+      @if (showImportModal()) {
+        @if (selectedItinerary(); as sel) {
+          <div class="modal-backdrop import-backdrop" (click)="closeImportModal()">
+            <div class="modal-card import-modal" (click)="$event.stopPropagation()">
+              @if (importSuccess()) {
+                <p class="import-success">{{ 'flightWatch.importSuccess' | transloco }}</p>
+              } @else {
+                <h3 class="modal-title">{{ 'flightWatch.importToTrip' | transloco }}</h3>
+                <app-dropdown-select
+                  [options]="tripDropdownOptions()"
+                  [ngModel]="importTargetTripId()"
+                  (ngModelChange)="importTargetTripId.set($event)"
+                  name="importTargetTrip"
+                  [placeholder]="'flightWatch.selectTrip' | transloco"
+                ></app-dropdown-select>
+                <div class="form-actions">
+                  <button type="button" class="btn-secondary" (click)="closeImportModal()">
+                    {{ 'common.cancel' | transloco }}
+                  </button>
                   <button
                     type="button"
                     class="btn-primary"
                     [disabled]="!importTargetTripId() || importing()"
                     (click)="confirmImport(sel)"
                   >
-                    {{ 'flightWatch.confirmImport' | transloco }}
+                    {{ 'common.confirm' | transloco }}
                   </button>
-                }
-              </div>
-            }
-            <div class="form-actions">
-              <button type="button" class="btn-secondary" (click)="closeDetailModal()">
-                {{ 'common.close' | transloco }}
-              </button>
+                </div>
+              }
             </div>
           </div>
-        </div>
+        }
       }
     </div>
   `,
@@ -754,24 +764,40 @@ const CURRENCY_CODES = [
       .detail-modal {
         max-width: 480px;
         max-height: 85vh;
-        overflow-y: auto;
-        display: block;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
         background: var(--surface);
         border-radius: 16px;
         box-shadow: 0 12px 40px var(--shadow);
-        scrollbar-width: none;
       }
-      .detail-modal::-webkit-scrollbar {
+      .detail-modal-scroll {
+        overflow-y: auto;
+        scrollbar-width: none;
+        padding: 0 1.25rem 1.25rem;
+      }
+      .detail-modal-scroll::-webkit-scrollbar {
         display: none;
       }
       .detail-modal .modal-header {
         display: flex;
         align-items: center;
-        justify-content: space-between;
-        margin-bottom: 1rem;
+        justify-content: center;
+        position: relative;
+        flex-shrink: 0;
+        padding: 1.25rem 1.25rem 1rem;
+        background: var(--surface);
+        z-index: 1;
       }
       .detail-modal .modal-title {
         margin: 0;
+        text-align: center;
+      }
+      .detail-modal .close-x-btn {
+        position: absolute;
+        right: 1.25rem;
+        top: 50%;
+        transform: translateY(-50%);
       }
       .close-x-btn {
         flex-shrink: 0;
@@ -796,35 +822,81 @@ const CURRENCY_CODES = [
         padding: 2rem 0;
       }
       .itinerary-list {
+        background: transparent;
         display: flex;
         flex-direction: column;
-        gap: 0.75rem;
-        margin-bottom: 1rem;
+        gap: 1rem;
+        padding-top: 0.25rem;
       }
-      .itinerary-item {
+      .boarding-pass {
+        position: relative;
+        max-width: 100%;
+        box-sizing: border-box;
+        background: var(--surface);
         border: 1.5px solid var(--border);
-        border-radius: 12px;
-        padding: 0.75rem 1rem;
+        border-radius: 14px;
+        box-shadow: 0 6px 18px var(--shadow);
+        overflow: hidden;
         cursor: pointer;
         transition:
           border-color 0.15s,
-          background 0.15s;
+          box-shadow 0.15s,
+          transform 0.1s;
       }
-      .itinerary-item.selected {
+      .boarding-pass:active {
+        transform: scale(0.98);
+      }
+      .boarding-pass.selected {
         border-color: var(--accent);
-        background: var(--accent-light);
+        box-shadow: 0 6px 18px var(--accent-light);
       }
-      .import-panel {
+      .boarding-pass-header {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        gap: 0.2rem;
+        padding: 0.9rem 1rem 0.7rem;
+      }
+      .boarding-pass-carriers {
+        font-weight: 600;
+        color: var(--text-primary);
+        font-size: 0.9rem;
+        overflow-wrap: break-word;
+      }
+      .boarding-pass-price {
+        font-family: var(--font-mono);
+        font-weight: 700;
+        color: var(--accent);
+        font-size: 1.05rem;
+      }
+      .boarding-pass-divider {
+        position: relative;
+        height: 0;
+        border-top: 2px dashed var(--border);
+        margin: 0 0.5rem;
+      }
+      .boarding-pass-divider::before,
+      .boarding-pass-divider::after {
+        content: '';
+        position: absolute;
+        top: -8px;
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        background: var(--surface);
+      }
+      .boarding-pass-divider::before {
+        left: -8px;
+      }
+      .boarding-pass-divider::after {
+        right: -8px;
+      }
+      .boarding-pass-legs {
         display: flex;
         flex-direction: column;
         gap: 0.5rem;
-        padding-top: 0.75rem;
-        margin-top: 0.75rem;
-        border-top: 1.5px solid var(--border);
-      }
-      .import-panel label {
-        font-size: 0.85rem;
-        color: var(--text-secondary);
+        padding: 0.7rem 1rem 0.9rem;
       }
       .import-success {
         color: #48bb78;
@@ -832,37 +904,12 @@ const CURRENCY_CODES = [
         text-align: center;
         margin: 0;
       }
-      .itinerary-top {
-        display: flex;
-        align-items: center;
-        flex-wrap: wrap;
-        gap: 0.25rem 0.75rem;
-        justify-content: space-between;
-        margin-bottom: 0.5rem;
-      }
-      .itinerary-carriers {
-        font-weight: 600;
-        color: var(--text-primary);
-        min-width: 0;
-        overflow-wrap: break-word;
-        font-size: 0.9rem;
-      }
-      .itinerary-price {
-        font-family: var(--font-mono);
-        font-weight: 700;
-        color: var(--accent);
-      }
-      .itinerary-item {
-        max-width: 100%;
-        box-sizing: border-box;
-      }
       .itinerary-leg {
         display: flex;
         flex-wrap: wrap;
         gap: 0.2rem 0.5rem;
         font-size: 0.8rem;
         color: var(--text-secondary);
-        padding: 0.2rem 0;
         max-width: 100%;
       }
       .leg-route {
@@ -880,6 +927,19 @@ const CURRENCY_CODES = [
           gap: 0.1rem;
         }
       }
+      .import-modal {
+        max-width: 420px;
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+        background: var(--surface);
+        border-radius: 16px;
+        box-shadow: 0 12px 40px var(--shadow);
+        padding: 1.5rem;
+      }
+      .import-backdrop {
+        z-index: 210;
+      }
     `,
   ],
 })
@@ -892,6 +952,9 @@ export class FlightWatchComponent implements OnInit {
   private tripService = inject(TripService);
   private fb = inject(FormBuilder);
   private pref = inject(PreferenceService);
+  private transloco = inject(TranslocoService);
+
+  private static readonly NEW_TRIP_VALUE = '__new__';
 
   watches = signal<FlightWatch[]>([]);
   showAddModal = signal(false);
@@ -903,12 +966,19 @@ export class FlightWatchComponent implements OnInit {
   loadingItineraries = signal(false);
   myTrips = signal<Trip[]>([]);
   selectedItinerary = signal<FlightItinerary | null>(null);
+  showImportModal = signal(false);
   importTargetTripId = signal('');
   importing = signal(false);
   importSuccess = signal(false);
 
   tripDropdownOptions(): { value: string; label: string }[] {
-    return this.myTrips().map((t) => ({ value: t.id, label: t.title }));
+    return [
+      ...this.myTrips().map((t) => ({ value: t.id, label: t.title })),
+      {
+        value: FlightWatchComponent.NEW_TRIP_VALUE,
+        label: this.transloco.translate('trips.create'),
+      },
+    ];
   }
 
   currencyDropdownOptions = CURRENCY_CODES.map((c) => ({ value: c, label: c }));
@@ -1145,6 +1215,7 @@ export class FlightWatchComponent implements OnInit {
     this.detailWatch.set(watch);
     this.itineraries.set([]);
     this.selectedItinerary.set(null);
+    this.showImportModal.set(false);
     this.importTargetTripId.set('');
     this.importSuccess.set(false);
     this.loadingItineraries.set(true);
@@ -1164,13 +1235,23 @@ export class FlightWatchComponent implements OnInit {
     this.detailWatch.set(null);
     this.itineraries.set([]);
     this.selectedItinerary.set(null);
+    this.showImportModal.set(false);
     this.importTargetTripId.set('');
     this.importSuccess.set(false);
   }
 
   selectItinerary(it: FlightItinerary): void {
-    this.selectedItinerary.set(this.selectedItinerary() === it ? null : it);
+    this.selectedItinerary.set(it);
     this.importTargetTripId.set('');
+    this.importSuccess.set(false);
+    this.showImportModal.set(true);
+  }
+
+  closeImportModal(): void {
+    this.showImportModal.set(false);
+    this.selectedItinerary.set(null);
+    this.importTargetTripId.set('');
+    this.importSuccess.set(false);
   }
 
   private countryInfoForAirport(code: string): { timezone: string; currency: string } | undefined {
@@ -1180,15 +1261,25 @@ export class FlightWatchComponent implements OnInit {
     return country ? { timezone: country.timezone, currency: country.currency } : undefined;
   }
 
+  /** 產生預設行程名稱，若已有同名行程則加上流水號（新行程、新行程2、新行程3...） */
+  private generateDefaultTripTitle(): string {
+    const base = this.transloco.translate('flightWatch.defaultTripTitle');
+    const existingTitles = new Set(this.myTrips().map((t) => t.title));
+    if (!existingTitles.has(base)) return base;
+    let n = 2;
+    while (existingTitles.has(`${base}${n}`)) n++;
+    return `${base}${n}`;
+  }
+
   async confirmImport(it: FlightItinerary): Promise<void> {
-    const tripId = this.importTargetTripId();
-    if (!tripId) return;
+    const selectedValue = this.importTargetTripId();
+    if (!selectedValue) return;
     this.importing.set(true);
     try {
       const outbound = it.legs[0];
       const inbound = it.legs[1];
       const countryInfo = outbound ? this.countryInfoForAirport(outbound.to) : undefined;
-      await this.tripService.update(tripId, {
+      const tripPatch = {
         ...(outbound ? { start_date_utc: new Date(outbound.dep).toISOString() } : {}),
         ...(inbound
           ? { end_date_utc: new Date(inbound.arr).toISOString() }
@@ -1197,9 +1288,20 @@ export class FlightWatchComponent implements OnInit {
             : {}),
         ...(countryInfo?.timezone ? { target_timezone: countryInfo.timezone } : {}),
         ...(countryInfo?.currency ? { base_currency: countryInfo.currency } : {}),
-      });
+      };
+
+      if (selectedValue === FlightWatchComponent.NEW_TRIP_VALUE) {
+        await this.tripService.create({
+          title: this.generateDefaultTripTitle(),
+          target_timezone: countryInfo?.timezone ?? this.pref.homeCountry().timezone,
+          base_currency: countryInfo?.currency ?? this.pref.homeCountry().currency,
+          ...tripPatch,
+        });
+      } else {
+        await this.tripService.update(selectedValue, tripPatch);
+      }
       this.importSuccess.set(true);
-      setTimeout(() => this.closeDetailModal(), 1200);
+      setTimeout(() => this.closeImportModal(), 1200);
     } finally {
       this.importing.set(false);
     }

@@ -259,7 +259,8 @@
     "importToTrip": "Import to trip",
     "selectTrip": "Select a trip",
     "confirmImport": "Confirm Import",
-    "importSuccess": "Imported successfully"
+    "importSuccess": "Imported successfully",
+    "defaultTripTitle": "New Trip"
   },
   "nearby": {
     "message": "You're near {{place}} — {{count}} spot(s) within {{radius}} km"

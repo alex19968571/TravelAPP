@@ -294,7 +294,8 @@
     "importToTrip": "匯入到行程",
     "selectTrip": "請選擇行程",
     "confirmImport": "確認匯入",
-    "importSuccess": "已成功匯入行程"
+    "importSuccess": "已成功匯入行程",
+    "defaultTripTitle": "新行程"
   },
   "nearby": {
     "message": "你的位置在 {{place}}，{{radius}} 公里內有 {{count}} 個景點"

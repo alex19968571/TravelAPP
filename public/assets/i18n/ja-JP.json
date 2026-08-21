@@ -259,7 +259,8 @@
     "importToTrip": "旅程にインポート",
     "selectTrip": "旅程を選択してください",
     "confirmImport": "インポートを確定",
-    "importSuccess": "旅程へのインポートが完了しました"
+    "importSuccess": "旅程へのインポートが完了しました",
+    "defaultTripTitle": "新しい旅程"
   },
   "nearby": {
     "message": "現在地：{{place}}、半径 {{radius}}km 以内に {{count}} 件のスポットがあります"
