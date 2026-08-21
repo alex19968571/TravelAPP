@@ -1,0 +1,156 @@
+{
+  "configVersion": 1,
+  "timestamp": 1787304941255,
+  "index": "/TravelAPP/index.html",
+  "assetGroups": [
+    {
+      "name": "app",
+      "installMode": "prefetch",
+      "updateMode": "prefetch",
+      "cacheQueryOptions": {
+        "ignoreVary": true
+      },
+      "urls": [
+        "/TravelAPP/chunk-BAhr4iBJ.js",
+        "/TravelAPP/chunk-BV30aZzX.js",
+        "/TravelAPP/chunk-BVDMd8d0.js",
+        "/TravelAPP/chunk-B_CszUz0.js",
+        "/TravelAPP/chunk-ByDzJ5rL.js",
+        "/TravelAPP/chunk-C63yx9Py.js",
+        "/TravelAPP/chunk-CPp2Ncd_.js",
+        "/TravelAPP/chunk-CQizMXIf.js",
+        "/TravelAPP/chunk-CR8SRGWy.js",
+        "/TravelAPP/chunk-C_r1hvOx.js",
+        "/TravelAPP/chunk-CbsI1FO2.js",
+        "/TravelAPP/chunk-CwWD4ATg.js",
+        "/TravelAPP/chunk-CyR-bEpp.js",
+        "/TravelAPP/chunk-DZ5pg9vX.js",
+        "/TravelAPP/chunk-DeVIC1eV.js",
+        "/TravelAPP/chunk-_1olIHMs.js",
+        "/TravelAPP/chunk-bvHum-la.js",
+        "/TravelAPP/chunk-fo5mMq3j.js",
+        "/TravelAPP/chunk-nAt1F9sm.js",
+        "/TravelAPP/chunk-qlgijFw0.js",
+        "/TravelAPP/favicon.ico",
+        "/TravelAPP/index.html",
+        "/TravelAPP/main-FFS637BF.js",
+        "/TravelAPP/manifest.webmanifest",
+        "/TravelAPP/styles-MY5TOR3O.css"
+      ],
+      "patterns": []
+    },
+    {
+      "name": "assets",
+      "installMode": "lazy",
+      "updateMode": "prefetch",
+      "cacheQueryOptions": {
+        "ignoreVary": true
+      },
+      "urls": [
+        "/TravelAPP/assets/i18n/en-US.json",
+        "/TravelAPP/assets/i18n/ja-JP.json",
+        "/TravelAPP/assets/i18n/zh-CN.json",
+        "/TravelAPP/assets/i18n/zh-TW.json",
+        "/TravelAPP/icons/icon-128x128.png",
+        "/TravelAPP/icons/icon-144x144.png",
+        "/TravelAPP/icons/icon-152x152.png",
+        "/TravelAPP/icons/icon-192x192.png",
+        "/TravelAPP/icons/icon-384x384.png",
+        "/TravelAPP/icons/icon-512x512.png",
+        "/TravelAPP/icons/icon-72x72.png",
+        "/TravelAPP/icons/icon-96x96.png"
+      ],
+      "patterns": []
+    }
+  ],
+  "dataGroups": [
+    {
+      "name": "tesseract-wasm",
+      "patterns": [
+        "https:\\/\\/cdn\\.jsdelivr\\.net\\/npm\\/tesseract\\.js@7\\/.*",
+        "https:\\/\\/cdn\\.jsdelivr\\.net\\/npm\\/tesseract\\.js-core@6\\/.*",
+        "https:\\/\\/tessdata\\.projectnaptha\\.com\\/.*"
+      ],
+      "strategy": "freshness",
+      "maxSize": 50,
+      "maxAge": 604800000,
+      "timeoutMs": 10000,
+      "cacheQueryOptions": {
+        "ignoreVary": true
+      },
+      "version": 1
+    },
+    {
+      "name": "frankfurter-rates",
+      "patterns": [
+        "https:\\/\\/api\\.frankfurter\\.app\\/.*"
+      ],
+      "strategy": "freshness",
+      "maxSize": 10,
+      "maxAge": 86400000,
+      "timeoutMs": 5000,
+      "cacheQueryOptions": {
+        "ignoreVary": true
+      },
+      "version": 1
+    }
+  ],
+  "hashTable": {
+    "/TravelAPP/assets/i18n/en-US.json": "9ee707b16ba87c9a413c0a312240a0c21cd65441",
+    "/TravelAPP/assets/i18n/ja-JP.json": "adf218c23be29f6aef626fee4ac6aee354595053",
+    "/TravelAPP/assets/i18n/zh-CN.json": "c3b446eb87a65bf16e49e453e22d2014e48ce08b",
+    "/TravelAPP/assets/i18n/zh-TW.json": "375743ecce82317ebf49b49a897f00d7bc5d381b",
+    "/TravelAPP/chunk-BAhr4iBJ.js": "3cf3cd760f6278c991fc6d9082f465be89996f54",
+    "/TravelAPP/chunk-BV30aZzX.js": "331bf484039e0edbff1d7fce56951caebbb67925",
+    "/TravelAPP/chunk-BVDMd8d0.js": "dcf5c4cfe568f6aa80faa5392dd9f3b83d532379",
+    "/TravelAPP/chunk-B_CszUz0.js": "4c314124bb0d006b90fdc23ae4e955433504442b",
+    "/TravelAPP/chunk-ByDzJ5rL.js": "a55e9a301746e8fcd4cf70e7b809d74a7261cfb0",
+    "/TravelAPP/chunk-C63yx9Py.js": "3d6409dc81297119bcb10ff522e1e911c1e8b319",
+    "/TravelAPP/chunk-CPp2Ncd_.js": "6d62b9fc291ca81bc2fd7d87425fb252a0653ced",
+    "/TravelAPP/chunk-CQizMXIf.js": "fa666143c9b8808a583ffaa67c9272e5a8e58046",
+    "/TravelAPP/chunk-CR8SRGWy.js": "6171dc653d150e3a0d4cf8a8ae2f05a36534dc59",
+    "/TravelAPP/chunk-C_r1hvOx.js": "47dc05f9898904c967afbf63c4efe91306202a72",
+    "/TravelAPP/chunk-CbsI1FO2.js": "1c49b8f9c30428bbb5a39e2da03ff8eb3029defb",
+    "/TravelAPP/chunk-CwWD4ATg.js": "d3986f7c2b58b064bc11beacf72d4f96a22059fe",
+    "/TravelAPP/chunk-CyR-bEpp.js": "326a28cfb91cf1895e32e5d25e94c1bf024ca1c9",
+    "/TravelAPP/chunk-DZ5pg9vX.js": "682941a1885c6d607605410512362e99a6a5cc14",
+    "/TravelAPP/chunk-DeVIC1eV.js": "ceb637851dc08c994c788798a6dfc1b560306146",
+    "/TravelAPP/chunk-_1olIHMs.js": "b3ddbc83d640545670631d24f9cc6c42c9b16488",
+    "/TravelAPP/chunk-bvHum-la.js": "5e80e5512802f48852d4533bdddbb8ae7480d56c",
+    "/TravelAPP/chunk-fo5mMq3j.js": "dfd55b2790c892a22146caeeed701246dbc4885b",
+    "/TravelAPP/chunk-nAt1F9sm.js": "9ccac790af43883d1ac6315ff29be8264ffc91ba",
+    "/TravelAPP/chunk-qlgijFw0.js": "90a85aa3a7f73d96402ee306c7ed3626cc62649c",
+    "/TravelAPP/favicon.ico": "9c39f434fe1261f68c5e3eefdf734630d99c5670",
+    "/TravelAPP/icons/icon-128x128.png": "f912963bdc6d5a38d8f1dd0afbaab2ce8d657acb",
+    "/TravelAPP/icons/icon-144x144.png": "b155fd5f2fd5d2ea7760721063003c4cd95fd783",
+    "/TravelAPP/icons/icon-152x152.png": "eae6e0f0c8afb8aaae339e2a569b43e9238e5e6c",
+    "/TravelAPP/icons/icon-192x192.png": "15c4180454633880d98674aa7394656196c91584",
+    "/TravelAPP/icons/icon-384x384.png": "94a915751ef6c9282df9aea405ad679230631814",
+    "/TravelAPP/icons/icon-512x512.png": "1de182f76f7329dfa8f9fcdd1fdcdd695bea6a99",
+    "/TravelAPP/icons/icon-72x72.png": "aa88a6096bd973be7f6d7a5489bfa6bc2463f8c4",
+    "/TravelAPP/icons/icon-96x96.png": "7fb8f59c30ce2ff12c700321a0b39e14b3dc8f95",
+    "/TravelAPP/index.html": "f936844f857a161c4ddcaaa5f3eda63187c67bae",
+    "/TravelAPP/main-FFS637BF.js": "ca68619deb94a987baa6794d334fb9cad21a73ee",
+    "/TravelAPP/manifest.webmanifest": "f4f9dc5fadaadb68f914d082c1a4a03ac016afa0",
+    "/TravelAPP/styles-MY5TOR3O.css": "522a8f089a857b8612485627255fbc68904ba25c"
+  },
+  "navigationUrls": [
+    {
+      "positive": true,
+      "regex": "^\\/.*$"
+    },
+    {
+      "positive": false,
+      "regex": "^\\/(?:.+\\/)?[^/]*\\.[^/]*$"
+    },
+    {
+      "positive": false,
+      "regex": "^\\/(?:.+\\/)?[^/]*__[^/]*$"
+    },
+    {
+      "positive": false,
+      "regex": "^\\/(?:.+\\/)?[^/]*__[^/]*\\/.*$"
+    }
+  ],
+  "navigationRequestStrategy": "performance"
+}
