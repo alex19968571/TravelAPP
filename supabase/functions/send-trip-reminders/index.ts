@@ -23,7 +23,8 @@ const CRON_SECRET = Deno.env.get('CRON_SECRET') ?? '';
 // 瀏覽器會先送 CORS 預檢請求，沒有這組標頭會被瀏覽器擋下（pg_cron 的伺服器對伺服器呼叫則不受影響）
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-cron-secret',
+  'Access-Control-Allow-Headers':
+    'authorization, x-client-info, apikey, content-type, x-cron-secret',
 };
 
 const OFFSET_LABEL: Record<string, string> = {

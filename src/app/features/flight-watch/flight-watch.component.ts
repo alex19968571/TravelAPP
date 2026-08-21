@@ -421,7 +421,8 @@ const CURRENCY_CODES = [
         appearance: none;
         -webkit-appearance: none;
         -moz-appearance: textfield;
-        padding: 0;
+        padding: 0 !important;
+        text-indent: 0 !important;
         background: transparent;
         font-size: 1.1rem;
         color: var(--text-primary);
