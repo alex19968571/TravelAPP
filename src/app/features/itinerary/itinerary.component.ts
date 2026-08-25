@@ -28,8 +28,6 @@ interface SearchResult {
   lng: number;
 }
 
-const DAY_COLORS = ['#667eea', '#ed8936', '#48bb78', '#f56565', '#9f7aea', '#38b2ac'];
-
 @Component({
   selector: 'app-itinerary',
   standalone: true,
@@ -514,6 +512,8 @@ export class ItineraryComponent implements OnInit, AfterViewInit {
   showPositionPicker = signal(false);
   selectedDate = signal<DateTab | null>(null);
   selectedPosition = signal(0);
+  /** 由 ?day=N 導入時設為 true，之後地圖只畫該天路線（供旅行地圖「跳轉到系統中的該天」使用） */
+  private mapFilteredToDay = false;
 
   // ── 地圖物件（不放 Signal，避免 Proxy 問題）────────────────
   private mapInstance: google.maps.Map | null = null;
@@ -561,7 +561,10 @@ export class ItineraryComponent implements OnInit, AfterViewInit {
     const dayParam = Number(this.route.snapshot.queryParamMap.get('day'));
     if (dayParam) {
       const match = this.dateTabs().find((d) => d.dayNumber === dayParam);
-      if (match) this.selectedDate.set(match);
+      if (match) {
+        this.selectedDate.set(match);
+        this.mapFilteredToDay = true;
+      }
     }
     this.renderSpotMarkers();
   }
@@ -609,7 +612,8 @@ export class ItineraryComponent implements OnInit, AfterViewInit {
     });
   }
 
-  // ── 繪製景點 Marker + Polyline ─────────────────────────────
+  // ── 繪製景點 Marker + Polyline（分組/調色邏輯已搬到 MapsService.renderDayColoredRoute，
+  //    這裡只負責清除舊物件、視需要依 ?day=N 篩選、呼叫共用方法並管理 fitBounds） ──
   private renderSpotMarkers(): void {
     if (!this.mapInstance) return;
     this.spotMarkers.forEach((m) => m.setMap(null));
@@ -617,61 +621,18 @@ export class ItineraryComponent implements OnInit, AfterViewInit {
     this.polylineObjects.forEach((p) => p.setMap(null));
     this.polylineObjects = [];
 
-    const grouped = new Map<number, ItineraryItem[]>();
-    for (const item of this.items()) {
-      if (!grouped.has(item.day_number)) grouped.set(item.day_number, []);
-      grouped.get(item.day_number)!.push(item);
-    }
+    const dayFilter = this.mapFilteredToDay ? this.selectedDate()?.dayNumber : undefined;
+    const items = dayFilter ? this.items().filter((i) => i.day_number === dayFilter) : this.items();
 
-    const bounds = new google.maps.LatLngBounds();
-    let hasItems = false;
+    const { markers, polylines, bounds } = this.mapsService.renderDayColoredRoute(
+      this.mapInstance,
+      items,
+      (item, marker) => this.ngZone.run(() => this.showSpotInfoWindow(item, marker)),
+    );
+    this.spotMarkers = markers;
+    this.polylineObjects = polylines;
 
-    grouped.forEach((dayItems, day) => {
-      const color = DAY_COLORS[(day - 1) % DAY_COLORS.length];
-      const sorted = [...dayItems].sort((a, b) => a.order_index - b.order_index);
-
-      sorted.forEach((item, idx) => {
-        const pos: google.maps.LatLngLiteral = { lat: item.latitude, lng: item.longitude };
-        bounds.extend(pos);
-        hasItems = true;
-
-        const marker = new google.maps.Marker({
-          position: pos,
-          map: this.mapInstance!,
-          label: { text: String(idx + 1), color: 'white', fontWeight: 'bold', fontSize: '12px' },
-          icon: {
-            path: google.maps.SymbolPath.CIRCLE,
-            fillColor: color,
-            fillOpacity: 1,
-            strokeColor: 'white',
-            strokeWeight: 2,
-            scale: 14,
-          },
-          title: `第 ${day} 天 #${idx + 1}：${item.place_name}`,
-        });
-
-        // 點擊已有景點 → 顯示 InfoWindow + 編輯按鈕
-        marker.addListener('click', () => {
-          this.ngZone.run(() => this.showSpotInfoWindow(item, marker));
-        });
-
-        this.spotMarkers.push(marker);
-      });
-
-      if (sorted.length >= 2) {
-        const polyline = new google.maps.Polyline({
-          path: sorted.map((i) => ({ lat: i.latitude, lng: i.longitude })),
-          geodesic: true,
-          strokeColor: color,
-          strokeOpacity: 0.8,
-          strokeWeight: 3,
-          map: this.mapInstance!,
-        });
-        this.polylineObjects.push(polyline);
-      }
-    });
-
-    if (hasItems) this.mapInstance!.fitBounds(bounds, 60);
+    if (items.length) this.mapInstance.fitBounds(bounds, 60);
   }
 
   // ── 搜尋 ─────────────────────────────────────────────────────

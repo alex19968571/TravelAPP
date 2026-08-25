@@ -31,7 +31,18 @@ export class TripService {
   async create(
     data: Pick<
       Trip,
-      'title' | 'target_timezone' | 'base_currency' | 'start_date_utc' | 'end_date_utc'
+      | 'title'
+      | 'target_timezone'
+      | 'base_currency'
+      | 'start_date_utc'
+      | 'end_date_utc'
+      | 'origin'
+      | 'origin_lat'
+      | 'origin_lng'
+      | 'destination'
+      | 'destination_lat'
+      | 'destination_lng'
+      | 'destination_country_code'
     >,
   ): Promise<Trip> {
     const userId = this.auth.user()?.id ?? '';
@@ -66,7 +77,21 @@ export class TripService {
   async update(
     id: string,
     changes: Partial<
-      Pick<Trip, 'title' | 'target_timezone' | 'base_currency' | 'start_date_utc' | 'end_date_utc'>
+      Pick<
+        Trip,
+        | 'title'
+        | 'target_timezone'
+        | 'base_currency'
+        | 'start_date_utc'
+        | 'end_date_utc'
+        | 'origin'
+        | 'origin_lat'
+        | 'origin_lng'
+        | 'destination'
+        | 'destination_lat'
+        | 'destination_lng'
+        | 'destination_country_code'
+      >
     >,
   ): Promise<void> {
     const now = new Date().toISOString();
@@ -171,7 +196,17 @@ export class TripService {
 
   async updateItineraryItem(
     id: string,
-    changes: Partial<Pick<ItineraryItem, 'place_name' | 'image_url' | 'notes' | 'day_number' | 'next_transport_mode' | 'next_transport_minutes'>>,
+    changes: Partial<
+      Pick<
+        ItineraryItem,
+        | 'place_name'
+        | 'image_url'
+        | 'notes'
+        | 'day_number'
+        | 'next_transport_mode'
+        | 'next_transport_minutes'
+      >
+    >,
   ): Promise<void> {
     const now = new Date().toISOString();
     await db.itinerary_items.update(id, { ...changes, updated_at_utc: now });
@@ -190,7 +225,10 @@ export class TripService {
     const { error } = await this.supabase.storage
       .from('itinerary-images')
       .upload(path, file, { contentType: file.type });
-    if (error) { console.error('[TripService] uploadItineraryPhoto error', error); return null; }
+    if (error) {
+      console.error('[TripService] uploadItineraryPhoto error', error);
+      return null;
+    }
     const { data } = this.supabase.storage.from('itinerary-images').getPublicUrl(path);
     return data.publicUrl;
   }
@@ -201,7 +239,7 @@ export class TripService {
     position: number,
   ): Promise<ItineraryItem> {
     const dayItems = (await this.getItinerary(data.trip_id))
-      .filter(i => i.day_number === data.day_number)
+      .filter((i) => i.day_number === data.day_number)
       .sort((a, b) => a.order_index - b.order_index);
     const pos = Math.max(0, Math.min(position, dayItems.length));
     const now = new Date().toISOString();
@@ -215,23 +253,27 @@ export class TripService {
     };
 
     // 插入到記憶體陣列的目標位置，再正規化所有 order_index
-    const merged = [
-      ...dayItems.slice(0, pos),
-      newItem,
-      ...dayItems.slice(pos),
-    ];
+    const merged = [...dayItems.slice(0, pos), newItem, ...dayItems.slice(pos)];
     for (let i = 0; i < merged.length; i++) {
       const it = merged[i];
       if (it.id === newItem.id) {
         newItem.order_index = i;
       } else if (it.order_index !== i) {
         await db.itinerary_items.update(it.id, { order_index: i, updated_at_utc: now });
-        await this.sync.enqueue('UPDATE', 'itinerary_items', { id: it.id, order_index: i, updated_at_utc: now });
+        await this.sync.enqueue('UPDATE', 'itinerary_items', {
+          id: it.id,
+          order_index: i,
+          updated_at_utc: now,
+        });
       }
     }
 
     await db.itinerary_items.add(newItem);
-    await this.sync.enqueue('CREATE', 'itinerary_items', newItem as unknown as Record<string, unknown>);
+    await this.sync.enqueue(
+      'CREATE',
+      'itinerary_items',
+      newItem as unknown as Record<string, unknown>,
+    );
     return newItem;
   }
 }

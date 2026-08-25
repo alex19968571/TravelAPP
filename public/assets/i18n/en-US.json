@@ -25,7 +25,24 @@
     "uploadPhoto": "Upload Photo",
     "orChoosePreset": "Or choose a preset avatar",
     "chooseIcon": "Choose Icon",
-    "chooseBgColor": "Choose Background Color"
+    "chooseBgColor": "Choose Background Color",
+    "myMap": "My Map"
+  },
+  "travelMap": {
+    "title": "Travel Map",
+    "share": "Share",
+    "copied": "Link copied",
+    "loading": "Loading...",
+    "shareNotFound": "This share link could not be found",
+    "dayLabel": "Day {{day}}",
+    "noContent": "No content yet",
+    "photos": "Photos",
+    "audio": "Audio",
+    "removeAudio": "Remove audio",
+    "notes": "Notes",
+    "arcColor": "Line color",
+    "resetColor": "Reset to default color",
+    "edit": "Edit"
   },
   "trips": {
     "myTrips": "My Trips",
@@ -42,6 +59,10 @@
     "currency": "Currency",
     "titleLabel": "Trip Name",
     "titlePlaceholder": "e.g. 5-Day Tokyo Trip",
+    "origin": "Origin",
+    "originPlaceholder": "Enter a city or place, e.g. Taipei",
+    "destination": "Destination",
+    "destinationPlaceholder": "Enter a city or place, e.g. Tokyo",
     "startDate": "Departure Date & Time",
     "endDate": "Return Date & Time",
     "submit": "Create Trip",

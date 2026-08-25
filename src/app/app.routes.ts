@@ -13,6 +13,11 @@ export const routes: Routes = [
       import('./features/trips/join-trip.component').then((m) => m.JoinTripComponent),
   },
   {
+    path: 'shared-map/:token',
+    loadComponent: () =>
+      import('./features/map/public-map.component').then((m) => m.PublicMapComponent),
+  },
+  {
     path: '',
     canActivate: [authGuard],
     loadComponent: () =>
@@ -67,6 +72,11 @@ export const routes: Routes = [
           import('./features/flight-watch/flight-watch.component').then(
             (m) => m.FlightWatchComponent,
           ),
+      },
+      {
+        path: 'map',
+        loadComponent: () =>
+          import('./features/map/travel-map.component').then((m) => m.TravelMapComponent),
       },
       {
         path: 'account',

@@ -19,6 +19,8 @@ import { AuthService } from '../../core/services/auth.service';
 import { PreferenceService, COUNTRIES } from '../../core/services/preference.service';
 import { PageTransitionService } from '../../core/services/page-transition.service';
 import { DropdownSelectComponent } from '../../shared/components/dropdown-select/dropdown-select.component';
+import { PlaceAutocompleteInputComponent } from '../../shared/components/place-autocomplete-input/place-autocomplete-input.component';
+import { PlaceSuggestion } from '../../core/services/maps.service';
 
 const TIMEZONE_OPTIONS = [
   { value: 'Asia/Taipei', key: 'taipei', utc: '+8' },
@@ -67,6 +69,7 @@ const CURRENCY_OPTIONS = [
     FormsModule,
     TranslocoModule,
     DropdownSelectComponent,
+    PlaceAutocompleteInputComponent,
   ],
   template: `
     <div class="page-container">
@@ -176,8 +179,26 @@ const CURRENCY_OPTIONS = [
             </div>
             <div class="form-row-grid">
               <div class="form-row">
+                <label>{{ 'trips.origin' | transloco }}</label>
+                <app-place-autocomplete-input
+                  formControlName="origin"
+                  [placeholder]="'trips.originPlaceholder' | transloco"
+                  (placeSelected)="onOriginSelected($event)"
+                ></app-place-autocomplete-input>
+              </div>
+              <div class="form-row">
                 <label>{{ 'trips.startDate' | transloco }}</label>
                 <input formControlName="start_date_local" type="datetime-local" />
+              </div>
+            </div>
+            <div class="form-row-grid">
+              <div class="form-row">
+                <label>{{ 'trips.destination' | transloco }}</label>
+                <app-place-autocomplete-input
+                  formControlName="destination"
+                  [placeholder]="'trips.destinationPlaceholder' | transloco"
+                  (placeSelected)="onDestinationSelected($event)"
+                ></app-place-autocomplete-input>
               </div>
               <div class="form-row">
                 <label>{{ 'trips.endDate' | transloco }}</label>
@@ -248,7 +269,11 @@ const CURRENCY_OPTIONS = [
                   </button>
                   <div class="trip-card-body">
                     <div class="trip-info">
-                      <div class="trip-route">{{ trip.target_timezone }}</div>
+                      @if (trip.origin && trip.destination) {
+                        <div class="trip-route">{{ trip.origin }} → {{ trip.destination }}</div>
+                      } @else {
+                        <div class="trip-route">{{ trip.target_timezone }}</div>
+                      }
                       <h3>{{ trip.title }}</h3>
                     </div>
                     <div class="trip-stub">
@@ -330,8 +355,26 @@ const CURRENCY_OPTIONS = [
               </div>
               <div class="form-row-grid">
                 <div class="form-row">
+                  <label>{{ 'trips.origin' | transloco }}</label>
+                  <app-place-autocomplete-input
+                    formControlName="origin"
+                    [placeholder]="'trips.originPlaceholder' | transloco"
+                    (placeSelected)="onOriginSelected($event)"
+                  ></app-place-autocomplete-input>
+                </div>
+                <div class="form-row">
                   <label>{{ 'trips.startDate' | transloco }}</label>
                   <input formControlName="start_date_local" type="datetime-local" />
+                </div>
+              </div>
+              <div class="form-row-grid">
+                <div class="form-row">
+                  <label>{{ 'trips.destination' | transloco }}</label>
+                  <app-place-autocomplete-input
+                    formControlName="destination"
+                    [placeholder]="'trips.destinationPlaceholder' | transloco"
+                    (placeSelected)="onDestinationSelected($event)"
+                  ></app-place-autocomplete-input>
                 </div>
                 <div class="form-row">
                   <label>{{ 'trips.endDate' | transloco }}</label>
@@ -1402,6 +1445,13 @@ export class TripsListComponent implements OnInit {
 
   form = this.fb.group({
     title: ['', [Validators.required, Validators.maxLength(100)]],
+    origin: [''],
+    origin_lat: [null as number | null],
+    origin_lng: [null as number | null],
+    destination: [''],
+    destination_lat: [null as number | null],
+    destination_lng: [null as number | null],
+    destination_country_code: [null as string | null],
     start_date_local: [this.todayAtMidnightLocal()],
     end_date_local: [this.todayAtMidnightLocal()],
     target_timezone: [this.pref.country().timezone, Validators.required],
@@ -1410,11 +1460,36 @@ export class TripsListComponent implements OnInit {
 
   editForm = this.fb.group({
     title: ['', [Validators.required, Validators.maxLength(100)]],
+    origin: [''],
+    origin_lat: [null as number | null],
+    origin_lng: [null as number | null],
+    destination: [''],
+    destination_lat: [null as number | null],
+    destination_lng: [null as number | null],
+    destination_country_code: [null as string | null],
     start_date_local: [''],
     end_date_local: [''],
     target_timezone: ['', Validators.required],
     base_currency: ['', Validators.required],
   });
+
+  onOriginSelected(s: PlaceSuggestion): void {
+    this.form.patchValue({ origin_lat: s.lat, origin_lng: s.lng });
+    this.editForm.patchValue({ origin_lat: s.lat, origin_lng: s.lng });
+  }
+
+  onDestinationSelected(s: PlaceSuggestion): void {
+    this.form.patchValue({
+      destination_lat: s.lat,
+      destination_lng: s.lng,
+      destination_country_code: s.countryCode ?? null,
+    });
+    this.editForm.patchValue({
+      destination_lat: s.lat,
+      destination_lng: s.lng,
+      destination_country_code: s.countryCode ?? null,
+    });
+  }
 
   @HostListener('document:click', ['$event'])
   onDocumentClick(e: MouseEvent): void {
@@ -1474,14 +1549,33 @@ export class TripsListComponent implements OnInit {
 
   async createTrip(): Promise<void> {
     if (this.form.invalid) return;
-    const { title, target_timezone, base_currency, start_date_local, end_date_local } =
-      this.form.value;
+    const {
+      title,
+      target_timezone,
+      base_currency,
+      start_date_local,
+      end_date_local,
+      origin,
+      origin_lat,
+      origin_lng,
+      destination,
+      destination_lat,
+      destination_lng,
+      destination_country_code,
+    } = this.form.value;
     await this.tripService.create({
       title: title!,
       target_timezone: target_timezone!,
       base_currency: base_currency!,
       start_date_utc: start_date_local ? new Date(start_date_local).toISOString() : undefined,
       end_date_utc: end_date_local ? new Date(end_date_local).toISOString() : undefined,
+      origin: origin || null,
+      origin_lat: origin_lat ?? null,
+      origin_lng: origin_lng ?? null,
+      destination: destination || null,
+      destination_lat: destination_lat ?? null,
+      destination_lng: destination_lng ?? null,
+      destination_country_code: destination_country_code ?? null,
     });
     this.form.reset({
       target_timezone: this.pref.country().timezone,
@@ -1675,6 +1769,13 @@ export class TripsListComponent implements OnInit {
       end_date_local: this.toLocalInput(trip.end_date_utc),
       target_timezone: trip.target_timezone,
       base_currency: trip.base_currency,
+      origin: trip.origin ?? '',
+      origin_lat: trip.origin_lat ?? null,
+      origin_lng: trip.origin_lng ?? null,
+      destination: trip.destination ?? '',
+      destination_lat: trip.destination_lat ?? null,
+      destination_lng: trip.destination_lng ?? null,
+      destination_country_code: trip.destination_country_code ?? null,
     });
     this.editingTrip.set(trip);
   }
@@ -1685,14 +1786,33 @@ export class TripsListComponent implements OnInit {
 
   async saveEditTrip(id: string): Promise<void> {
     if (this.editForm.invalid) return;
-    const { title, target_timezone, base_currency, start_date_local, end_date_local } =
-      this.editForm.value;
+    const {
+      title,
+      target_timezone,
+      base_currency,
+      start_date_local,
+      end_date_local,
+      origin,
+      origin_lat,
+      origin_lng,
+      destination,
+      destination_lat,
+      destination_lng,
+      destination_country_code,
+    } = this.editForm.value;
     await this.tripService.update(id, {
       title: title!,
       target_timezone: target_timezone!,
       base_currency: base_currency!,
       start_date_utc: start_date_local ? new Date(start_date_local).toISOString() : null,
       end_date_utc: end_date_local ? new Date(end_date_local).toISOString() : null,
+      origin: origin || null,
+      origin_lat: origin_lat ?? null,
+      origin_lng: origin_lng ?? null,
+      destination: destination || null,
+      destination_lat: destination_lat ?? null,
+      destination_lng: destination_lng ?? null,
+      destination_country_code: destination_country_code ?? null,
     });
     this.editingTrip.set(null);
     await this.loadTrips();

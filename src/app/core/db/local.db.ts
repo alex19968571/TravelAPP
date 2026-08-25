@@ -11,6 +11,7 @@ import {
   ExchangeRate,
   FlightWatch,
   TripReminder,
+  TravelMapPin,
 } from '../models';
 
 export class LocalDb extends Dexie {
@@ -25,6 +26,7 @@ export class LocalDb extends Dexie {
   exchange_rates!: Table<ExchangeRate, string>;
   flight_watches!: Table<FlightWatch, string>;
   trip_reminders!: Table<TripReminder, string>;
+  travel_map_pins!: Table<TravelMapPin, string>;
 
   constructor() {
     super('TravelAppDB');
@@ -49,6 +51,9 @@ export class LocalDb extends Dexie {
     });
     this.version(4).stores({
       trip_reminders: 'id, trip_id, user_id, notify_at_utc',
+    });
+    this.version(5).stores({
+      travel_map_pins: 'id, owner_id, trip_id, updated_at_utc',
     });
   }
 }

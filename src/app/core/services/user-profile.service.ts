@@ -115,6 +115,30 @@ export class UserProfileService {
     }
   }
 
+  /** 取得（沒有就建立）旅行地圖公開分享用的 token，供組出 /shared-map/:token 連結 */
+  async getOrCreateMapShareToken(): Promise<string> {
+    const user = this.auth.user();
+    if (!user) throw new Error('Not authenticated');
+
+    const { data } = await this.supabase
+      .from('user_profiles')
+      .select('map_share_token')
+      .eq('id', user.id)
+      .maybeSingle();
+    const existing = data?.['map_share_token'];
+    if (existing) return existing;
+
+    const token = crypto.randomUUID();
+    const { error } = await this.supabase
+      .from('user_profiles')
+      .upsert({ id: user.id, email: user.email, map_share_token: token }, { onConflict: 'id' });
+    if (error) {
+      console.error('[UserProfile] getOrCreateMapShareToken error', error);
+      throw error;
+    }
+    return token;
+  }
+
   async setPresetAvatar(preset: PresetAvatar): Promise<void> {
     const user = this.auth.user();
     if (!user) return;

@@ -31,6 +31,16 @@ export interface RouteOption {
   fareText?: string;
 }
 
+export interface PlaceSuggestion {
+  name: string;
+  lat: number;
+  lng: number;
+  /** ISO alpha-2 國碼（小寫），供旅行地圖依國家分色使用 */
+  countryCode?: string | null;
+}
+
+const DAY_COLORS = ['#667eea', '#ed8936', '#48bb78', '#f56565', '#9f7aea', '#38b2ac'];
+
 @Injectable({ providedIn: 'root' })
 export class MapsService {
   private initialized = false;
@@ -51,6 +61,7 @@ export class MapsService {
     await importLibrary('routes');
     await importLibrary('geocoding');
     await importLibrary('geometry');
+    await importLibrary('marker');
     this.initialized = true;
   }
 
@@ -109,6 +120,58 @@ export class MapsService {
     } catch (err) {
       console.error('[Maps] Nominatim forward geocoding failed', err);
       return null;
+    }
+  }
+
+  /**
+   * 依關鍵字查詢「多筆」地點建議（供輸入框即時顯示建議清單，例如旅行地圖的出發地/目的地）。
+   * `searchPlace()` 只回傳單一最佳結果，不適合做這種 UX，故另開一支方法。
+   * 優先用 Google Geocoding（可能回傳多筆 `results`），沒有結果／未啟用時 fallback 到
+   * Nominatim 的多筆搜尋（`limit=8`），兩者都盡量帶出國碼供地圖依國家分色使用。
+   */
+  async searchPlaceSuggestions(query: string): Promise<PlaceSuggestion[]> {
+    const q = query.trim();
+    if (!q) return [];
+    await this.ensureLoaded();
+
+    try {
+      const geocoder = new google.maps.Geocoder();
+      const result = await geocoder.geocode({ address: q });
+      const suggestions = (result.results ?? []).slice(0, 8).map((r) => {
+        const countryComponent = r.address_components?.find((c) => c.types.includes('country'));
+        return {
+          name: r.formatted_address,
+          lat: r.geometry.location.lat(),
+          lng: r.geometry.location.lng(),
+          countryCode: countryComponent?.short_name?.toLowerCase() ?? null,
+        };
+      });
+      if (suggestions.length) return suggestions;
+    } catch {
+      // Geocoding API 未啟用，改用 Nominatim
+    }
+
+    return this.nominatimForwardMulti(q);
+  }
+
+  /** Nominatim 多筆正向地理編碼（免費，不需 API key），供 searchPlaceSuggestions 使用 */
+  private async nominatimForwardMulti(query: string): Promise<PlaceSuggestion[]> {
+    try {
+      const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=8&addressdetails=1`;
+      const res = await fetch(url, {
+        headers: { 'User-Agent': 'TravelAPP/1.0', 'Accept-Language': 'zh-TW,zh;q=0.9,en;q=0.8' },
+      });
+      if (!res.ok) return [];
+      const data = await res.json();
+      return (data as any[]).map((d) => ({
+        name: d.display_name,
+        lat: parseFloat(d.lat),
+        lng: parseFloat(d.lon),
+        countryCode: d.address?.country_code ?? null,
+      }));
+    } catch (err) {
+      console.error('[Maps] Nominatim multi forward geocoding failed', err);
+      return [];
     }
   }
 
@@ -316,4 +379,155 @@ export class MapsService {
       map,
     });
   }
+
+  /**
+   * 旅行地圖用的大頭針：沒有照片用預設紅色 PinElement；有照片用圓形裁切縮圖取代大頭針
+   * （對應「去的地方如果有附圖片，用圖片縮圖顯示，不用大頭針」）。
+   */
+  createPinMarker(
+    map: google.maps.Map,
+    position: google.maps.LatLngLiteral,
+    photoUrl?: string | null,
+  ): google.maps.marker.AdvancedMarkerElement {
+    if (photoUrl) {
+      const content = document.createElement('div');
+      content.style.width = '40px';
+      content.style.height = '40px';
+      content.style.borderRadius = '50%';
+      content.style.border = '3px solid #fff';
+      content.style.boxShadow = '0 2px 8px rgba(0,0,0,0.4)';
+      content.style.overflow = 'hidden';
+      const img = document.createElement('img');
+      img.src = photoUrl;
+      img.style.width = '100%';
+      img.style.height = '100%';
+      img.style.objectFit = 'cover';
+      content.appendChild(img);
+      return new google.maps.marker.AdvancedMarkerElement({ map, position, content });
+    }
+    return new google.maps.marker.AdvancedMarkerElement({
+      map,
+      position,
+      content: new google.maps.marker.PinElement({}).element,
+    });
+  }
+
+  /** 兩點間的弧線（geodesic），供旅行地圖出發地/目的地連線使用 */
+  drawArc(
+    map: google.maps.Map,
+    from: google.maps.LatLngLiteral,
+    to: google.maps.LatLngLiteral,
+    color: string,
+  ): google.maps.Polyline {
+    return new google.maps.Polyline({
+      path: [from, to],
+      geodesic: true,
+      strokeColor: color,
+      strokeOpacity: 0.85,
+      strokeWeight: 3,
+      map,
+    });
+  }
+
+  /**
+   * 依 `day_number` 分組畫出每日路線（不同天不同顏色的 marker + polyline），
+   * 從 `itinerary.component.ts` 的 renderSpotMarkers() 抽出，供該頁與旅行地圖的
+   * 行程小地圖共用，避免重複實作同一套繪圖邏輯。呼叫端負責在清除/重繪前自行
+   * `setMap(null)` 舊的 markers/polylines。
+   */
+  renderDayColoredRoute(
+    map: google.maps.Map,
+    items: ItineraryItem[],
+    onMarkerClick?: (item: ItineraryItem, marker: google.maps.Marker) => void,
+  ): {
+    markers: google.maps.Marker[];
+    polylines: google.maps.Polyline[];
+    bounds: google.maps.LatLngBounds;
+  } {
+    const markers: google.maps.Marker[] = [];
+    const polylines: google.maps.Polyline[] = [];
+    const bounds = new google.maps.LatLngBounds();
+
+    const grouped = new Map<number, ItineraryItem[]>();
+    for (const item of items) {
+      if (!grouped.has(item.day_number)) grouped.set(item.day_number, []);
+      grouped.get(item.day_number)!.push(item);
+    }
+
+    grouped.forEach((dayItems, day) => {
+      const color = DAY_COLORS[(day - 1) % DAY_COLORS.length];
+      const sorted = [...dayItems].sort((a, b) => a.order_index - b.order_index);
+
+      sorted.forEach((item, idx) => {
+        const pos: google.maps.LatLngLiteral = { lat: item.latitude, lng: item.longitude };
+        bounds.extend(pos);
+
+        const marker = new google.maps.Marker({
+          position: pos,
+          map,
+          label: { text: String(idx + 1), color: 'white', fontWeight: 'bold', fontSize: '12px' },
+          icon: {
+            path: google.maps.SymbolPath.CIRCLE,
+            fillColor: color,
+            fillOpacity: 1,
+            strokeColor: 'white',
+            strokeWeight: 2,
+            scale: 14,
+          },
+          title: `第 ${day} 天 #${idx + 1}：${item.place_name}`,
+        });
+        if (onMarkerClick) marker.addListener('click', () => onMarkerClick(item, marker));
+        markers.push(marker);
+      });
+
+      if (sorted.length >= 2) {
+        polylines.push(
+          new google.maps.Polyline({
+            path: sorted.map((i) => ({ lat: i.latitude, lng: i.longitude })),
+            geodesic: true,
+            strokeColor: color,
+            strokeOpacity: 0.8,
+            strokeWeight: 3,
+            map,
+          }),
+        );
+      }
+    });
+
+    return { markers, polylines, bounds };
+  }
+
+  /**
+   * 旅行地圖弧線預設顏色：色相依 `destination_country_code` 固定（同國家同色系），
+   * 明暗依「去過同一國家的所有行程」以 `start_date_utc` 由舊到新排序後的名次決定
+   * ——最早去的最淺、最晚去的最深。authenticated（Trip）與 public（PublicMapTrip）
+   * 兩種行程資料形狀都只需要這 3 個欄位，故用最小介面共用。
+   */
+  getDefaultArcColor(trip: ArcColorTripInput, allTrips: ArcColorTripInput[]): string {
+    const hue = this.hueForCountry(trip.destination_country_code);
+    const sameCountry = allTrips
+      .filter(
+        (t) => t.destination_country_code === trip.destination_country_code && t.start_date_utc,
+      )
+      .sort(
+        (a, b) => new Date(a.start_date_utc!).getTime() - new Date(b.start_date_utc!).getTime(),
+      );
+    const idx = sameCountry.findIndex((t) => t.id === trip.id);
+    const count = sameCountry.length;
+    const lightness = count <= 1 || idx < 0 ? 55 : 75 - (idx / (count - 1)) * 40;
+    return `hsl(${hue}, 65%, ${lightness}%)`;
+  }
+
+  private hueForCountry(code: string | null | undefined): number {
+    if (!code) return 210;
+    let hash = 0;
+    for (let i = 0; i < code.length; i++) hash = (hash * 31 + code.charCodeAt(i)) % 360;
+    return hash;
+  }
+}
+
+export interface ArcColorTripInput {
+  id: string;
+  destination_country_code?: string | null;
+  start_date_utc?: string | null;
 }

@@ -9,6 +9,7 @@ import {
   ElementRef,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { RouterModule } from '@angular/router';
 import { TranslocoModule } from '@jsverse/transloco';
 import { AuthService } from '../../core/services/auth.service';
 import {
@@ -21,7 +22,7 @@ import { PreferenceService, COUNTRIES, Country } from '../../core/services/prefe
 @Component({
   selector: 'app-account',
   standalone: true,
-  imports: [CommonModule, TranslocoModule],
+  imports: [CommonModule, RouterModule, TranslocoModule],
   template: `
     <div class="page-container">
       <div class="scale-wrap" #scaleWrap>
@@ -69,6 +70,11 @@ import { PreferenceService, COUNTRIES, Country } from '../../core/services/prefe
               </div>
             </div>
           </div>
+
+          <a class="row-item" routerLink="/map">
+            <span>🗺️ {{ 'account.myMap' | transloco }}</span>
+            <span class="chevron">›</span>
+          </a>
 
           <button class="row-item danger" (click)="auth.signOut()">
             <span>→ {{ 'auth.signOut' | transloco }}</span>

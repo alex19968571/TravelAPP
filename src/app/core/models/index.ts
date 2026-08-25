@@ -18,6 +18,29 @@ export interface Trip {
   end_date_utc?: string | null;
   invite_code_editor?: string | null;
   invite_code_viewer?: string | null;
+  /** 出發地顯示名稱（地點搜尋選定），供旅行地圖弧線起點使用 */
+  origin?: string | null;
+  origin_lat?: number | null;
+  origin_lng?: number | null;
+  /** 目的地顯示名稱（地點搜尋選定），供旅行地圖大頭針/弧線終點使用 */
+  destination?: string | null;
+  destination_lat?: number | null;
+  destination_lng?: number | null;
+  /** 目的地所在國家 ISO alpha-2 代碼（小寫），供旅行地圖弧線依國家分色 */
+  destination_country_code?: string | null;
+  created_at_utc: string;
+  updated_at_utc: string;
+}
+
+/** 旅行地圖：每趟有目的地的行程最多一筆附加內容（照片/聲音/筆記/自訂弧線顏色） */
+export interface TravelMapPin {
+  id: string;
+  owner_id: string;
+  trip_id: string;
+  photo_urls: string[];
+  audio_url?: string | null;
+  notes?: string | null;
+  arc_color?: string | null;
   created_at_utc: string;
   updated_at_utc: string;
 }

@@ -25,7 +25,24 @@
     "uploadPhoto": "写真をアップロード",
     "orChoosePreset": "またはプリセットアバターを選択",
     "chooseIcon": "アイコンを選択",
-    "chooseBgColor": "背景色を選択"
+    "chooseBgColor": "背景色を選択",
+    "myMap": "マイマップ"
+  },
+  "travelMap": {
+    "title": "旅行マップ",
+    "share": "共有",
+    "copied": "リンクをコピーしました",
+    "loading": "読み込み中...",
+    "shareNotFound": "この共有リンクは見つかりませんでした",
+    "dayLabel": "{{day}} 日目",
+    "noContent": "まだコンテンツがありません",
+    "photos": "写真",
+    "audio": "音声",
+    "removeAudio": "音声を削除",
+    "notes": "メモ",
+    "arcColor": "ラインの色",
+    "resetColor": "デフォルトの色に戻す",
+    "edit": "編集"
   },
   "trips": {
     "myTrips": "マイ旅程",
@@ -42,6 +59,10 @@
     "currency": "通貨",
     "titleLabel": "旅程名",
     "titlePlaceholder": "例：東京5日間の旅",
+    "origin": "出発地",
+    "originPlaceholder": "都市または場所を入力（例：台北）",
+    "destination": "目的地",
+    "destinationPlaceholder": "都市または場所を入力（例：東京）",
     "startDate": "出発日時",
     "endDate": "帰着日時",
     "submit": "旅程を作成",

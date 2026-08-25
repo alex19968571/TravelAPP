@@ -25,7 +25,24 @@
     "uploadPhoto": "上传照片",
     "orChoosePreset": "或选择预设头像",
     "chooseIcon": "选择图标",
-    "chooseBgColor": "选择背景色"
+    "chooseBgColor": "选择背景色",
+    "myMap": "我的地图"
+  },
+  "travelMap": {
+    "title": "旅行地图",
+    "share": "分享",
+    "copied": "已复制链接",
+    "loading": "载入中...",
+    "shareNotFound": "找不到这个分享链接",
+    "dayLabel": "第 {{day}} 天",
+    "noContent": "尚无内容",
+    "photos": "照片",
+    "audio": "声音",
+    "removeAudio": "移除声音",
+    "notes": "笔记",
+    "arcColor": "弧线颜色",
+    "resetColor": "恢复预设颜色",
+    "edit": "编辑"
   },
   "trips": {
     "myTrips": "我的行程",
@@ -42,6 +59,10 @@
     "currency": "货币",
     "titleLabel": "行程名称",
     "titlePlaceholder": "例：日本东京五天四夜",
+    "origin": "出发地",
+    "originPlaceholder": "输入城市或地点，例如：台北",
+    "destination": "目的地",
+    "destinationPlaceholder": "输入城市或地点，例如：东京",
     "startDate": "去程日期时间",
     "endDate": "回程日期时间",
     "submit": "建立行程",
