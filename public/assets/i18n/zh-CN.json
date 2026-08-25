@@ -295,7 +295,14 @@
     "selectTrip": "请选择行程",
     "confirmImport": "确认导入",
     "importSuccess": "已成功导入行程",
-    "defaultTripTitle": "新行程"
+    "defaultTripTitle": "新行程",
+    "maxStopsLabel": "转机次数",
+    "maxStops": {
+      "any": "不限",
+      "direct": "直达",
+      "one": "转机一次",
+      "twoPlus": "转机两次(含)以上"
+    }
   },
   "nearby": {
     "message": "你的位置在 {{place}}，{{radius}} 公里内有 {{count}} 个景点"

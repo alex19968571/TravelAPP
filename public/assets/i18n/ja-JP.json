@@ -260,7 +260,14 @@
     "selectTrip": "旅程を選択してください",
     "confirmImport": "インポートを確定",
     "importSuccess": "旅程へのインポートが完了しました",
-    "defaultTripTitle": "新しい旅程"
+    "defaultTripTitle": "新しい旅程",
+    "maxStopsLabel": "経由回数",
+    "maxStops": {
+      "any": "指定なし",
+      "direct": "直行便",
+      "one": "経由1回",
+      "twoPlus": "経由2回以上"
+    }
   },
   "nearby": {
     "message": "現在地：{{place}}、半径 {{radius}}km 以内に {{count}} 件のスポットがあります"

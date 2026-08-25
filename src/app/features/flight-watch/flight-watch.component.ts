@@ -12,7 +12,7 @@ import { CommonModule, DecimalPipe } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
 import { ReactiveFormsModule, FormsModule, FormBuilder, Validators } from '@angular/forms';
 import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
-import { FlightWatch, Trip } from '../../core/models';
+import { FlightWatch, FlightMaxStops, Trip } from '../../core/models';
 import { FlightWatchService } from '../../core/services/flight-watch.service';
 import { FlightPriceService, FlightItinerary } from '../../core/services/flight-price.service';
 import { AuthService } from '../../core/services/auth.service';
@@ -271,6 +271,13 @@ const CURRENCY_CODES = [
                   <input formControlName="return_date" type="date" />
                 </div>
                 <div class="form-row span-2">
+                  <label>{{ 'flightWatch.maxStopsLabel' | transloco }}</label>
+                  <app-dropdown-select
+                    [options]="maxStopsDropdownOptions()"
+                    formControlName="max_stops"
+                  ></app-dropdown-select>
+                </div>
+                <div class="form-row span-2">
                   <label>{{ 'flightWatch.targetPrice' | transloco }}</label>
                   <div class="amount-input-wrap">
                     <input
@@ -403,6 +410,7 @@ const CURRENCY_CODES = [
         <div class="modal-backdrop" (click)="closeDetailModal()">
           <div class="modal-card detail-modal" (click)="$event.stopPropagation()">
             <div class="modal-header">
+              <span class="header-spacer" aria-hidden="true"></span>
               <h3 class="modal-title">{{ dw.origin }} → {{ dw.destination }}</h3>
               <button
                 type="button"
@@ -425,11 +433,11 @@ const CURRENCY_CODES = [
             <div class="detail-modal-scroll">
               @if (loadingItineraries()) {
                 <p class="detail-status">{{ 'flightWatch.loadingDetails' | transloco }}</p>
-              } @else if (itineraries().length === 0) {
+              } @else if (filteredItineraries().length === 0) {
                 <p class="detail-status">{{ 'flightWatch.noDetails' | transloco }}</p>
               } @else {
                 <div class="itinerary-list">
-                  @for (it of itineraries(); track $index) {
+                  @for (it of filteredItineraries(); track $index) {
                     <div
                       class="boarding-pass"
                       [class.selected]="selectedItinerary() === it"
@@ -467,7 +475,10 @@ const CURRENCY_CODES = [
       @if (showImportModal()) {
         @if (selectedItinerary(); as sel) {
           <div class="modal-backdrop import-backdrop" (click)="closeImportModal()">
-            <div class="modal-card import-modal" (click)="$event.stopPropagation()">
+            <div
+              class="modal-card import-modal modal-card-compact"
+              (click)="$event.stopPropagation()"
+            >
               @if (importSuccess()) {
                 <p class="import-success">{{ 'flightWatch.importSuccess' | transloco }}</p>
               } @else {
@@ -894,24 +905,32 @@ const CURRENCY_CODES = [
       .detail-modal .modal-header {
         display: flex;
         align-items: center;
-        justify-content: center;
-        position: relative;
+        justify-content: space-between;
+        gap: 0.5rem;
         flex-shrink: 0;
         width: 100%;
         box-sizing: border-box;
-        padding: 1.25rem 1.25rem 1rem;
-        background: transparent;
+        padding: 0.9rem 1.25rem;
+        background: var(--surface);
+        box-shadow: 0 4px 16px var(--shadow);
+        border-radius: 16px 16px 0 0;
         z-index: 1;
       }
+      .detail-modal .header-spacer {
+        width: 28px;
+        flex-shrink: 0;
+      }
       .detail-modal .modal-title {
+        flex: 1;
+        min-width: 0;
         margin: 0;
         text-align: center;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
       }
       .detail-modal .close-x-btn {
-        position: absolute;
-        right: 1.25rem;
-        top: 50%;
-        transform: translateY(-50%);
+        flex-shrink: 0;
       }
       .close-x-btn {
         flex-shrink: 0;
@@ -1098,6 +1117,15 @@ export class FlightWatchComponent implements OnInit {
   editingWatchId = signal<string | null>(null);
   detailWatch = signal<FlightWatch | null>(null);
   itineraries = signal<FlightItinerary[]>([]);
+  /** 依目前追蹤路線設定的「轉機次數」篩選後的明細清單 */
+  filteredItineraries = computed(() => {
+    const watch = this.detailWatch();
+    const list = this.itineraries();
+    if (!watch || watch.max_stops === 'any') return list;
+    return list.filter((it) =>
+      it.legs.every((leg) => this.stopsMatchesFilter(leg.stops, watch.max_stops)),
+    );
+  });
   loadingItineraries = signal(false);
   myTrips = signal<Trip[]>([]);
   selectedItinerary = signal<FlightItinerary | null>(null);
@@ -1118,6 +1146,13 @@ export class FlightWatchComponent implements OnInit {
 
   currencyDropdownOptions = CURRENCY_CODES.map((c) => ({ value: c, label: c }));
 
+  maxStopsDropdownOptions(): { value: FlightMaxStops; label: string }[] {
+    return (['any', 'direct', 'one', 'twoPlus'] as FlightMaxStops[]).map((value) => ({
+      value,
+      label: this.transloco.translate(`flightWatch.maxStops.${value}`),
+    }));
+  }
+
   originQuery = signal('');
   destinationQuery = signal('');
   originFocused = signal(false);
@@ -1131,6 +1166,7 @@ export class FlightWatchComponent implements OnInit {
     destination: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(3)]],
     depart_date: [this.todayDateString(), Validators.required],
     return_date: [this.todayDateString()],
+    max_stops: ['any' as FlightMaxStops],
     target_price: [null as number | null],
     currency: ['TWD', [Validators.required, Validators.minLength(3), Validators.maxLength(3)]],
   });
@@ -1196,6 +1232,7 @@ export class FlightWatchComponent implements OnInit {
       destination: watch.destination,
       depart_date: watch.depart_date,
       return_date: watch.return_date ?? watch.depart_date,
+      max_stops: watch.max_stops,
       target_price: watch.target_price,
       currency: watch.currency,
     });
@@ -1231,6 +1268,7 @@ export class FlightWatchComponent implements OnInit {
     this.editingWatchId.set(null);
     this.form.reset({
       currency: this.pref.homeCountry().currency,
+      max_stops: 'any',
       depart_date: this.todayDateString(),
       return_date: this.todayDateString(),
     });
@@ -1307,6 +1345,7 @@ export class FlightWatchComponent implements OnInit {
       destination: v.destination!.toUpperCase(),
       depart_date: v.depart_date!,
       return_date: v.return_date || null,
+      max_stops: v.max_stops!,
       target_price: v.target_price ? Number(v.target_price) : null,
       currency: v.currency!.toUpperCase(),
     });
@@ -1335,6 +1374,7 @@ export class FlightWatchComponent implements OnInit {
       destination: v.destination!.toUpperCase(),
       depart_date: v.depart_date!,
       return_date: v.return_date || null,
+      max_stops: v.max_stops!,
       target_price: v.target_price ? Number(v.target_price) : null,
       currency: v.currency!.toUpperCase(),
     });
@@ -1415,6 +1455,20 @@ export class FlightWatchComponent implements OnInit {
 
   private countryInfoForAirport(code: string): { timezone: string; currency: string } | undefined {
     return AIRPORT_TZ_CURRENCY[code];
+  }
+
+  /** 單一航段的轉機次數是否符合追蹤路線設定的篩選條件 */
+  private stopsMatchesFilter(stops: number, filter: FlightMaxStops): boolean {
+    switch (filter) {
+      case 'direct':
+        return stops === 0;
+      case 'one':
+        return stops === 1;
+      case 'twoPlus':
+        return stops >= 2;
+      default:
+        return true;
+    }
   }
 
   /** 產生預設行程名稱，若已有同名行程則加上流水號（新行程、新行程2、新行程3...） */

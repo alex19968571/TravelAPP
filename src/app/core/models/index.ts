@@ -132,6 +132,9 @@ export interface TripReminder {
   created_at_utc: string;
 }
 
+/** 轉機次數篩選：不限 / 直達 / 轉機一次 / 轉機兩次(含)以上 */
+export type FlightMaxStops = 'any' | 'direct' | 'one' | 'twoPlus';
+
 export interface FlightWatch {
   id: string;
   owner_id: string;
@@ -141,6 +144,7 @@ export interface FlightWatch {
   return_date?: string | null;
   target_price?: number | null;
   currency: string;
+  max_stops: FlightMaxStops;
   last_price: number | null;
   last_checked_at: string | null;
   created_at_utc: string;

@@ -260,7 +260,14 @@
     "selectTrip": "Select a trip",
     "confirmImport": "Confirm Import",
     "importSuccess": "Imported successfully",
-    "defaultTripTitle": "New Trip"
+    "defaultTripTitle": "New Trip",
+    "maxStopsLabel": "Stops",
+    "maxStops": {
+      "any": "Any",
+      "direct": "Direct",
+      "one": "1 stop",
+      "twoPlus": "2+ stops"
+    }
   },
   "nearby": {
     "message": "You're near {{place}} — {{count}} spot(s) within {{radius}} km"
