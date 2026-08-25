@@ -132,12 +132,18 @@ export class MapsService {
   async searchPlaceSuggestions(query: string): Promise<PlaceSuggestion[]> {
     const q = query.trim();
     if (!q) return [];
-    await this.ensureLoaded();
+
+    // Nominatim 優先：免金鑰、不需另外在 Google Cloud 專案啟用 Geocoding API，
+    // 避免每次輸入都在 Console 噴 "This API is not activated" 錯誤。
+    // Google Geocoding 僅作為 Nominatim 查無結果時的備援。
+    const nominatimResults = await this.nominatimForwardMulti(q);
+    if (nominatimResults.length) return nominatimResults;
 
     try {
+      await this.ensureLoaded();
       const geocoder = new google.maps.Geocoder();
       const result = await geocoder.geocode({ address: q });
-      const suggestions = (result.results ?? []).slice(0, 8).map((r) => {
+      return (result.results ?? []).slice(0, 8).map((r) => {
         const countryComponent = r.address_components?.find((c) => c.types.includes('country'));
         return {
           name: r.formatted_address,
@@ -146,12 +152,9 @@ export class MapsService {
           countryCode: countryComponent?.short_name?.toLowerCase() ?? null,
         };
       });
-      if (suggestions.length) return suggestions;
     } catch {
-      // Geocoding API 未啟用，改用 Nominatim
+      return [];
     }
-
-    return this.nominatimForwardMulti(q);
   }
 
   /** Nominatim 多筆正向地理編碼（免費，不需 API key），供 searchPlaceSuggestions 使用 */

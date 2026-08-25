@@ -190,7 +190,10 @@ export class TravelMapComponent implements AfterViewInit {
 
   async share(): Promise<void> {
     const token = await this.userProfileService.getOrCreateMapShareToken();
-    const url = `${location.origin}/shared-map/${token}`;
+    // 用 document.baseURI（反映 <base href>，部署到 GitHub Pages 子路徑如
+    // /TravelAPP/ 時會含在內）而非 location.origin，避免分享連結漏掉部署子路徑
+    // 導致 404（GH Pages 的 SPA fallback 404.html 只涵蓋子路徑底下的網址）。
+    const url = `${document.baseURI}shared-map/${token}`;
     await navigator.clipboard.writeText(url);
     this.copied.set(true);
     setTimeout(() => this.copied.set(false), 2000);
