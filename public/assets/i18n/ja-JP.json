@@ -256,6 +256,7 @@
     "noDetails": "フライト詳細が見つかりません",
     "direct": "直行便",
     "viaStops": "経由 {{count}} 回",
+    "transferDetail": "{{airport}} で乗り継ぎ、待ち時間 {{duration}}",
     "importToTrip": "旅程にインポート",
     "selectTrip": "旅程を選択してください",
     "confirmImport": "インポートを確定",

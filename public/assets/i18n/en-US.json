@@ -256,6 +256,7 @@
     "noDetails": "No flight details available",
     "direct": "Direct",
     "viaStops": "{{count}} stop(s)",
+    "transferDetail": "Connect at {{airport}}, wait {{duration}}",
     "importToTrip": "Import to trip",
     "selectTrip": "Select a trip",
     "confirmImport": "Confirm Import",

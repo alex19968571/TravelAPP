@@ -39,6 +39,15 @@ function parsePriceString(raw: unknown): number | null {
   return isNaN(num) ? null : num;
 }
 
+interface ItineraryLegSegment {
+  flight: string;
+  from: string;
+  to: string;
+  dep: string;
+  arr: string;
+  durMin: number;
+}
+
 interface ItineraryLeg {
   from: string;
   to: string;
@@ -46,6 +55,8 @@ interface ItineraryLeg {
   arr: string;
   durMin: number;
   stops: number;
+  /** 轉機段落明細（每個航段一筆），供前端算出轉機機場與等待時間；直飛或 API 未提供時可能為空陣列 */
+  segments: ItineraryLegSegment[];
 }
 
 interface Itinerary {
@@ -73,6 +84,14 @@ function mapSkyscannerResults(results: any[]): Itinerary[] {
         arr: leg?.arr ?? '',
         durMin: typeof leg?.dur_min === 'number' ? leg.dur_min : 0,
         stops: typeof leg?.stops === 'number' ? leg.stops : 0,
+        segments: (leg?.segments ?? []).map((seg: any) => ({
+          flight: seg?.flight ?? '',
+          from: seg?.from ?? '',
+          to: seg?.to ?? '',
+          dep: seg?.dep ?? '',
+          arr: seg?.arr ?? '',
+          durMin: typeof seg?.dur_min === 'number' ? seg.dur_min : 0,
+        })),
       }));
       return {
         price,

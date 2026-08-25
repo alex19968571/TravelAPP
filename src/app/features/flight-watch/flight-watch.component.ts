@@ -14,7 +14,11 @@ import { ReactiveFormsModule, FormsModule, FormBuilder, Validators } from '@angu
 import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
 import { FlightWatch, FlightMaxStops, Trip } from '../../core/models';
 import { FlightWatchService } from '../../core/services/flight-watch.service';
-import { FlightPriceService, FlightItinerary } from '../../core/services/flight-price.service';
+import {
+  FlightPriceService,
+  FlightItinerary,
+  FlightItineraryLeg,
+} from '../../core/services/flight-price.service';
 import { AuthService } from '../../core/services/auth.service';
 import { PreferenceService } from '../../core/services/preference.service';
 import { TripService } from '../../core/services/trip.service';
@@ -450,16 +454,34 @@ const CURRENCY_CODES = [
                       <div class="boarding-pass-divider"></div>
                       <div class="boarding-pass-legs">
                         @for (leg of it.legs; track $index) {
-                          <div class="itinerary-leg">
-                            <span class="leg-route">{{ leg.from }} → {{ leg.to }}</span>
-                            <span class="leg-time"
-                              >{{ formatLegTime(leg.dep) }} - {{ formatLegTime(leg.arr) }}</span
-                            >
-                            <span class="leg-duration">{{ formatDuration(leg.durMin) }}</span>
-                            <span class="leg-stops">{{
-                              (leg.stops === 0 ? 'flightWatch.direct' : 'flightWatch.viaStops')
-                                | transloco: { count: leg.stops }
-                            }}</span>
+                          <div class="itinerary-leg-block">
+                            <div class="itinerary-leg">
+                              <span class="leg-route">{{ leg.from }} → {{ leg.to }}</span>
+                              <span class="leg-time"
+                                >{{ formatLegTime(leg.dep) }} - {{ formatLegTime(leg.arr) }}</span
+                              >
+                              <span class="leg-duration">{{ formatDuration(leg.durMin) }}</span>
+                              <span class="leg-stops">{{
+                                (leg.stops === 0 ? 'flightWatch.direct' : 'flightWatch.viaStops')
+                                  | transloco: { count: leg.stops }
+                              }}</span>
+                            </div>
+                            @if (legConnections(leg).length > 0) {
+                              <div class="leg-connections">
+                                @for (conn of legConnections(leg); track $index) {
+                                  <div class="leg-connection">
+                                    {{
+                                      'flightWatch.transferDetail'
+                                        | transloco
+                                          : {
+                                              airport: conn.airport,
+                                              duration: formatDuration(conn.waitMin),
+                                            }
+                                    }}
+                                  </div>
+                                }
+                              </div>
+                            }
                           </div>
                         }
                       </div>
@@ -1055,6 +1077,12 @@ const CURRENCY_CODES = [
         text-align: center;
         margin: 0;
       }
+      .itinerary-leg-block {
+        display: flex;
+        flex-direction: column;
+        gap: 0.3rem;
+        max-width: 100%;
+      }
       .itinerary-leg {
         display: flex;
         flex-wrap: wrap;
@@ -1071,6 +1099,17 @@ const CURRENCY_CODES = [
       .leg-duration,
       .leg-stops {
         white-space: nowrap;
+      }
+      .leg-connections {
+        display: flex;
+        flex-direction: column;
+        gap: 0.15rem;
+        padding-left: 0.75rem;
+        border-left: 2px solid var(--border);
+      }
+      .leg-connection {
+        font-size: 0.75rem;
+        color: var(--text-secondary);
       }
       @media (max-width: 480px) {
         .itinerary-leg {
@@ -1532,5 +1571,19 @@ export class FlightWatchComponent implements OnInit {
     const h = Math.floor(durMin / 60);
     const m = durMin % 60;
     return `${h}h${String(m).padStart(2, '0')}m`;
+  }
+
+  /** 依航段明細算出每個轉機點的機場與等待時間（相鄰兩航段的抵達/起飛時間差） */
+  legConnections(leg: FlightItineraryLeg): { airport: string; waitMin: number }[] {
+    const segments = leg.segments;
+    if (!segments || segments.length < 2) return [];
+    const connections: { airport: string; waitMin: number }[] = [];
+    for (let i = 0; i < segments.length - 1; i++) {
+      const arrTime = new Date(segments[i].arr).getTime();
+      const depTime = new Date(segments[i + 1].dep).getTime();
+      const waitMin = Math.max(0, Math.round((depTime - arrTime) / 60000));
+      connections.push({ airport: segments[i].to, waitMin });
+    }
+    return connections;
   }
 }

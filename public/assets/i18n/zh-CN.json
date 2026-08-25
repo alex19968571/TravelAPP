@@ -291,6 +291,7 @@
     "noDetails": "暂时查无航班明细",
     "direct": "直飞",
     "viaStops": "转机 {{count}} 次",
+    "transferDetail": "于 {{airport}} 转机，等待 {{duration}}",
     "importToTrip": "导入到行程",
     "selectTrip": "请选择行程",
     "confirmImport": "确认导入",

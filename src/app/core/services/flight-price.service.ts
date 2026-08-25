@@ -3,6 +3,15 @@ import { FlightWatch } from '../models';
 import { FlightWatchService } from './flight-watch.service';
 import { SupabaseService } from './supabase.service';
 
+export interface FlightItineraryLegSegment {
+  flight: string;
+  from: string;
+  to: string;
+  dep: string;
+  arr: string;
+  durMin: number;
+}
+
 export interface FlightItineraryLeg {
   from: string;
   to: string;
@@ -10,6 +19,8 @@ export interface FlightItineraryLeg {
   arr: string;
   durMin: number;
   stops: number;
+  /** 轉機航段明細（依序），直飛或 API 未提供時可能為空陣列 */
+  segments: FlightItineraryLegSegment[];
 }
 
 export interface FlightItinerary {
