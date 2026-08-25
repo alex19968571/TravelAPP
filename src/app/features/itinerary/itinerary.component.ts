@@ -171,7 +171,7 @@ const DAY_COLORS = ['#667eea', '#ed8936', '#48bb78', '#f56565', '#9f7aea', '#38b
       <!-- 順序選擇 Modal -->
       @if (showPositionPicker()) {
         <div class="modal-backdrop" (click)="showPositionPicker.set(false)">
-          <div class="modal-card" (click)="$event.stopPropagation()">
+          <div class="modal-card modal-card-compact" (click)="$event.stopPropagation()">
             <h3>{{ 'itinerary.choosePosition' | transloco }}</h3>
             <div class="picker-list">
               @for (p of positionOptions(); track p) {
