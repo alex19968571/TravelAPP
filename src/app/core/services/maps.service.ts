@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { setOptions, importLibrary } from '@googlemaps/js-api-loader';
 import { environment } from '../../../environments/environment';
 import { ItineraryItem, TransportMode } from '../models';
+import { filterAirportDirectory } from '../utils/airport-directory.util';
 
 export interface RouteStepTransitInfo {
   lineName: string;
@@ -124,58 +125,19 @@ export class MapsService {
   }
 
   /**
-   * 依關鍵字查詢「多筆」地點建議（供輸入框即時顯示建議清單，例如旅行地圖的出發地/目的地）。
-   * `searchPlace()` 只回傳單一最佳結果，不適合做這種 UX，故另開一支方法。
-   * 優先用 Google Geocoding（可能回傳多筆 `results`），沒有結果／未啟用時 fallback 到
-   * Nominatim 的多筆搜尋（`limit=8`），兩者都盡量帶出國碼供地圖依國家分色使用。
+   * 依關鍵字查詢「多筆」地點建議，供「行程」出發地/目的地自動完成下拉選單使用。
+   * 刻意只查機場（`AIRPORT_DIRECTORY`），不做一般地址/地標搜尋——
+   * 一來符合「出發地/目的地＝搭機起訖點」的需求，二來一般地址搜尋（Nominatim/Google）
+   * 常回傳很長的完整地址字串，塞進下拉選單容易被裁切/需要捲動；改成同步查表後
+   * 就不再需要打外部 API，也不會再遇到 Google Geocoding API 未啟用的錯誤。
    */
   async searchPlaceSuggestions(query: string): Promise<PlaceSuggestion[]> {
-    const q = query.trim();
-    if (!q) return [];
-
-    // Nominatim 優先：免金鑰、不需另外在 Google Cloud 專案啟用 Geocoding API，
-    // 避免每次輸入都在 Console 噴 "This API is not activated" 錯誤。
-    // Google Geocoding 僅作為 Nominatim 查無結果時的備援。
-    const nominatimResults = await this.nominatimForwardMulti(q);
-    if (nominatimResults.length) return nominatimResults;
-
-    try {
-      await this.ensureLoaded();
-      const geocoder = new google.maps.Geocoder();
-      const result = await geocoder.geocode({ address: q });
-      return (result.results ?? []).slice(0, 8).map((r) => {
-        const countryComponent = r.address_components?.find((c) => c.types.includes('country'));
-        return {
-          name: r.formatted_address,
-          lat: r.geometry.location.lat(),
-          lng: r.geometry.location.lng(),
-          countryCode: countryComponent?.short_name?.toLowerCase() ?? null,
-        };
-      });
-    } catch {
-      return [];
-    }
-  }
-
-  /** Nominatim 多筆正向地理編碼（免費，不需 API key），供 searchPlaceSuggestions 使用 */
-  private async nominatimForwardMulti(query: string): Promise<PlaceSuggestion[]> {
-    try {
-      const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=8&addressdetails=1`;
-      const res = await fetch(url, {
-        headers: { 'User-Agent': 'TravelAPP/1.0', 'Accept-Language': 'zh-TW,zh;q=0.9,en;q=0.8' },
-      });
-      if (!res.ok) return [];
-      const data = await res.json();
-      return (data as any[]).map((d) => ({
-        name: d.display_name,
-        lat: parseFloat(d.lat),
-        lng: parseFloat(d.lon),
-        countryCode: d.address?.country_code ?? null,
-      }));
-    } catch (err) {
-      console.error('[Maps] Nominatim multi forward geocoding failed', err);
-      return [];
-    }
+    return filterAirportDirectory(query).map((a) => ({
+      name: `${a.name}（${a.city}）`,
+      lat: a.lat,
+      lng: a.lng,
+      countryCode: a.countryCode,
+    }));
   }
 
   /** 反向地理編碼（取得點擊座標的地名）：Google Geocoding → Nominatim → 座標字串 */
