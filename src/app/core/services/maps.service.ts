@@ -539,15 +539,46 @@ export class MapsService {
   }
 
   /**
-   * 隨機產生一個弧線顏色，盡量避開 `usedColors` 裡已經在用的色相（角度差需
-   * >= 30 度才算「不重複」）；找不到夠遠的候選時，取嘗試過程中角度差最大的一個。
+   * 產生一個弧線顏色，供詳情面板「隨機生成」按鈕使用：
+   * - 如果「目的地國家」跟其他行程有相同的（`others` 有同國碼的），改成同色系
+   *   （色相固定用 `hueForCountry`，跟 `getDefaultArcColor` 同一套算法）、只挑一個
+   *   跟同國家其他行程明暗值都夠遠的明暗度，做出「同色系不同色」的效果。
+   * - 沒有同國家的其他行程，才照舊在全部顏色裡隨機挑一個色相角度差夠大的顏色。
    */
-  generateDistinctColor(usedColors: string[]): string {
-    const usedHues = usedColors
-      .map((c) => this.parseHue(c))
+  generateDistinctColor(
+    countryCode: string | null | undefined,
+    others: { countryCode: string | null | undefined; color: string }[],
+  ): string {
+    const sameCountry = others.filter((o) => countryCode && o.countryCode === countryCode);
+    if (sameCountry.length) {
+      const hue = this.hueForCountry(countryCode);
+      const usedLightness = sameCountry
+        .map((o) => this.parseHsl(o.color)?.l ?? null)
+        .filter((l): l is number => l !== null);
+
+      const MIN_L_DISTANCE = 12;
+      const MAX_ATTEMPTS = 20;
+      let bestLightness = 55;
+      let bestDistance = -1;
+      for (let i = 0; i < MAX_ATTEMPTS; i++) {
+        const candidate = 30 + Math.random() * 45; // 30%~75%，跟 getDefaultArcColor 的區間一致
+        const distance = usedLightness.length
+          ? Math.min(...usedLightness.map((l) => Math.abs(l - candidate)))
+          : Infinity;
+        if (distance >= MIN_L_DISTANCE) return `hsl(${hue}, 65%, ${candidate.toFixed(0)}%)`;
+        if (distance > bestDistance) {
+          bestDistance = distance;
+          bestLightness = candidate;
+        }
+      }
+      return `hsl(${hue}, 65%, ${bestLightness.toFixed(0)}%)`;
+    }
+
+    const usedHues = others
+      .map((o) => this.parseHsl(o.color)?.h ?? null)
       .filter((h): h is number => h !== null);
 
-    const MIN_DISTANCE = 30;
+    const MIN_H_DISTANCE = 30;
     const MAX_ATTEMPTS = 30;
     let bestHue = Math.floor(Math.random() * 360);
     let bestMinDistance = -1;
@@ -557,7 +588,7 @@ export class MapsService {
       const minDistance = usedHues.length
         ? Math.min(...usedHues.map((h) => this.hueDistance(candidate, h)))
         : Infinity;
-      if (minDistance >= MIN_DISTANCE) return `hsl(${candidate}, 65%, 50%)`;
+      if (minDistance >= MIN_H_DISTANCE) return `hsl(${candidate}, 65%, 50%)`;
       if (minDistance > bestMinDistance) {
         bestMinDistance = minDistance;
         bestHue = candidate;
@@ -571,10 +602,18 @@ export class MapsService {
     return diff > 180 ? 360 - diff : diff;
   }
 
-  /** 解析 `hsl(h, s%, l%)` 或 `#rrggbb` 字串取得色相角度（0-360），解析失敗回傳 null */
-  private parseHue(color: string): number | null {
-    const hslMatch = color.match(/^hsl\(\s*(-?\d+(?:\.\d+)?)/i);
-    if (hslMatch) return ((parseFloat(hslMatch[1]) % 360) + 360) % 360;
+  /** 解析 `hsl(h, s%, l%)` 或 `#rrggbb` 字串取得 {h, s, l}，解析失敗回傳 null */
+  private parseHsl(color: string): { h: number; s: number; l: number } | null {
+    const hslMatch = color.match(
+      /^hsl\(\s*(-?\d+(?:\.\d+)?)\s*,\s*(\d+(?:\.\d+)?)%\s*,\s*(\d+(?:\.\d+)?)%\s*\)$/i,
+    );
+    if (hslMatch) {
+      return {
+        h: ((parseFloat(hslMatch[1]) % 360) + 360) % 360,
+        s: parseFloat(hslMatch[2]),
+        l: parseFloat(hslMatch[3]),
+      };
+    }
 
     const hexMatch = color.match(/^#([0-9a-f]{6})$/i);
     if (!hexMatch) return null;
@@ -583,13 +622,15 @@ export class MapsService {
     const b = parseInt(hexMatch[1].slice(4, 6), 16) / 255;
     const max = Math.max(r, g, b);
     const min = Math.min(r, g, b);
-    if (max === min) return 0;
+    const l = (max + min) / 2;
+    if (max === min) return { h: 0, s: 0, l: l * 100 };
     const d = max - min;
+    const s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
     let h: number;
     if (max === r) h = ((g - b) / d + (g < b ? 6 : 0)) * 60;
     else if (max === g) h = ((b - r) / d + 2) * 60;
     else h = ((r - g) / d + 4) * 60;
-    return h;
+    return { h, s: s * 100, l: l * 100 };
   }
 }
 

@@ -8,13 +8,13 @@ import { TravelMapService } from '../../core/services/travel-map.service';
 import { UserProfileService } from '../../core/services/user-profile.service';
 import { AuthService } from '../../core/services/auth.service';
 import { MapsService } from '../../core/services/maps.service';
-import { TravelMapDetailComponent } from './travel-map-detail.component';
+import { TravelMapDetailComponent, OtherTripColor } from './travel-map-detail.component';
 
 interface DetailData {
   trip: Trip;
   pin: TravelMapPin | undefined;
   items: ItineraryItem[];
-  usedColors: string[];
+  otherTripColors: OtherTripColor[];
 }
 
 @Component({
@@ -44,7 +44,7 @@ interface DetailData {
         [trip]="d.trip"
         [pin]="d.pin"
         [itineraryItems]="d.items"
-        [usedColors]="d.usedColors"
+        [otherTripColors]="d.otherTripColors"
         [readOnly]="false"
         (closed)="detailData.set(null)"
         (saved)="onPinSaved($event)"
@@ -193,12 +193,13 @@ export class TravelMapComponent implements AfterViewInit {
 
   async openDetail(trip: Trip, pin: TravelMapPin | undefined): Promise<void> {
     const items = await this.tripService.getItinerary(trip.id);
-    const usedColors = this.trips
+    const otherTripColors: OtherTripColor[] = this.trips
       .filter((t) => t.id !== trip.id)
-      .map(
-        (t) => this.pinsByTripId.get(t.id)?.arc_color || this.mapsService.getDefaultArcColor(t, this.trips),
-      );
-    this.detailData.set({ trip, pin, items, usedColors });
+      .map((t) => ({
+        countryCode: t.destination_country_code,
+        color: this.pinsByTripId.get(t.id)?.arc_color || this.mapsService.getDefaultArcColor(t, this.trips),
+      }));
+    this.detailData.set({ trip, pin, items, otherTripColors });
   }
 
   async onPinSaved(updated: TravelMapPin): Promise<void> {

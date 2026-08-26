@@ -25,6 +25,13 @@ export interface TravelMapDetailTrip {
   title: string;
   origin?: string | null;
   destination?: string | null;
+  destination_country_code?: string | null;
+}
+
+/** 供「隨機生成」判斷同國家其他行程目前的顏色，決定要不要改成同色系不同色 */
+export interface OtherTripColor {
+  countryCode: string | null | undefined;
+  color: string;
 }
 
 /**
@@ -457,8 +464,8 @@ export class TravelMapDetailComponent implements OnInit, AfterViewInit {
   @Input() pin: TravelMapPin | undefined;
   @Input() itineraryItems: ItineraryItem[] = [];
   @Input() readOnly = false;
-  /** 其他行程目前使用中的弧線顏色（含自訂與預設計算出來的），供「隨機生成」避開重複色 */
-  @Input() usedColors: string[] = [];
+  /** 其他行程目前使用中的弧線顏色（含自訂與預設計算出來的）＋各自目的地國碼，供「隨機生成」判斷 */
+  @Input() otherTripColors: OtherTripColor[] = [];
   @Output() closed = new EventEmitter<void>();
   @Output() saved = new EventEmitter<TravelMapPin>();
 
@@ -560,7 +567,9 @@ export class TravelMapDetailComponent implements OnInit, AfterViewInit {
   }
 
   randomizeColor(): void {
-    this.colorDraft.set(this.mapsService.generateDistinctColor(this.usedColors));
+    this.colorDraft.set(
+      this.mapsService.generateDistinctColor(this.trip.destination_country_code, this.otherTripColors),
+    );
   }
 
   onColorInput(event: Event): void {
