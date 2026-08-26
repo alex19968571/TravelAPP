@@ -55,6 +55,12 @@ export class SyncEngineService implements OnDestroy {
   // ── Sync-Down：登入後從雲端覆蓋寫入本地 ──────────────────────────
   async syncDown(userId: string): Promise<void> {
     try {
+      // 先把本機尚未上傳的異動（sync_queue 裡的 PENDING/FAILED 項目）送出去，
+      // 避免「剛編輯完就重整」時，這裡撈回的還是編輯前的舊遠端資料，把本機剛存的
+      // 異動蓋掉（尤其 Ctrl+F5 這種會整個重新載入頁面的操作，很容易跟尚未送達
+      // 伺服器的背景同步撞在一起）。
+      await this.syncUp();
+
       const [
         { data: ownedTrips, error: ownedTripsErr },
         { data: members, error: membersErr },
@@ -137,7 +143,10 @@ export class SyncEngineService implements OnDestroy {
               new Set(tripIds),
             );
           }
-          if (trips.length) await db.trips.bulkPut(trips as Trip[]);
+          if (trips.length) {
+            const safeTrips = await this.excludePending('trips', trips as Trip[], 'id');
+            if (safeTrips.length) await db.trips.bulkPut(safeTrips);
+          }
 
           if (!membersErr) {
             await this.pruneStale(
@@ -230,6 +239,25 @@ export class SyncEngineService implements OnDestroy {
     } catch (err) {
       console.error('[SyncEngine] syncDown error', err);
     }
+  }
+
+  /**
+   * 從即將 bulkPut 覆蓋本機的遠端資料中，剔除「本機仍有尚未上傳成功」的記錄
+   * （sync_queue 裡還有該筆的 PENDING/FAILED/SYNCING 項目），避免用撈到的舊遠端
+   * 資料覆蓋掉本機剛做的、伺服器還沒收到的異動。呼叫端已在 syncDown() 開頭先跑過
+   * syncUp() 把佇列清空，這裡是防止 syncUp 失敗（例如剛好離線）時的最後一道防線。
+   */
+  private async excludePending<T extends Record<string, unknown>>(
+    tableName: string,
+    records: T[],
+    idField: string,
+  ): Promise<T[]> {
+    const pending = await db.sync_queue.where('table_name').equals(tableName).toArray();
+    if (!pending.length) return records;
+    const protectedIds = new Set(pending.map((p) => (p.payload as any)[idField]).filter(Boolean));
+    return protectedIds.size
+      ? records.filter((r) => !protectedIds.has(r[idField] as string))
+      : records;
   }
 
   /** 刪除本機存在、但伺服器已沒有、且未在同步佇列中等待上傳的記錄 */
