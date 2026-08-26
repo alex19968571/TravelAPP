@@ -70,30 +70,45 @@ export interface TravelMapDetailTrip {
             </div>
           }
 
-          @if (photoUrlsDraft().length > 0) {
-            <div class="photo-grid">
-              @for (url of photoUrlsDraft(); track url) {
-                <div class="photo-item">
-                  <img [src]="url" alt="" />
-                  @if (editing()) {
-                    <button type="button" class="photo-remove" (click)="removePhoto(url)">✕</button>
-                  }
-                </div>
-              }
-            </div>
-          } @else if (!editing()) {
-            <p class="empty-hint">{{ 'travelMap.noContent' | transloco }}</p>
-          }
+          @if (!editing()) {
+            @if (photoUrlsDraft().length > 0) {
+              <div class="photo-display">
+                @for (url of photoUrlsDraft(); track url) {
+                  <img [src]="url" alt="" class="photo-full" />
+                }
+              </div>
+            } @else {
+              <p class="empty-hint">{{ 'travelMap.noContent' | transloco }}</p>
+            }
 
-          @if (audioUrlDraft()) {
-            <audio controls [src]="audioUrlDraft()"></audio>
-          }
+            @if (audioUrlDraft()) {
+              <div class="field-block">
+                <label>{{ 'travelMap.audio' | transloco }}</label>
+                <audio controls [src]="audioUrlDraft()"></audio>
+              </div>
+            }
 
-          @if (notesDraft() && !editing()) {
-            <p class="notes-text">{{ notesDraft() }}</p>
+            @if (notesDraft()) {
+              <div class="field-block">
+                <label>{{ 'travelMap.notes' | transloco }}</label>
+                <p class="notes-text">{{ notesDraft() }}</p>
+              </div>
+            }
           }
 
           @if (editing()) {
+            @if (photoUrlsDraft().length > 0) {
+              <div class="photo-grid">
+                @for (url of photoUrlsDraft(); track url) {
+                  <div class="photo-item">
+                    <img [src]="url" alt="" />
+                    <button type="button" class="photo-remove" (click)="removePhoto(url)">
+                      ✕
+                    </button>
+                  </div>
+                }
+              </div>
+            }
             <div class="edit-panel">
               <label>{{ 'travelMap.photos' | transloco }}（{{ photoUrlsDraft().length }}/3）</label>
               <label
@@ -262,6 +277,26 @@ export interface TravelMapDetailTrip {
         color: var(--text-secondary);
         font-size: 0.78rem;
       }
+      .photo-display {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        margin-bottom: 0.75rem;
+      }
+      .photo-full {
+        width: 100%;
+        border-radius: 12px;
+        display: block;
+      }
+      .field-block {
+        margin-bottom: 0.75rem;
+      }
+      .field-block label {
+        display: block;
+        font-size: 0.8rem;
+        color: var(--text-secondary);
+        margin-bottom: 0.35rem;
+      }
       .photo-grid {
         display: grid;
         grid-template-columns: repeat(3, 1fr);
@@ -294,13 +329,18 @@ export interface TravelMapDetailTrip {
       }
       audio {
         width: 100%;
-        margin-bottom: 0.75rem;
       }
       .notes-text {
+        box-sizing: border-box;
+        width: 100%;
         color: var(--text-primary);
         font-size: 0.9rem;
         white-space: pre-wrap;
-        margin: 0 0 0.75rem;
+        margin: 0;
+        padding: 0.5rem 0.75rem;
+        border: 1.5px solid var(--border);
+        border-radius: 10px;
+        background: var(--input-bg);
       }
       .empty-hint {
         color: var(--text-secondary);
@@ -335,11 +375,28 @@ export interface TravelMapDetailTrip {
         align-items: center;
         gap: 0.5rem;
       }
+      .color-row input[type='color'] {
+        flex: 1;
+        min-width: 0;
+        height: 38px;
+        padding: 0.15rem;
+        border: 1.5px solid var(--border);
+        border-radius: 10px;
+        background: var(--input-bg);
+        cursor: pointer;
+      }
+      .color-row .btn-secondary {
+        flex: 1;
+      }
       .modal-actions {
         display: flex;
         gap: 0.75rem;
-        justify-content: flex-end;
         padding: 0.75rem 1.25rem 1.25rem;
+      }
+      .modal-actions .btn-primary,
+      .modal-actions .btn-secondary {
+        flex: 1;
+        text-align: center;
       }
       .btn-primary {
         background: var(--accent);
@@ -362,8 +419,10 @@ export interface TravelMapDetailTrip {
         cursor: pointer;
       }
       .file-btn {
-        display: inline-flex;
-        align-self: flex-start;
+        display: flex;
+        width: 100%;
+        box-sizing: border-box;
+        justify-content: center;
         background: var(--accent-light);
         color: var(--text-secondary);
         border: none;
