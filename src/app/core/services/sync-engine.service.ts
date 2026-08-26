@@ -247,16 +247,14 @@ export class SyncEngineService implements OnDestroy {
    * 資料覆蓋掉本機剛做的、伺服器還沒收到的異動。呼叫端已在 syncDown() 開頭先跑過
    * syncUp() 把佇列清空，這裡是防止 syncUp 失敗（例如剛好離線）時的最後一道防線。
    */
-  private async excludePending<T extends Record<string, unknown>>(
-    tableName: string,
-    records: T[],
-    idField: string,
-  ): Promise<T[]> {
+  private async excludePending<T>(tableName: string, records: T[], idField: string): Promise<T[]> {
     const pending = await db.sync_queue.where('table_name').equals(tableName).toArray();
     if (!pending.length) return records;
     const protectedIds = new Set(pending.map((p) => (p.payload as any)[idField]).filter(Boolean));
     return protectedIds.size
-      ? records.filter((r) => !protectedIds.has(r[idField] as string))
+      ? records.filter(
+          (r) => !protectedIds.has((r as unknown as Record<string, unknown>)[idField] as string),
+        )
       : records;
   }
 
