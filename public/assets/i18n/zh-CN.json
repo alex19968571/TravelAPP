@@ -41,7 +41,7 @@
     "removeAudio": "移除声音",
     "notes": "笔记",
     "arcColor": "弧线颜色",
-    "resetColor": "恢复预设颜色",
+    "randomColor": "随机生成",
     "edit": "编辑"
   },
   "trips": {

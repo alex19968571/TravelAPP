@@ -537,6 +537,60 @@ export class MapsService {
     for (let i = 0; i < code.length; i++) hash = (hash * 31 + code.charCodeAt(i)) % 360;
     return hash;
   }
+
+  /**
+   * 隨機產生一個弧線顏色，盡量避開 `usedColors` 裡已經在用的色相（角度差需
+   * >= 30 度才算「不重複」）；找不到夠遠的候選時，取嘗試過程中角度差最大的一個。
+   */
+  generateDistinctColor(usedColors: string[]): string {
+    const usedHues = usedColors
+      .map((c) => this.parseHue(c))
+      .filter((h): h is number => h !== null);
+
+    const MIN_DISTANCE = 30;
+    const MAX_ATTEMPTS = 30;
+    let bestHue = Math.floor(Math.random() * 360);
+    let bestMinDistance = -1;
+
+    for (let i = 0; i < MAX_ATTEMPTS; i++) {
+      const candidate = Math.floor(Math.random() * 360);
+      const minDistance = usedHues.length
+        ? Math.min(...usedHues.map((h) => this.hueDistance(candidate, h)))
+        : Infinity;
+      if (minDistance >= MIN_DISTANCE) return `hsl(${candidate}, 65%, 50%)`;
+      if (minDistance > bestMinDistance) {
+        bestMinDistance = minDistance;
+        bestHue = candidate;
+      }
+    }
+    return `hsl(${bestHue}, 65%, 50%)`;
+  }
+
+  private hueDistance(a: number, b: number): number {
+    const diff = Math.abs(a - b) % 360;
+    return diff > 180 ? 360 - diff : diff;
+  }
+
+  /** 解析 `hsl(h, s%, l%)` 或 `#rrggbb` 字串取得色相角度（0-360），解析失敗回傳 null */
+  private parseHue(color: string): number | null {
+    const hslMatch = color.match(/^hsl\(\s*(-?\d+(?:\.\d+)?)/i);
+    if (hslMatch) return ((parseFloat(hslMatch[1]) % 360) + 360) % 360;
+
+    const hexMatch = color.match(/^#([0-9a-f]{6})$/i);
+    if (!hexMatch) return null;
+    const r = parseInt(hexMatch[1].slice(0, 2), 16) / 255;
+    const g = parseInt(hexMatch[1].slice(2, 4), 16) / 255;
+    const b = parseInt(hexMatch[1].slice(4, 6), 16) / 255;
+    const max = Math.max(r, g, b);
+    const min = Math.min(r, g, b);
+    if (max === min) return 0;
+    const d = max - min;
+    let h: number;
+    if (max === r) h = ((g - b) / d + (g < b ? 6 : 0)) * 60;
+    else if (max === g) h = ((b - r) / d + 2) * 60;
+    else h = ((r - g) / d + 4) * 60;
+    return h;
+  }
 }
 
 export interface ArcColorTripInput {

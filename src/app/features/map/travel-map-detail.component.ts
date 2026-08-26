@@ -70,17 +70,33 @@ export interface TravelMapDetailTrip {
             </div>
           }
 
-          @if (!editing()) {
-            @if (photoUrlsDraft().length > 0) {
-              <div class="photo-display">
+          @if (photoUrlsDraft().length > 0) {
+            <div class="photo-carousel">
+              <div class="carousel-track">
                 @for (url of photoUrlsDraft(); track url) {
-                  <img [src]="url" alt="" class="photo-full" />
+                  <div class="carousel-slide">
+                    <img [src]="url" alt="" class="photo-full" />
+                    @if (editing()) {
+                      <button type="button" class="photo-remove" (click)="removePhoto(url)">
+                        ✕
+                      </button>
+                    }
+                  </div>
                 }
               </div>
-            } @else {
-              <p class="empty-hint">{{ 'travelMap.noContent' | transloco }}</p>
-            }
+              @if (photoUrlsDraft().length > 1) {
+                <div class="carousel-dots">
+                  @for (url of photoUrlsDraft(); track url) {
+                    <span class="dot"></span>
+                  }
+                </div>
+              }
+            </div>
+          } @else if (!editing()) {
+            <p class="empty-hint">{{ 'travelMap.noContent' | transloco }}</p>
+          }
 
+          @if (!editing()) {
             @if (audioUrlDraft()) {
               <div class="field-block">
                 <label>{{ 'travelMap.audio' | transloco }}</label>
@@ -97,18 +113,6 @@ export interface TravelMapDetailTrip {
           }
 
           @if (editing()) {
-            @if (photoUrlsDraft().length > 0) {
-              <div class="photo-grid">
-                @for (url of photoUrlsDraft(); track url) {
-                  <div class="photo-item">
-                    <img [src]="url" alt="" />
-                    <button type="button" class="photo-remove" (click)="removePhoto(url)">
-                      ✕
-                    </button>
-                  </div>
-                }
-              </div>
-            }
             <div class="edit-panel">
               <label>{{ 'travelMap.photos' | transloco }}（{{ photoUrlsDraft().length }}/3）</label>
               <label
@@ -128,6 +132,7 @@ export interface TravelMapDetailTrip {
 
               <label>{{ 'travelMap.audio' | transloco }}</label>
               @if (audioUrlDraft()) {
+                <audio controls [src]="audioUrlDraft()"></audio>
                 <button type="button" class="btn-secondary" (click)="removeAudio()">
                   {{ 'travelMap.removeAudio' | transloco }}
                 </button>
@@ -158,8 +163,8 @@ export interface TravelMapDetailTrip {
                   [value]="colorDraft() ?? '#667eea'"
                   (input)="onColorInput($event)"
                 />
-                <button type="button" class="btn-secondary" (click)="resetColor()">
-                  {{ 'travelMap.resetColor' | transloco }}
+                <button type="button" class="btn-secondary" (click)="randomizeColor()">
+                  {{ 'travelMap.randomColor' | transloco }}
                 </button>
               </div>
             </div>
@@ -277,17 +282,6 @@ export interface TravelMapDetailTrip {
         color: var(--text-secondary);
         font-size: 0.78rem;
       }
-      .photo-display {
-        display: flex;
-        flex-direction: column;
-        gap: 0.5rem;
-        margin-bottom: 0.75rem;
-      }
-      .photo-full {
-        width: 100%;
-        border-radius: 12px;
-        display: block;
-      }
       .field-block {
         margin-bottom: 0.75rem;
       }
@@ -297,35 +291,53 @@ export interface TravelMapDetailTrip {
         color: var(--text-secondary);
         margin-bottom: 0.35rem;
       }
-      .photo-grid {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 0.5rem;
+      .photo-carousel {
         margin-bottom: 0.75rem;
       }
-      .photo-item {
-        position: relative;
-        aspect-ratio: 1;
-        border-radius: 10px;
-        overflow: hidden;
+      .carousel-track {
+        display: flex;
+        overflow-x: auto;
+        scroll-snap-type: x mandatory;
+        scrollbar-width: none;
+        border-radius: 12px;
       }
-      .photo-item img {
+      .carousel-track::-webkit-scrollbar {
+        display: none;
+      }
+      .carousel-slide {
+        position: relative;
+        flex: 0 0 100%;
+        scroll-snap-align: start;
+      }
+      .photo-full {
         width: 100%;
-        height: 100%;
-        object-fit: cover;
+        border-radius: 12px;
+        display: block;
+      }
+      .carousel-dots {
+        display: flex;
+        justify-content: center;
+        gap: 0.35rem;
+        margin-top: 0.5rem;
+      }
+      .dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--border);
       }
       .photo-remove {
         position: absolute;
-        top: 4px;
-        right: 4px;
-        width: 22px;
-        height: 22px;
+        top: 8px;
+        right: 8px;
+        width: 24px;
+        height: 24px;
         border-radius: 50%;
         border: none;
         background: rgba(0, 0, 0, 0.6);
         color: #fff;
         cursor: pointer;
-        font-size: 0.7rem;
+        font-size: 0.75rem;
       }
       audio {
         width: 100%;
@@ -445,6 +457,8 @@ export class TravelMapDetailComponent implements OnInit, AfterViewInit {
   @Input() pin: TravelMapPin | undefined;
   @Input() itineraryItems: ItineraryItem[] = [];
   @Input() readOnly = false;
+  /** 其他行程目前使用中的弧線顏色（含自訂與預設計算出來的），供「隨機生成」避開重複色 */
+  @Input() usedColors: string[] = [];
   @Output() closed = new EventEmitter<void>();
   @Output() saved = new EventEmitter<TravelMapPin>();
 
@@ -545,8 +559,8 @@ export class TravelMapDetailComponent implements OnInit, AfterViewInit {
     this.audioUrlDraft.set(null);
   }
 
-  resetColor(): void {
-    this.colorDraft.set(null);
+  randomizeColor(): void {
+    this.colorDraft.set(this.mapsService.generateDistinctColor(this.usedColors));
   }
 
   onColorInput(event: Event): void {

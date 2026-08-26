@@ -14,6 +14,7 @@ interface DetailData {
   trip: Trip;
   pin: TravelMapPin | undefined;
   items: ItineraryItem[];
+  usedColors: string[];
 }
 
 @Component({
@@ -43,6 +44,7 @@ interface DetailData {
         [trip]="d.trip"
         [pin]="d.pin"
         [itineraryItems]="d.items"
+        [usedColors]="d.usedColors"
         [readOnly]="false"
         (closed)="detailData.set(null)"
         (saved)="onPinSaved($event)"
@@ -191,7 +193,12 @@ export class TravelMapComponent implements AfterViewInit {
 
   async openDetail(trip: Trip, pin: TravelMapPin | undefined): Promise<void> {
     const items = await this.tripService.getItinerary(trip.id);
-    this.detailData.set({ trip, pin, items });
+    const usedColors = this.trips
+      .filter((t) => t.id !== trip.id)
+      .map(
+        (t) => this.pinsByTripId.get(t.id)?.arc_color || this.mapsService.getDefaultArcColor(t, this.trips),
+      );
+    this.detailData.set({ trip, pin, items, usedColors });
   }
 
   async onPinSaved(updated: TravelMapPin): Promise<void> {

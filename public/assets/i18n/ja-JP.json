@@ -41,7 +41,7 @@
     "removeAudio": "音声を削除",
     "notes": "メモ",
     "arcColor": "ラインの色",
-    "resetColor": "デフォルトの色に戻す",
+    "randomColor": "ランダム生成",
     "edit": "編集"
   },
   "trips": {
