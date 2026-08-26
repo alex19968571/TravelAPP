@@ -565,13 +565,13 @@ export class MapsService {
         const distance = usedLightness.length
           ? Math.min(...usedLightness.map((l) => Math.abs(l - candidate)))
           : Infinity;
-        if (distance >= MIN_L_DISTANCE) return `hsl(${hue}, 65%, ${candidate.toFixed(0)}%)`;
+        if (distance >= MIN_L_DISTANCE) return this.hslToHex(hue, 65, candidate);
         if (distance > bestDistance) {
           bestDistance = distance;
           bestLightness = candidate;
         }
       }
-      return `hsl(${hue}, 65%, ${bestLightness.toFixed(0)}%)`;
+      return this.hslToHex(hue, 65, bestLightness);
     }
 
     const usedHues = others
@@ -588,18 +588,45 @@ export class MapsService {
       const minDistance = usedHues.length
         ? Math.min(...usedHues.map((h) => this.hueDistance(candidate, h)))
         : Infinity;
-      if (minDistance >= MIN_H_DISTANCE) return `hsl(${candidate}, 65%, 50%)`;
+      if (minDistance >= MIN_H_DISTANCE) return this.hslToHex(candidate, 65, 50);
       if (minDistance > bestMinDistance) {
         bestMinDistance = minDistance;
         bestHue = candidate;
       }
     }
-    return `hsl(${bestHue}, 65%, 50%)`;
+    return this.hslToHex(bestHue, 65, 50);
   }
 
   private hueDistance(a: number, b: number): number {
     const diff = Math.abs(a - b) % 360;
     return diff > 180 ? 360 - diff : diff;
+  }
+
+  /**
+   * hsl → `#rrggbb`。`generateDistinctColor()` 一律回傳 hex 而非 `hsl(...)` 字串——
+   * 原生 `<input type="color">` 只認得 hex，塞 hsl(...) 進去會被瀏覽器判定成無效值、
+   * 靜默顯示黑色，導致色票（黑色）跟實際存進去、畫在地圖上的顏色（hsl 字串本身）不一致。
+   */
+  private hslToHex(h: number, s: number, l: number): string {
+    const sNorm = s / 100;
+    const lNorm = l / 100;
+    const c = (1 - Math.abs(2 * lNorm - 1)) * sNorm;
+    const x = c * (1 - Math.abs(((h / 60) % 2) - 1));
+    const m = lNorm - c / 2;
+    let r = 0;
+    let g = 0;
+    let b = 0;
+    if (h < 60) [r, g, b] = [c, x, 0];
+    else if (h < 120) [r, g, b] = [x, c, 0];
+    else if (h < 180) [r, g, b] = [0, c, x];
+    else if (h < 240) [r, g, b] = [0, x, c];
+    else if (h < 300) [r, g, b] = [x, 0, c];
+    else [r, g, b] = [c, 0, x];
+    const toHex = (v: number) =>
+      Math.round((v + m) * 255)
+        .toString(16)
+        .padStart(2, '0');
+    return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
   }
 
   /** 解析 `hsl(h, s%, l%)` 或 `#rrggbb` 字串取得 {h, s, l}，解析失敗回傳 null */
