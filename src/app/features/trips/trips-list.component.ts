@@ -1176,12 +1176,9 @@ const CURRENCY_OPTIONS = [
         background: var(--accent-light);
       }
 
-      /* 編輯視窗：容器較窄，日期欄位固定單欄，避免 datetime-local 原生控件把版面撐壞 */
+      /* 編輯視窗：容器較窄 */
       .edit-modal {
         max-width: 420px;
-      }
-      .edit-modal .form-row-grid {
-        grid-template-columns: 1fr;
       }
 
       /* ── 提醒通知視窗（比照自動盯價彈窗：compact 不滿版 + 內容等比縮放不出捲軸） ── */
