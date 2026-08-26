@@ -387,7 +387,12 @@ export class MapsService {
     });
   }
 
-  /** 兩點間的弧線（geodesic），供旅行地圖出發地/目的地連線使用 */
+  /**
+   * 兩點間的弧線，供旅行地圖出發地/目的地連線使用。
+   * 單純兩點 `geodesic:true` 在中短距離看起來幾乎是直線（地球曲率要長距離才看得出來），
+   * 不符合「像飛行路線圖一樣明顯弓起」的視覺需求，改成沿二次貝茲曲線內插出一串座標，
+   * 控制點往中垂線方向（固定偏北，弓起方向一致、視覺統一）外推一段距離做出弧度。
+   */
   drawArc(
     map: google.maps.Map,
     from: google.maps.LatLngLiteral,
@@ -395,13 +400,46 @@ export class MapsService {
     color: string,
   ): google.maps.Polyline {
     return new google.maps.Polyline({
-      path: [from, to],
-      geodesic: true,
+      path: this.computeArcPath(from, to),
+      geodesic: false,
       strokeColor: color,
       strokeOpacity: 0.85,
       strokeWeight: 3,
       map,
     });
+  }
+
+  private computeArcPath(
+    from: google.maps.LatLngLiteral,
+    to: google.maps.LatLngLiteral,
+    segments = 60,
+  ): google.maps.LatLngLiteral[] {
+    const dLat = to.lat - from.lat;
+    const dLng = to.lng - from.lng;
+    const midLat = (from.lat + to.lat) / 2;
+    const midLng = (from.lng + to.lng) / 2;
+
+    // 中垂線方向有兩個（互為反向），固定挑「往北」的那一個，讓所有弧線弓起方向一致
+    const perpA = { lat: -dLng, lng: dLat };
+    const perpB = { lat: dLng, lng: -dLat };
+    const perp = perpA.lat >= perpB.lat ? perpA : perpB;
+    const perpLen = Math.hypot(perp.lat, perp.lng) || 1;
+
+    const bowRatio = 0.18;
+    const dist = Math.hypot(dLat, dLng);
+    const controlLat = midLat + (perp.lat / perpLen) * dist * bowRatio;
+    const controlLng = midLng + (perp.lng / perpLen) * dist * bowRatio;
+
+    const path: google.maps.LatLngLiteral[] = [];
+    for (let i = 0; i <= segments; i++) {
+      const t = i / segments;
+      const oneMinusT = 1 - t;
+      path.push({
+        lat: oneMinusT * oneMinusT * from.lat + 2 * oneMinusT * t * controlLat + t * t * to.lat,
+        lng: oneMinusT * oneMinusT * from.lng + 2 * oneMinusT * t * controlLng + t * t * to.lng,
+      });
+    }
+    return path;
   }
 
   /**
