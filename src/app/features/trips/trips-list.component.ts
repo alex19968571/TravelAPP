@@ -1124,6 +1124,13 @@ const CURRENCY_OPTIONS = [
         box-sizing: border-box;
         overflow-x: hidden;
         box-shadow: 0 12px 40px var(--shadow);
+        /* overflow-x: hidden 會讓瀏覽器自動把 overflow-y 算成 auto（CSS 規範行為），
+           使本卡片變成捲動容器，蓋住裡面地點自動完成下拉選單顯示的原生捲軸；
+           比照 .page-scroll 隱藏捲軸樣式，捲動功能仍在、只是不露出難看的捲軸列。 */
+        scrollbar-width: none;
+      }
+      .modal-card::-webkit-scrollbar {
+        display: none;
       }
       .modal-card h3 {
         margin: 0;
