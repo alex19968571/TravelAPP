@@ -300,16 +300,24 @@ export class SyncEngineService implements OnDestroy {
   private async processSyncItem(item: SyncQueueItem): Promise<void> {
     await db.sync_queue.update(item.id, { status: 'SYNCING' });
     try {
+      // supabase-js 的 query builder 不會在 API 錯誤時 throw（例如 PostgREST schema
+      // cache 還沒認到新欄位、RLS 擋掉寫入等），只會回傳 { error }。之前這裡完全沒檢查
+      // error，導致上傳「看起來成功」、佇列項目照樣被刪掉，實際上資料根本沒寫進
+      // Supabase（這就是行程出發地/目的地存檔後 Supabase 端一直是 NULL 的原因）。
+      let error: { message?: string } | null = null;
       if (item.operation === 'DELETE') {
         const pkField = CONFLICT_FIELD[item.table_name as TableName] ?? 'id';
-        await this.supabase
+        ({ error } = await this.supabase
           .from(item.table_name)
           .delete()
-          .eq(pkField, (item.payload as any)[pkField]);
+          .eq(pkField, (item.payload as any)[pkField]));
       } else {
         const conflictCol = CONFLICT_FIELD[item.table_name as TableName] ?? 'id';
-        await this.supabase.from(item.table_name).upsert(item.payload, { onConflict: conflictCol });
+        ({ error } = await this.supabase
+          .from(item.table_name)
+          .upsert(item.payload, { onConflict: conflictCol }));
       }
+      if (error) throw error;
       await db.sync_queue.delete(item.id);
     } catch (err) {
       console.error(`[SyncEngine] failed item ${item.id}`, err);
