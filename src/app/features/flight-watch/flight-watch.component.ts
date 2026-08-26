@@ -23,6 +23,7 @@ import { AuthService } from '../../core/services/auth.service';
 import { PreferenceService } from '../../core/services/preference.service';
 import { TripService } from '../../core/services/trip.service';
 import { DropdownSelectComponent } from '../../shared/components/dropdown-select/dropdown-select.component';
+import { AIRPORT_DIRECTORY } from '../../core/utils/airport-directory.util';
 
 interface Airport {
   code: string;
@@ -1496,6 +1497,17 @@ export class FlightWatchComponent implements OnInit {
     return AIRPORT_TZ_CURRENCY[code];
   }
 
+  /** 依機場代碼查「行程」出發地/目的地欄位需要的資料（全名＋座標＋國碼），
+   *  跟「行程」出發地/目的地自動完成用的是同一份機場資料表，格式也保持一致
+   *  （`${機場全名} (${代碼})`），確保匯入後跟手動選擇的效果相同。 */
+  private tripPlaceFieldsForAirport(
+    code: string,
+  ): { name: string; lat: number; lng: number; countryCode: string } | undefined {
+    const a = AIRPORT_DIRECTORY.find((x) => x.code === code);
+    if (!a) return undefined;
+    return { name: `${a.name} (${a.code})`, lat: a.lat, lng: a.lng, countryCode: a.countryCode };
+  }
+
   /** 單一航段的轉機次數是否符合追蹤路線設定的篩選條件 */
   private stopsMatchesFilter(stops: number, filter: FlightMaxStops): boolean {
     switch (filter) {
@@ -1528,6 +1540,8 @@ export class FlightWatchComponent implements OnInit {
       const outbound = it.legs[0];
       const inbound = it.legs[1];
       const countryInfo = outbound ? this.countryInfoForAirport(outbound.to) : undefined;
+      const originPlace = outbound ? this.tripPlaceFieldsForAirport(outbound.from) : undefined;
+      const destPlace = outbound ? this.tripPlaceFieldsForAirport(outbound.to) : undefined;
       const tripPatch = {
         ...(outbound ? { start_date_utc: new Date(outbound.dep).toISOString() } : {}),
         ...(inbound
@@ -1537,6 +1551,17 @@ export class FlightWatchComponent implements OnInit {
             : {}),
         ...(countryInfo?.timezone ? { target_timezone: countryInfo.timezone } : {}),
         ...(countryInfo?.currency ? { base_currency: countryInfo.currency } : {}),
+        ...(originPlace
+          ? { origin: originPlace.name, origin_lat: originPlace.lat, origin_lng: originPlace.lng }
+          : {}),
+        ...(destPlace
+          ? {
+              destination: destPlace.name,
+              destination_lat: destPlace.lat,
+              destination_lng: destPlace.lng,
+              destination_country_code: destPlace.countryCode,
+            }
+          : {}),
       };
 
       let targetTripId = selectedValue;
