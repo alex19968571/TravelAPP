@@ -305,17 +305,30 @@ export class SyncEngineService implements OnDestroy {
       // error，導致上傳「看起來成功」、佇列項目照樣被刪掉，實際上資料根本沒寫進
       // Supabase（這就是行程出發地/目的地存檔後 Supabase 端一直是 NULL 的原因）。
       let error: { message?: string } | null = null;
+      const pkField = CONFLICT_FIELD[item.table_name as TableName] ?? 'id';
       if (item.operation === 'DELETE') {
-        const pkField = CONFLICT_FIELD[item.table_name as TableName] ?? 'id';
         ({ error } = await this.supabase
           .from(item.table_name)
           .delete()
           .eq(pkField, (item.payload as any)[pkField]));
-      } else {
-        const conflictCol = CONFLICT_FIELD[item.table_name as TableName] ?? 'id';
+      } else if (item.operation === 'UPDATE') {
+        // 用真正的 UPDATE（而非 upsert）：像 trips 這種 RLS policy 只有
+        // USING (owner_id = auth.uid())、沒另外寫 WITH CHECK 的資料表，Postgres
+        // 會拿 USING 的條件當 WITH CHECK 用。upsert 底層是
+        // `INSERT ... ON CONFLICT DO UPDATE`，即使最後會走 UPDATE 分支，Postgres
+        // 仍會先用「INSERT 這條語句嘗試要塞入的整列資料」去驗證 WITH CHECK——
+        // 而 UPDATE 的 payload 通常只帶部分欄位（例如不含 owner_id），缺的欄位會
+        // 被當成 NULL，導致 WITH CHECK 判斷 auth.uid() = NULL 恆為假、整個寫入
+        // 被 RLS 擋下（42501），即使這筆資料本來就是自己的也一樣。真正的 UPDATE
+        // 語句不會有這個問題：沒被 SET 到的欄位維持原本（已通過 RLS 的）值。
         ({ error } = await this.supabase
           .from(item.table_name)
-          .upsert(item.payload, { onConflict: conflictCol }));
+          .update(item.payload)
+          .eq(pkField, (item.payload as any)[pkField]));
+      } else {
+        ({ error } = await this.supabase
+          .from(item.table_name)
+          .upsert(item.payload, { onConflict: pkField }));
       }
       if (error) throw error;
       await db.sync_queue.delete(item.id);
