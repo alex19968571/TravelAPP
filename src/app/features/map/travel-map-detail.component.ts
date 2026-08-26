@@ -96,13 +96,20 @@ export interface TravelMapDetailTrip {
           @if (editing()) {
             <div class="edit-panel">
               <label>{{ 'travelMap.photos' | transloco }}（{{ photoUrlsDraft().length }}/3）</label>
-              <input
-                type="file"
-                accept="image/*"
-                multiple
-                [disabled]="uploadingPhoto() || photoUrlsDraft().length >= 3"
-                (change)="onPhotoSelected($event)"
-              />
+              <label
+                class="file-btn"
+                [class.disabled]="uploadingPhoto() || photoUrlsDraft().length >= 3"
+              >
+                {{ 'common.chooseFile' | transloco }}
+                <input
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  hidden
+                  [disabled]="uploadingPhoto() || photoUrlsDraft().length >= 3"
+                  (change)="onPhotoSelected($event)"
+                />
+              </label>
 
               <label>{{ 'travelMap.audio' | transloco }}</label>
               @if (audioUrlDraft()) {
@@ -110,12 +117,16 @@ export interface TravelMapDetailTrip {
                   {{ 'travelMap.removeAudio' | transloco }}
                 </button>
               } @else {
-                <input
-                  type="file"
-                  accept="audio/*"
-                  [disabled]="uploadingAudio()"
-                  (change)="onAudioSelected($event)"
-                />
+                <label class="file-btn" [class.disabled]="uploadingAudio()">
+                  {{ 'common.chooseFile' | transloco }}
+                  <input
+                    type="file"
+                    accept="audio/*"
+                    hidden
+                    [disabled]="uploadingAudio()"
+                    (change)="onAudioSelected($event)"
+                  />
+                </label>
               }
 
               <label>{{ 'travelMap.notes' | transloco }}</label>
@@ -349,6 +360,21 @@ export interface TravelMapDetailTrip {
         border-radius: 10px;
         padding: 0.625rem 1.25rem;
         cursor: pointer;
+      }
+      .file-btn {
+        display: inline-flex;
+        align-self: flex-start;
+        background: var(--accent-light);
+        color: var(--text-secondary);
+        border: none;
+        border-radius: 10px;
+        padding: 0.5rem 1rem;
+        font-size: 0.85rem;
+        cursor: pointer;
+      }
+      .file-btn.disabled {
+        opacity: 0.5;
+        pointer-events: none;
       }
     `,
   ],

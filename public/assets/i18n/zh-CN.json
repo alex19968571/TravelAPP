@@ -243,7 +243,8 @@
     "back": "返回",
     "confirm": "确认",
     "loading": "加载中...",
-    "close": "关闭"
+    "close": "关闭",
+    "chooseFile": "选择文件"
   },
   "join": {
     "joining": "正在加入行程...",

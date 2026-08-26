@@ -243,7 +243,8 @@
     "back": "Back",
     "confirm": "Confirm",
     "loading": "Loading...",
-    "close": "Close"
+    "close": "Close",
+    "chooseFile": "Choose File"
   },
   "join": {
     "joining": "Joining trip...",

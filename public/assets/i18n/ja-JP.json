@@ -243,7 +243,8 @@
     "back": "戻る",
     "confirm": "確認",
     "loading": "読み込み中...",
-    "close": "閉じる"
+    "close": "閉じる",
+    "chooseFile": "ファイルを選択"
   },
   "join": {
     "joining": "旅程に参加中...",

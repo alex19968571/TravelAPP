@@ -126,6 +126,8 @@ export class TravelMapComponent implements AfterViewInit {
   private mapInstance: google.maps.Map | null = null;
   private trips: Trip[] = [];
   private pinsByTripId = new Map<string, TravelMapPin>();
+  private mapMarkers: google.maps.marker.AdvancedMarkerElement[] = [];
+  private mapArcs: google.maps.Polyline[] = [];
 
   async ngAfterViewInit(): Promise<void> {
     const ownerId = this.auth.user()?.id;
@@ -153,6 +155,14 @@ export class TravelMapComponent implements AfterViewInit {
 
   private renderMap(): void {
     if (!this.mapInstance) return;
+
+    // 每次重繪前先清掉舊的 marker/弧線，避免疊加（尤其是儲存詳情面板後重繪時，
+    // 若不清除會讓舊的大頭針/弧線一直留在地圖上）
+    this.mapMarkers.forEach((m) => (m.map = null));
+    this.mapArcs.forEach((a) => a.setMap(null));
+    this.mapMarkers = [];
+    this.mapArcs = [];
+
     for (const trip of this.trips) {
       if (trip.destination_lat == null || trip.destination_lng == null) continue;
       const destPos = { lat: trip.destination_lat, lng: trip.destination_lng };
@@ -163,6 +173,7 @@ export class TravelMapComponent implements AfterViewInit {
         pin?.photo_urls?.[0],
       );
       destMarker.addListener('gmp-click', () => this.openDetail(trip, pin));
+      this.mapMarkers.push(destMarker);
 
       if (trip.origin_lat != null && trip.origin_lng != null) {
         const originPos = { lat: trip.origin_lat, lng: trip.origin_lng };
@@ -171,8 +182,9 @@ export class TravelMapComponent implements AfterViewInit {
           const infoWindow = new google.maps.InfoWindow({ content: trip.origin ?? '' });
           infoWindow.open({ map: this.mapInstance!, anchor: originMarker });
         });
+        this.mapMarkers.push(originMarker);
         const color = pin?.arc_color || this.mapsService.getDefaultArcColor(trip, this.trips);
-        this.mapsService.drawArc(this.mapInstance, originPos, destPos, color);
+        this.mapArcs.push(this.mapsService.drawArc(this.mapInstance, originPos, destPos, color));
       }
     }
   }
@@ -186,6 +198,9 @@ export class TravelMapComponent implements AfterViewInit {
     this.pinsByTripId.set(updated.trip_id, updated);
     const current = this.detailData();
     if (current) this.detailData.set({ ...current, pin: updated });
+    // 重繪地圖：不然大頭針的照片縮圖／弧線顏色不會更新，且下次點同一個大頭針時，
+    // click 監聽器 closure 抓到的還是儲存前的舊 pin（沒有剛存的聲音/筆記）
+    this.renderMap();
   }
 
   async share(): Promise<void> {
