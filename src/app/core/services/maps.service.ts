@@ -182,6 +182,9 @@ export class MapsService {
       zoom: 13,
       mapTypeControl: false,
       streetViewControl: false,
+      // AdvancedMarkerElement（旅行地圖大頭針用）必須要有有效的 Map ID 才能運作，
+      // 否則 console 會噴「地圖在初始化時未使用有效的地圖 ID」且大頭針不會顯示。
+      mapId: environment.googleMapsMapId,
     });
   }
 
