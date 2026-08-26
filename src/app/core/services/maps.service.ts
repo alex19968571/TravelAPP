@@ -38,6 +38,10 @@ export interface PlaceSuggestion {
   lng: number;
   /** ISO alpha-2 國碼（小寫），供旅行地圖依國家分色使用 */
   countryCode?: string | null;
+  /** 以下 3 個欄位僅機場搜尋結果才有值，供下拉選單比照「自動盯價」呈現兩行（城市＋「國家 · 代碼」） */
+  city?: string;
+  country?: string;
+  code?: string;
 }
 
 const DAY_COLORS = ['#667eea', '#ed8936', '#48bb78', '#f56565', '#9f7aea', '#38b2ac'];
@@ -133,10 +137,13 @@ export class MapsService {
    */
   async searchPlaceSuggestions(query: string): Promise<PlaceSuggestion[]> {
     return filterAirportDirectory(query).map((a) => ({
-      name: `${a.name}（${a.city}）`,
+      name: `${a.name} (${a.code})`,
       lat: a.lat,
       lng: a.lng,
       countryCode: a.countryCode,
+      city: a.name,
+      country: a.country,
+      code: a.code,
     }));
   }
 
