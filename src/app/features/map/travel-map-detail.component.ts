@@ -568,7 +568,10 @@ export class TravelMapDetailComponent implements OnInit, AfterViewInit {
 
   randomizeColor(): void {
     this.colorDraft.set(
-      this.mapsService.generateDistinctColor(this.trip.destination_country_code, this.otherTripColors),
+      this.mapsService.generateDistinctColor(
+        this.trip.destination_country_code,
+        this.otherTripColors,
+      ),
     );
   }
 

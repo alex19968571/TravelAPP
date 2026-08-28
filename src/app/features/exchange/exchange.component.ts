@@ -4,16 +4,14 @@ import {
   OnInit,
   AfterViewInit,
   signal,
-  computed,
-  effect,
   HostListener,
   ViewChild,
   ElementRef,
 } from '@angular/core';
 import { CommonModule, DecimalPipe } from '@angular/common';
 import { TranslocoModule } from '@jsverse/transloco';
-import { PreferenceService, COUNTRIES, Country } from '../../core/services/preference.service';
-import { ExchangeRateService } from '../../core/services/exchange-rate.service';
+import { COUNTRIES, Country } from '../../core/services/preference.service';
+import { ExchangeStateService } from '../../core/services/exchange-state.service';
 
 const KEYPAD_ROWS: string[][] = [
   ['7', '8', '9'],
@@ -33,16 +31,16 @@ const KEYPAD_ROWS: string[][] = [
           <div class="side">
             <div class="country-picker" [class.open]="showLeftPicker()">
               <button class="country-trigger" (click)="toggleLeftPicker($event)">
-                <span class="fi fi-{{ leftCountry().code.toLowerCase() }}"></span>
-                <span class="cname">{{ leftCountry().nativeName }}</span>
-                <span class="ccode">{{ leftCountry().currency }}</span>
+                <span class="fi fi-{{ state.leftCountry().code.toLowerCase() }}"></span>
+                <span class="cname">{{ state.leftCountry().nativeName }}</span>
+                <span class="ccode">{{ state.leftCountry().currency }}</span>
                 <span class="caret" [class.flipped]="showLeftPicker()">▾</span>
               </button>
               <div class="country-dropdown">
                 @for (c of countries; track c.code) {
                   <button
                     class="country-option"
-                    [class.selected]="c.code === leftCountry().code"
+                    [class.selected]="c.code === state.leftCountry().code"
                     (click)="selectLeft(c)"
                   >
                     <span class="fi fi-{{ c.code.toLowerCase() }}"></span>
@@ -52,8 +50,8 @@ const KEYPAD_ROWS: string[][] = [
                 }
               </div>
             </div>
-            <div class="amount">{{ displayAmount() }}</div>
-            <div class="currency-code">{{ leftCountry().currency }}</div>
+            <div class="amount">{{ state.displayAmount() }}</div>
+            <div class="currency-code">{{ state.leftCountry().currency }}</div>
           </div>
 
           <button class="swap-btn" (click)="swap()">⇄</button>
@@ -61,16 +59,16 @@ const KEYPAD_ROWS: string[][] = [
           <div class="side">
             <div class="country-picker" [class.open]="showRightPicker()">
               <button class="country-trigger" (click)="toggleRightPicker($event)">
-                <span class="fi fi-{{ rightCountry().code.toLowerCase() }}"></span>
-                <span class="cname">{{ rightCountry().nativeName }}</span>
-                <span class="ccode">{{ rightCountry().currency }}</span>
+                <span class="fi fi-{{ state.rightCountry().code.toLowerCase() }}"></span>
+                <span class="cname">{{ state.rightCountry().nativeName }}</span>
+                <span class="ccode">{{ state.rightCountry().currency }}</span>
                 <span class="caret" [class.flipped]="showRightPicker()">▾</span>
               </button>
               <div class="country-dropdown">
                 @for (c of countries; track c.code) {
                   <button
                     class="country-option"
-                    [class.selected]="c.code === rightCountry().code"
+                    [class.selected]="c.code === state.rightCountry().code"
                     (click)="selectRight(c)"
                   >
                     <span class="fi fi-{{ c.code.toLowerCase() }}"></span>
@@ -80,22 +78,22 @@ const KEYPAD_ROWS: string[][] = [
                 }
               </div>
             </div>
-            <div class="amount converted">{{ convertedAmount() | number: '1.0-2' }}</div>
-            <div class="currency-code">{{ rightCountry().currency }}</div>
+            <div class="amount converted">{{ state.convertedAmount() | number: '1.0-2' }}</div>
+            <div class="currency-code">{{ state.rightCountry().currency }}</div>
           </div>
         </div>
 
         <div class="rate-hint">
-          1 {{ leftCountry().currency }} ≈ {{ rate() | number: '1.0-4' }}
-          {{ rightCountry().currency }}
+          1 {{ state.leftCountry().currency }} ≈ {{ state.rate() | number: '1.0-4' }}
+          {{ state.rightCountry().currency }}
         </div>
 
         <!-- 計算過程（輸入同時即時同步顯示，逐行顯示，舊紀錄往上滑動消失） -->
         <div class="calc-history" #historyEl>
-          @for (line of history(); track $index) {
+          @for (line of state.history(); track $index) {
             <div class="calc-history-line">{{ line }}</div>
           }
-          <div class="calc-history-line calc-history-current">{{ currentLine() }}</div>
+          <div class="calc-history-line calc-history-current">{{ state.currentLine() }}</div>
         </div>
 
         <!-- 下方：計算機鍵盤（iPhone 計算機版面，支援四則運算並即時換匯） -->
@@ -106,7 +104,7 @@ const KEYPAD_ROWS: string[][] = [
             <button class="keypad-key keypad-key--fn" (click)="percent()">%</button>
             <button
               class="keypad-key keypad-key--op"
-              [class.active]="isActiveOp('÷')"
+              [class.active]="state.isActiveOp('÷')"
               (click)="onOperator('÷')"
             >
               ÷
@@ -119,7 +117,7 @@ const KEYPAD_ROWS: string[][] = [
               }
               <button
                 class="keypad-key keypad-key--op"
-                [class.active]="isActiveOp(opSymbols[ri])"
+                [class.active]="state.isActiveOp(opSymbols[ri])"
                 (click)="onOperator(opSymbols[ri])"
               >
                 {{ opSymbols[ri] }}
@@ -421,58 +419,24 @@ export class ExchangeComponent implements OnInit, AfterViewInit {
   @ViewChild('scaleWrap') scaleWrap?: ElementRef<HTMLElement>;
   @ViewChild('historyEl') historyEl?: ElementRef<HTMLElement>;
 
-  private pref = inject(PreferenceService);
-  private rateService = inject(ExchangeRateService);
+  /** 計算機狀態（金額/國家/運算子/歷史紀錄）都在這個 root 單例服務裡，
+   *  切換功能頁面回來不會重置，只有整個 App 重啟或按 AC 才會清空 */
+  state = inject(ExchangeStateService);
 
   countries = COUNTRIES;
   keypadRows = KEYPAD_ROWS;
   opSymbols = ['×', '−', '+'];
 
-  leftCountry = signal<Country>(this.pref.country());
-  rightCountry = signal<Country>(this.pref.homeCountry());
-  amountStr = signal('1');
-  /** 上方顯示金額：僅在完成一次運算（按 = 或連續運算的中間結果）後才更新，輸入第二個運算元期間維持顯示上次結果 */
-  displayAmount = signal('1');
-  rate = signal(1);
-
   showLeftPicker = signal(false);
   showRightPicker = signal(false);
 
-  private pendingValue = signal<number | null>(null);
-  private pendingOp = signal<string | null>(null);
-  private awaitingOperand = signal(false);
-  history = signal<string[]>([]);
-
-  convertedAmount = computed(() => (parseFloat(this.displayAmount()) || 0) * this.rate());
-
-  constructor() {
-    /** 標題列切換目的地時，換匯左側國家即時跟著更新（即使本頁面已停留在畫面上） */
-    effect(() => {
-      const c = this.pref.country();
-      this.leftCountry.set(c);
-      this.refreshRate();
-    });
-  }
-
-  currentLine = computed(() => {
-    const op = this.pendingOp();
-    const pending = this.pendingValue();
-    if (op !== null && pending !== null) {
-      if (this.awaitingOperand()) {
-        return `${this.formatResult(pending)} ${op}`;
-      }
-      return `${this.formatResult(pending)} ${op} ${this.amountStr()}`;
-    }
-    return this.amountStr();
-  });
-
   async ngOnInit(): Promise<void> {
-    await this.rateService.refreshIfNeeded();
-    await this.refreshRate();
+    await this.state.init();
   }
 
   ngAfterViewInit(): void {
     setTimeout(() => this.applyScale());
+    this.scrollHistoryToBottom();
   }
 
   @HostListener('window:resize')
@@ -487,15 +451,6 @@ export class ExchangeComponent implements OnInit, AfterViewInit {
     if (!contentH || !contentW) return;
     const scale = Math.min(1, availH / contentH, availW / contentW);
     el.style.transform = scale < 1 ? `scale(${scale})` : 'none';
-  }
-
-  private async refreshRate(): Promise<void> {
-    this.rate.set(
-      await this.rateService.getConversionRate(
-        this.leftCountry().currency,
-        this.rightCountry().currency,
-      ),
-    );
   }
 
   @HostListener('document:click', ['$event'])
@@ -521,110 +476,45 @@ export class ExchangeComponent implements OnInit, AfterViewInit {
   }
 
   async selectLeft(c: Country): Promise<void> {
-    this.leftCountry.set(c);
+    await this.state.selectLeft(c);
     this.showLeftPicker.set(false);
-    await this.refreshRate();
   }
 
   async selectRight(c: Country): Promise<void> {
-    this.rightCountry.set(c);
+    await this.state.selectRight(c);
     this.showRightPicker.set(false);
-    await this.refreshRate();
   }
 
   async swap(): Promise<void> {
-    const l = this.leftCountry();
-    this.leftCountry.set(this.rightCountry());
-    this.rightCountry.set(l);
-    await this.refreshRate();
+    await this.state.swap();
   }
 
   onKey(key: string): void {
-    if (key === '⌫') {
-      const next = this.amountStr().slice(0, -1);
-      this.amountStr.set(next === '' || next === '-' ? '0' : next);
-      this.syncDisplayIfComposingFirstOperand();
-      this.scrollHistoryToBottom();
-      return;
-    }
-    let current = this.amountStr();
-    if (this.awaitingOperand()) {
-      current = '0';
-      this.awaitingOperand.set(false);
-    }
-    if (key === '.') {
-      if (!current.includes('.')) {
-        this.amountStr.set(`${current}.`);
-      }
-      this.syncDisplayIfComposingFirstOperand();
-      this.scrollHistoryToBottom();
-      return;
-    }
-    if (current === '0') {
-      this.amountStr.set(key);
-    } else {
-      this.amountStr.set(current + key);
-    }
-    this.syncDisplayIfComposingFirstOperand();
+    this.state.onKey(key);
     this.scrollHistoryToBottom();
   }
 
   clear(): void {
-    this.amountStr.set('0');
-    this.displayAmount.set('0');
-    this.pendingValue.set(null);
-    this.pendingOp.set(null);
-    this.awaitingOperand.set(false);
-  }
-
-  /** 尚未輸入任何運算子時，輸入中的第一個數字要同步顯示在上方；輸入第二個運算元期間則暫不更新 */
-  private syncDisplayIfComposingFirstOperand(): void {
-    if (this.pendingOp() === null) {
-      this.displayAmount.set(this.amountStr());
-    }
-  }
-
-  isActiveOp(op: string): boolean {
-    return this.pendingOp() === op && this.awaitingOperand();
+    this.state.clear();
   }
 
   onOperator(op: string): void {
-    const current = parseFloat(this.amountStr()) || 0;
-    if (this.pendingOp() !== null && !this.awaitingOperand()) {
-      const a = this.pendingValue()!;
-      const prevOp = this.pendingOp()!;
-      const result = this.calculate(a, current, prevOp);
-      this.pushHistory(
-        `${this.formatResult(a)} ${prevOp} ${this.formatResult(current)} = ${this.formatResult(result)}`,
-      );
-      this.amountStr.set(this.formatResult(result));
-      this.displayAmount.set(this.formatResult(result));
-      this.pendingValue.set(result);
-    } else {
-      this.pendingValue.set(current);
-    }
-    this.pendingOp.set(op);
-    this.awaitingOperand.set(true);
+    this.state.onOperator(op);
+    this.scrollHistoryToBottom();
   }
 
   equals(): void {
-    const op = this.pendingOp();
-    if (op === null || this.pendingValue() === null) return;
-    const current = parseFloat(this.amountStr()) || 0;
-    const a = this.pendingValue()!;
-    const result = this.calculate(a, current, op);
-    this.pushHistory(
-      `${this.formatResult(a)} ${op} ${this.formatResult(current)} = ${this.formatResult(result)}`,
-    );
-    this.amountStr.set(this.formatResult(result));
-    this.displayAmount.set(this.formatResult(result));
-    this.pendingValue.set(null);
-    this.pendingOp.set(null);
-    this.awaitingOperand.set(false);
+    this.state.equals();
+    this.scrollHistoryToBottom();
   }
 
-  private pushHistory(line: string): void {
-    this.history.update((h) => [...h, line]);
+  percent(): void {
+    this.state.percent();
+    this.scrollHistoryToBottom();
+  }
+
+  toggleSign(): void {
+    this.state.toggleSign();
     this.scrollHistoryToBottom();
   }
 
@@ -633,40 +523,5 @@ export class ExchangeComponent implements OnInit, AfterViewInit {
       const el = this.historyEl?.nativeElement;
       if (el) el.scrollTop = el.scrollHeight;
     });
-  }
-
-  percent(): void {
-    const current = parseFloat(this.amountStr()) || 0;
-    this.amountStr.set(this.formatResult(current / 100));
-    this.syncDisplayIfComposingFirstOperand();
-    this.scrollHistoryToBottom();
-  }
-
-  toggleSign(): void {
-    const current = parseFloat(this.amountStr()) || 0;
-    this.amountStr.set(this.formatResult(-current));
-    this.syncDisplayIfComposingFirstOperand();
-    this.scrollHistoryToBottom();
-  }
-
-  private calculate(a: number, b: number, op: string): number {
-    switch (op) {
-      case '+':
-        return a + b;
-      case '−':
-        return a - b;
-      case '×':
-        return a * b;
-      case '÷':
-        return b === 0 ? 0 : a / b;
-      default:
-        return b;
-    }
-  }
-
-  private formatResult(n: number): string {
-    if (!isFinite(n)) return '0';
-    const rounded = Math.round(n * 1e10) / 1e10;
-    return String(rounded);
   }
 }

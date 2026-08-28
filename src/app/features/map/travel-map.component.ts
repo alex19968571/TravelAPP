@@ -197,7 +197,9 @@ export class TravelMapComponent implements AfterViewInit {
       .filter((t) => t.id !== trip.id)
       .map((t) => ({
         countryCode: t.destination_country_code,
-        color: this.pinsByTripId.get(t.id)?.arc_color || this.mapsService.getDefaultArcColor(t, this.trips),
+        color:
+          this.pinsByTripId.get(t.id)?.arc_color ||
+          this.mapsService.getDefaultArcColor(t, this.trips),
       }));
     this.detailData.set({ trip, pin, items, otherTripColors });
   }
