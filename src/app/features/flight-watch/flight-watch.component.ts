@@ -1562,6 +1562,8 @@ export class FlightWatchComponent implements OnInit {
               destination_country_code: destPlace.countryCode,
             }
           : {}),
+        // 該筆機票沒有回程航段才算單向；有回程（或本來就手動建立、非匯入）一律視為雙向
+        ...(outbound ? { is_one_way: !inbound } : {}),
       };
 
       let targetTripId = selectedValue;

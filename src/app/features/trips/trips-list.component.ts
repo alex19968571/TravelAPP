@@ -270,7 +270,11 @@ const CURRENCY_OPTIONS = [
                   <div class="trip-card-body">
                     <div class="trip-info">
                       @if (trip.origin && trip.destination) {
-                        <div class="trip-route">{{ trip.origin }} → {{ trip.destination }}</div>
+                        <div class="trip-route-stack">
+                          <div class="trip-route-line">{{ trip.origin }}</div>
+                          <div class="trip-route-arrow">{{ trip.is_one_way ? '↓' : '⇅' }}</div>
+                          <div class="trip-route-line">{{ trip.destination }}</div>
+                        </div>
                       } @else {
                         <div class="trip-route">{{ trip.target_timezone }}</div>
                       }
@@ -980,6 +984,32 @@ const CURRENCY_OPTIONS = [
         text-transform: uppercase;
         color: var(--text-secondary);
         margin-bottom: 0.35rem;
+      }
+      /* 出發地/目的地改成上下兩行＋中間箭頭：機場全名比舊版的機場代碼長很多，
+         單行排版容易撐寬/換行撞到卡片右上角「編輯」、左上角「通知」按鈕，
+         固定用堆疊排版可以確保不管文字多長都不會跑到按鈕的位置。 */
+      .trip-route-stack {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.2rem;
+        margin-bottom: 0.35rem;
+        max-width: 100%;
+      }
+      .trip-route-line {
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        color: var(--text-secondary);
+        max-width: 100%;
+        overflow-wrap: break-word;
+        word-break: break-word;
+      }
+      .trip-route-arrow {
+        font-size: 0.9rem;
+        line-height: 1;
+        color: var(--accent);
       }
       .trip-info h3 {
         font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans TC', sans-serif;

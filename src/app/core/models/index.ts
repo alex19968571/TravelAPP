@@ -28,6 +28,9 @@ export interface Trip {
   destination_lng?: number | null;
   /** 目的地所在國家 ISO alpha-2 代碼（小寫），供旅行地圖弧線依國家分色 */
   destination_country_code?: string | null;
+  /** 是否為單向行程（從自動盯價匯入時，該筆機票只有去程、沒有回程才會是 true）；
+   *  手動建立的行程一律視為雙向（false/undefined），登機證上顯示雙向箭頭 */
+  is_one_way?: boolean;
   created_at_utc: string;
   updated_at_utc: string;
 }

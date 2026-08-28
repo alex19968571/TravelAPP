@@ -43,6 +43,7 @@ export class TripService {
       | 'destination_lat'
       | 'destination_lng'
       | 'destination_country_code'
+      | 'is_one_way'
     >,
   ): Promise<Trip> {
     const userId = this.auth.user()?.id ?? '';
@@ -91,6 +92,7 @@ export class TripService {
         | 'destination_lat'
         | 'destination_lng'
         | 'destination_country_code'
+        | 'is_one_way'
       >
     >,
   ): Promise<void> {
