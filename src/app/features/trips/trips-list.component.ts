@@ -269,6 +269,16 @@ const CURRENCY_OPTIONS = [
                   </button>
                   <div class="trip-card-body">
                     <div class="trip-info">
+                      @if (formatDateRange(trip); as range) {
+                        <div class="trip-dates">{{ range }}</div>
+                      }
+                      <h3>{{ trip.title }}</h3>
+                      @if (trip.destination_country_code) {
+                        <div class="trip-country">
+                          <span class="fi fi-{{ trip.destination_country_code.toLowerCase() }}"></span>
+                          <span>{{ trip.destination_country_code.toUpperCase() }}</span>
+                        </div>
+                      }
                       @if (trip.origin && trip.destination) {
                         <div class="trip-route-stack">
                           <div class="trip-route-line">{{ trip.origin }}</div>
@@ -278,12 +288,8 @@ const CURRENCY_OPTIONS = [
                       } @else {
                         <div class="trip-route">{{ trip.target_timezone }}</div>
                       }
-                      <h3>{{ trip.title }}</h3>
                     </div>
                     <div class="trip-stub">
-                      @if (formatDateRange(trip); as range) {
-                        <div class="trip-dates">{{ range }}</div>
-                      }
                       <div class="trip-currency">{{ trip.base_currency }}</div>
                     </div>
                   </div>
@@ -1064,6 +1070,22 @@ const CURRENCY_OPTIONS = [
         color: var(--accent);
         font-weight: 700;
         letter-spacing: 0.04em;
+      }
+      /* 目的地國家縮寫＋國旗：文字樣式沿用 .trip-currency 那套（accent 色小型等寬粗體字） */
+      .trip-country {
+        display: flex;
+        align-items: center;
+        gap: 0.3rem;
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        color: var(--accent);
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        margin-bottom: 0.35rem;
+      }
+      .trip-country .fi {
+        width: 1.1em;
+        border-radius: 2px;
       }
       .info-btn {
         position: absolute;
