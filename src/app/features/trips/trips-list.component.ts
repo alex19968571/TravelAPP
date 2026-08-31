@@ -275,7 +275,9 @@ const CURRENCY_OPTIONS = [
                       <h3>{{ trip.title }}</h3>
                       @if (trip.destination_country_code) {
                         <div class="trip-country">
-                          <span class="fi fi-{{ trip.destination_country_code.toLowerCase() }}"></span>
+                          <span
+                            class="fi fi-{{ trip.destination_country_code.toLowerCase() }}"
+                          ></span>
                           <span>{{ trip.destination_country_code.toUpperCase() }}</span>
                         </div>
                       }
@@ -1075,6 +1077,7 @@ const CURRENCY_OPTIONS = [
       .trip-country {
         display: flex;
         align-items: center;
+        justify-content: center;
         gap: 0.3rem;
         font-family: var(--font-mono);
         font-size: 0.72rem;
