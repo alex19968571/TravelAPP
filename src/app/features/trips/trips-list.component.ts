@@ -291,9 +291,6 @@ const CURRENCY_OPTIONS = [
                         </div>
                       }
                     </div>
-                    <div class="trip-stub">
-                      <div class="trip-currency">{{ trip.base_currency }}</div>
-                    </div>
                   </div>
                   <div class="trip-perf-h"></div>
                   <div class="trip-nav">
@@ -1051,13 +1048,6 @@ const CURRENCY_OPTIONS = [
       .trip-perf-h::after {
         right: -7px;
       }
-      .trip-stub {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 0.15rem;
-        padding-top: 0.3rem;
-      }
       .trip-dates {
         font-family: var(--font-mono);
         font-variant-numeric: tabular-nums;
@@ -1067,14 +1057,7 @@ const CURRENCY_OPTIONS = [
         white-space: nowrap;
         margin-bottom: 0.35rem;
       }
-      .trip-currency {
-        font-family: var(--font-mono);
-        font-size: 0.72rem;
-        color: var(--accent);
-        font-weight: 700;
-        letter-spacing: 0.04em;
-      }
-      /* 目的地國家縮寫＋國旗：文字樣式沿用 .trip-currency 那套（accent 色小型等寬粗體字） */
+      /* 目的地國家縮寫＋國旗：文字樣式沿用原本 .trip-currency 那套（accent 色小型等寬粗體字） */
       .trip-country {
         display: flex;
         align-items: center;
