@@ -250,7 +250,9 @@ import { PreferenceService, COUNTRIES, Country } from '../../core/services/prefe
         box-shadow: 0 4px 20px var(--shadow);
         /* overflow: visible — 讓絕對定位下拉選單可以超出 card 邊界 */
       }
-      .row-item {
+      .row-item,
+      a.row-item:link,
+      a.row-item:visited {
         display: flex;
         align-items: center;
         justify-content: space-between;
@@ -261,9 +263,11 @@ import { PreferenceService, COUNTRIES, Country } from '../../core/services/prefe
         background: transparent;
         cursor: pointer;
         text-align: left;
+        text-decoration: none;
         color: var(--text-primary);
         font-size: 0.95rem;
         border-bottom: 1px solid var(--border);
+        box-sizing: border-box;
       }
       .row-item:first-child {
         border-radius: 16px 16px 0 0;
