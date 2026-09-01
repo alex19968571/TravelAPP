@@ -269,6 +269,15 @@ const CURRENCY_OPTIONS = [
                   </button>
                   <div class="trip-card-body">
                     <div class="trip-info">
+                      @if (trip.origin && trip.destination) {
+                        <div class="trip-route-stack">
+                          <div class="trip-route-line">{{ trip.origin }}</div>
+                          <div class="trip-route-arrow">{{ trip.is_one_way ? '↓' : '⇅' }}</div>
+                          <div class="trip-route-line">{{ trip.destination }}</div>
+                        </div>
+                      } @else {
+                        <div class="trip-route">{{ trip.target_timezone }}</div>
+                      }
                       @if (formatDateRange(trip); as range) {
                         <div class="trip-dates">{{ range }}</div>
                       }
@@ -280,15 +289,6 @@ const CURRENCY_OPTIONS = [
                           ></span>
                           <span>{{ trip.destination_country_code.toUpperCase() }}</span>
                         </div>
-                      }
-                      @if (trip.origin && trip.destination) {
-                        <div class="trip-route-stack">
-                          <div class="trip-route-line">{{ trip.origin }}</div>
-                          <div class="trip-route-arrow">{{ trip.is_one_way ? '↓' : '⇅' }}</div>
-                          <div class="trip-route-line">{{ trip.destination }}</div>
-                        </div>
-                      } @else {
-                        <div class="trip-route">{{ trip.target_timezone }}</div>
                       }
                     </div>
                     <div class="trip-stub">
@@ -1065,6 +1065,7 @@ const CURRENCY_OPTIONS = [
         font-size: 1.15rem;
         font-weight: 700;
         white-space: nowrap;
+        margin-bottom: 0.35rem;
       }
       .trip-currency {
         font-family: var(--font-mono);
@@ -1084,7 +1085,7 @@ const CURRENCY_OPTIONS = [
         color: var(--accent);
         font-weight: 700;
         letter-spacing: 0.04em;
-        margin-bottom: 0.35rem;
+        margin-top: 0.35rem;
       }
       .trip-country .fi {
         width: 1.1em;
