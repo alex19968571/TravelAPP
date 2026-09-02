@@ -801,8 +801,14 @@ const CURRENCY_OPTIONS = [
         overflow: hidden;
         border-radius: 16px;
         -webkit-tap-highlight-color: transparent;
+        /* 卡片左滑/右滑時，transform 只套用在內層 .trip-card.card 上，
+           這層本身的版位盒（layout box）不會跟著縮小，會蓋住露出來的
+           膠捲／刪除鈕造成點擊穿不進去（document.elementFromPoint 驗證過）。
+           讓這層本身不接手事件，實際互動交給內層卡片自己接管。 */
+        pointer-events: none;
       }
       .trip-card.card {
+        pointer-events: auto;
         padding: 0;
         margin-bottom: 0;
         position: relative;
@@ -1490,6 +1496,9 @@ export class TripsListComponent implements OnInit {
   private swipeAxis: 'x' | 'y' | null = null;
   /** 軸向鎖定為 'x' 時，這次手勢的方向：'right' = 右滑露出左側行程剪貼簿；'left' = 左滑露出右側刪除鈕 */
   private swipeDirection: 'left' | 'right' | null = null;
+  /** 指標是否真的按著（滑鼠需要按住左鍵、觸控需要手指觸碰）；滑鼠沒按著時單純移動
+   *  也會一直觸發 pointermove（跟觸控不同），沒有這個旗標會被誤判成手勢移動 */
+  private pointerActive = false;
 
   form = this.fb.group({
     title: ['', [Validators.required, Validators.maxLength(100)]],
@@ -1689,9 +1698,14 @@ export class TripsListComponent implements OnInit {
     this.gestureStartX = e.clientX;
     this.gestureStartY = e.clientY;
     this.swipeAxis = null;
+    this.pointerActive = true;
   }
 
   onCardPointerMove(e: PointerEvent, trip: Trip): void {
+    // 滑鼠移動就算沒按下也會一直觸發 pointermove（跟觸控不同，觸控沒按著螢幕
+    // 根本不會有 move 事件）；沒有這個判斷，滑鼠只是移入卡片就會拿舊的
+    // gestureStartX/Y 算出一段位移，誤判成手勢直接跳到展開/收合。
+    if (!this.pointerActive) return;
     const dx = e.clientX - this.gestureStartX;
     const dy = e.clientY - this.gestureStartY;
 
@@ -1755,6 +1769,7 @@ export class TripsListComponent implements OnInit {
       }
     }
     this.swipeAxis = null;
+    this.pointerActive = false;
   }
 
   onCardPointerCancel(): void {
@@ -1765,6 +1780,7 @@ export class TripsListComponent implements OnInit {
       }
     }
     this.swipeAxis = null;
+    this.pointerActive = false;
   }
 
   /** 拖曳超過門檻放開：動畫補完到底（卡片位移到底、膠捲完全展開，卡片本身不淡出），
