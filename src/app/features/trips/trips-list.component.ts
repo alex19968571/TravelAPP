@@ -864,9 +864,11 @@ const CURRENCY_OPTIONS = [
         top: 10px;
         bottom: 10px;
         /* 預設／第一階段：大部分藏在卡片後面（z-index 比卡片低），只露出一小截，
-           露出的那一截跟卡片邊緣是連續的（沒有空隙），滑鼠才能連續滑過去不中斷 hover。 */
+           露出的那一截跟卡片邊緣是連續的（沒有空隙），滑鼠才能連續滑過去不中斷 hover。
+           寬度必須 >= 拖曳最大位移(SWIPE_MAX_DRAG_PX=110) + 18，否則卡片被拖到底時
+           會露出膠捲右邊緣跟卡片之間的空白（膠捲沒那麼寬蓋不住拖曳露出的範圍）。 */
         left: -18px;
-        width: 84px;
+        width: 128px;
         z-index: 0;
         border: none;
         border-radius: 4px;
@@ -949,8 +951,10 @@ const CURRENCY_OPTIONS = [
         position: absolute;
         top: 10px;
         bottom: 10px;
+        /* 同上（.scrapbook-btn）：寬度需 >= SWIPE_MAX_DRAG_PX(110) + 18，
+           否則卡片左滑拖到底時，刪除鈕左邊緣跟卡片之間會露出空白。 */
         right: -18px;
-        width: 84px;
+        width: 128px;
         z-index: 0;
         border: none;
         border-radius: 4px;
