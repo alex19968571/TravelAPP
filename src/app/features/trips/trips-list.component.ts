@@ -821,9 +821,14 @@ const CURRENCY_OPTIONS = [
           transform 0.2s ease,
           opacity 0.2s ease,
           box-shadow 0.2s ease;
-        /* 卡片自己保留裁切：內部縮圖/hover 效果需要方角被裁成圓角，
-           缺口裝飾則利用這層裁切「咬」出一個洞。 */
+        /* 卡片自己保留裁切：內部縮圖/hover 效果需要方角被裁成圓角。 */
         overflow: hidden;
+        /* 右側撕票缺口：用 mask 挖一個「真的透空」的圓洞，而不是拿一個跟卡片同色的
+           圓形色塊蓋上去假裝挖洞——色塊蓋色塊在左滑露出紅色刪除鈕時會蓋住鈕的顏色，
+           變成缺口處固定顯示卡片底色、擋住刪除鈕。挖真洞後，缺口顯示的一律是「卡片
+           背後實際疊在那個位置的東西」（平常是頁面背景，滑出刪除鈕/膠捲時就是它們的顏色）。 */
+        -webkit-mask-image: radial-gradient(circle 15px at 100% 50%, transparent 15px, #000 15.5px);
+        mask-image: radial-gradient(circle 15px at 100% 50%, transparent 15px, #000 15.5px);
         -webkit-tap-highlight-color: transparent;
         /* 長按刪除／左滑拖曳膠捲手勢期間，避免手機瀏覽器跳出文字選取/放大鏡選單；
            水平方向交給 JS 判斷，垂直方向仍讓瀏覽器原生捲動處理。 */
@@ -841,21 +846,6 @@ const CURRENCY_OPTIONS = [
       .trip-card.card.dragging {
         transition: none;
       }
-      /* 登機證右側中間的圓形撕票缺口裝飾：掛在卡片本身，縮小時會跟著卡片一起移動 */
-      .trip-card.card::after {
-        content: '';
-        position: absolute;
-        right: -15px;
-        top: 50%;
-        transform: translateY(-50%);
-        width: 30px;
-        height: 30px;
-        border-radius: 50%;
-        background: var(--bg);
-        z-index: 2;
-        pointer-events: none;
-      }
-
       /* ── 行程剪貼簿：橫向底片膠捲，露出到卡片左側外面（網頁分兩階段 hover／手機右滑） ──
          刪除鈕改佔用原本膠捲用的右側機制（見下面 .delete-reveal-btn），
          膠捲搬到左側、手勢方向也跟著鏡射（右滑露出），兩者互為相反方向、互不衝突。 */
@@ -951,10 +941,13 @@ const CURRENCY_OPTIONS = [
         position: absolute;
         top: 10px;
         bottom: 10px;
-        /* 同上（.scrapbook-btn）：寬度需 >= SWIPE_MAX_DRAG_PX(110) + 18，
-           否則卡片左滑拖到底時，刪除鈕左邊緣跟卡片之間會露出空白。 */
+        /* 寬度需 >= SWIPE_MAX_DRAG_PX(110) + 18，否則卡片左滑拖到底時，
+           刪除鈕左邊緣跟卡片之間會露出空白；再加上 15（跟卡片右側缺口的
+           mask 半徑一致，見 .trip-card.card 的 mask-image），缺口的透空範圍
+           才會全程都有這顆鈕墊在卡片後面，缺口才能顯示鈕的顏色而不是卡片
+           後面空蕩蕩的頁面背景。 */
         right: -18px;
-        width: 128px;
+        width: 143px;
         z-index: 0;
         border: none;
         border-radius: 4px;
@@ -1311,7 +1304,9 @@ const CURRENCY_OPTIONS = [
         }
         .delete-reveal-btn {
           right: 0;
-          width: 110px;
+          /* 手機版拖曳距離也是 110，一樣要多留 15 給卡片右側缺口的 mask
+             半徑，缺口才能在拖到底時透出鈕的顏色（理由同桌機版）。 */
+          width: 125px;
         }
       }
     `,
