@@ -320,7 +320,6 @@ const CURRENCY_OPTIONS = [
                     >
                   </div>
                 </div>
-
               </div>
 
               <button
@@ -967,20 +966,9 @@ const CURRENCY_OPTIONS = [
       .delete-reveal-btn.dragging {
         transition: none;
       }
-      @media (hover: hover) and (pointer: fine) {
-        .trip-card-slot:hover .delete-reveal-btn {
-          opacity: 1;
-          pointer-events: auto;
-        }
-        .trip-card-slot:has(.delete-reveal-btn:hover) .delete-reveal-btn {
-          right: -84px;
-          transform: translateX(-38px);
-        }
-        .trip-card-slot:has(.delete-reveal-btn:hover) .trip-card.card {
-          transform: translateX(-38px);
-          box-shadow: 0 18px 36px var(--shadow);
-        }
-      }
+      /* 刻意不做桌面版 hover 兩階段預覽（跟行程剪貼簿不同）——刪除鈕只在實際
+         左滑（手機觸控）展開時才顯示；滑鼠移入卡片不會看到它。桌面版原本就有
+         ⓘ → 編輯視窗 → 🗑 這條路徑可以刪除，不需要額外的 hover 提示。 */
       .trip-card-body {
         display: flex;
         flex-direction: column;
