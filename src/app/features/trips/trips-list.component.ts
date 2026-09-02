@@ -321,18 +321,6 @@ const CURRENCY_OPTIONS = [
                   </div>
                 </div>
 
-                @if (longPressedTripId() === trip.id) {
-                  <div class="delete-overlay" (click)="cancelLongPress()">
-                    <button
-                      type="button"
-                      class="delete-overlay-btn"
-                      [attr.aria-label]="'trips.delete' | transloco"
-                      (click)="onDeleteBtnClick(trip, $event)"
-                    >
-                      🗑
-                    </button>
-                  </div>
-                }
               </div>
 
               <button
@@ -344,6 +332,17 @@ const CURRENCY_OPTIONS = [
                 (click)="onScrapbookBtnClick(trip, $event)"
               >
                 <span class="film-frame"></span>
+              </button>
+
+              <button
+                type="button"
+                class="delete-reveal-btn"
+                [class.dragging]="isLiveDragging() && dragTripId() === trip.id"
+                [ngStyle]="deleteRevealStyle(trip)"
+                [attr.aria-label]="'trips.delete' | transloco"
+                (click)="onDeleteRevealClick(trip, $event)"
+              >
+                🗑
               </button>
             </div>
           }
@@ -782,9 +781,10 @@ const CURRENCY_OPTIONS = [
       .trips-grid {
         display: grid;
         gap: 1rem;
-        /* 保留右側 gutter：讓行程剪貼簿膠捲可以露出在卡片外面，
+        /* 左右都保留 gutter：左側給行程剪貼簿膠捲、右側給刪除鈕露出在卡片外面，
            又不會被 .page-container / .page-scroll 的捲動裁切吃掉
           （那兩層有設 overflow，裁切範圍就是本容器的 box，padding 內側仍在範圍內）。 */
+        padding-left: 100px;
         padding-right: 100px;
       }
 
@@ -802,39 +802,6 @@ const CURRENCY_OPTIONS = [
         overflow: hidden;
         border-radius: 16px;
         -webkit-tap-highlight-color: transparent;
-      }
-      .delete-overlay {
-        position: absolute;
-        inset: 0;
-        z-index: 10;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        background: rgba(0, 0, 0, 0.55);
-        border-radius: inherit;
-        animation: delete-overlay-fade-in 0.15s ease;
-      }
-      @keyframes delete-overlay-fade-in {
-        from {
-          opacity: 0;
-        }
-        to {
-          opacity: 1;
-        }
-      }
-      .delete-overlay-btn {
-        width: 52px;
-        height: 52px;
-        border-radius: 50%;
-        border: none;
-        background: #e53e3e;
-        color: white;
-        font-size: 1.4rem;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
       }
       .trip-card.card {
         padding: 0;
@@ -884,14 +851,16 @@ const CURRENCY_OPTIONS = [
         pointer-events: none;
       }
 
-      /* ── 行程剪貼簿：橫向底片膠捲，露出到卡片右側外面（網頁分兩階段 hover／手機左滑） ── */
+      /* ── 行程剪貼簿：橫向底片膠捲，露出到卡片左側外面（網頁分兩階段 hover／手機右滑） ──
+         刪除鈕改佔用原本膠捲用的右側機制（見下面 .delete-reveal-btn），
+         膠捲搬到左側、手勢方向也跟著鏡射（右滑露出），兩者互為相反方向、互不衝突。 */
       .scrapbook-btn {
         position: absolute;
         top: 10px;
         bottom: 10px;
         /* 預設／第一階段：大部分藏在卡片後面（z-index 比卡片低），只露出一小截，
            露出的那一截跟卡片邊緣是連續的（沒有空隙），滑鼠才能連續滑過去不中斷 hover。 */
-        right: -18px;
+        left: -18px;
         width: 84px;
         z-index: 0;
         border: none;
@@ -903,7 +872,7 @@ const CURRENCY_OPTIONS = [
         pointer-events: none;
         transition:
           opacity 0.2s ease,
-          right 0.25s ease,
+          left 0.25s ease,
           transform 0.25s ease;
         /* 只在上下留打孔的位置，左右不留黑邊，讓畫面格能撐滿整個寬度 */
         padding: 12px 0;
@@ -958,13 +927,56 @@ const CURRENCY_OPTIONS = [
           opacity: 1;
           pointer-events: auto;
         }
-        /* 第二階段：滑鼠移到膠捲露出的那一小截上，膠捲整個滑出來，登機證往左等比縮小並加上陰影 */
+        /* 第二階段：滑鼠移到膠捲露出的那一小截上，膠捲整個滑出來，登機證往右等比縮小並加上陰影 */
         /* 膠捲跟卡片套用「完全相同」的 translateX，兩者才會同步位移、中間不會露出空白 */
         .trip-card-slot:has(.scrapbook-btn:hover) .scrapbook-btn {
+          left: -84px;
+          transform: translateX(38px);
+        }
+        .trip-card-slot:has(.scrapbook-btn:hover) .trip-card.card {
+          transform: translateX(38px);
+          box-shadow: 0 18px 36px var(--shadow);
+        }
+      }
+      /* ── 刪除：左滑露出到卡片右側外面（跟原本行程剪貼簿右側露出的機制完全一樣，只是改成刪除鈕；
+         網頁分兩階段 hover／手機左滑，再次左滑＝確認刪除，動畫跟行程剪貼簿共用同一套） ── */
+      .delete-reveal-btn {
+        position: absolute;
+        top: 10px;
+        bottom: 10px;
+        right: -18px;
+        width: 84px;
+        z-index: 0;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        background: #e53e3e;
+        color: #fff;
+        font-size: 1.4rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+        opacity: 0;
+        pointer-events: none;
+        transition:
+          opacity 0.2s ease,
+          right 0.25s ease,
+          transform 0.25s ease;
+      }
+      .delete-reveal-btn.dragging {
+        transition: none;
+      }
+      @media (hover: hover) and (pointer: fine) {
+        .trip-card-slot:hover .delete-reveal-btn {
+          opacity: 1;
+          pointer-events: auto;
+        }
+        .trip-card-slot:has(.delete-reveal-btn:hover) .delete-reveal-btn {
           right: -84px;
           transform: translateX(-38px);
         }
-        .trip-card-slot:has(.scrapbook-btn:hover) .trip-card.card {
+        .trip-card-slot:has(.delete-reveal-btn:hover) .trip-card.card {
           transform: translateX(-38px);
           box-shadow: 0 18px 36px var(--shadow);
         }
@@ -1284,10 +1296,11 @@ const CURRENCY_OPTIONS = [
           flex-wrap: wrap;
         }
         /* 手機版不額外保留 gutter（桌機版的 100px 在這裡重設為 0），
-           登機證維持正常滿版寬度；膠捲改成貼齊卡片（.trip-card-wrap）右邊緣、
-           完全包在原本的卡片範圍內，拖曳時純粹靠卡片本身左移露出，
-           不需要跟桌機版一樣的外側留白空間。 */
+           登機證維持正常滿版寬度；膠捲/刪除鈕改成貼齊卡片（.trip-card-wrap）
+           對應那一側的邊緣、完全包在原本的卡片範圍內，拖曳時純粹靠卡片本身
+           左右移動露出，不需要跟桌機版一樣的外側留白空間。 */
         .trips-grid {
+          padding-left: 0;
           padding-right: 0;
         }
         .list-toolbar,
@@ -1295,6 +1308,10 @@ const CURRENCY_OPTIONS = [
           margin-right: 0;
         }
         .scrapbook-btn {
+          left: 0;
+          width: 110px;
+        }
+        .delete-reveal-btn {
           right: 0;
           width: 110px;
         }
@@ -1439,11 +1456,11 @@ export class TripsListComponent implements OnInit {
   joinCode = signal('');
   joinError = signal(false);
   joining = signal(false);
-  /** 目前處於「長按刪除確認」狀態（反黑＋垃圾桶按鈕）的行程 id */
-  longPressedTripId = signal<string | null>(null);
-  /** 手機左滑手勢正在互動（含放開後的完成/彈回動畫）中的行程 id；網頁版 hover 純用 CSS 處理，不吃這裡 */
+  /** 左滑刪除鈕已「釘住展開」（顯示刪除鈕、不會自動彈回）的行程 id */
+  pinnedDeleteTripId = signal<string | null>(null);
+  /** 手機滑動手勢正在互動（含放開後的完成/彈回動畫）中的行程 id；網頁版 hover 純用 CSS 處理，不吃這裡 */
   dragTripId = signal<string | null>(null);
-  /** 左滑進度 0~1，即時對應手指拖曳距離；放開後動畫收斂到 0（取消）或 1（進入行程剪貼簿） */
+  /** 滑動進度 0~1，即時對應手指拖曳距離；放開後動畫收斂到 0（取消）或 1（進入行程剪貼簿／刪除鈕全開） */
   dragProgress = signal(0);
   /** true 時代表手指正在即時拖曳中（此時卡片不套用 CSS transition，才能 1:1 跟手）；
    *  放開手指後改為 false，讓收斂到 0 或 1 的動畫可以套用 transition 平滑過渡 */
@@ -1473,18 +1490,18 @@ export class TripsListComponent implements OnInit {
     }));
   }
 
-  private static readonly LONG_PRESS_MS = 500;
-  private static readonly LONG_PRESS_MOVE_TOLERANCE_PX = 10;
-  /** 左滑最大拖曳距離（px），對應 dragProgress = 1（完全展開） */
-  private static readonly SCRAPBOOK_MAX_DRAG_PX = 110;
-  /** 放開手指時，拖曳進度需超過此比例才視為「確定進入」，否則彈回 */
-  private static readonly SCRAPBOOK_COMMIT_RATIO = 0.6;
-  private longPressTimer: ReturnType<typeof setTimeout> | null = null;
-  private longPressTriggered = false;
-  private longPressStartX = 0;
-  private longPressStartY = 0;
-  /** 移動超過容忍值後鎖定的手勢軸向；僅觸控手勢才會判斷左滑膠捲（滑鼠用 hover，不吃這條路徑） */
+  private static readonly SWIPE_MOVE_TOLERANCE_PX = 10;
+  /** 滑動最大拖曳距離（px），對應 dragProgress = 1（完全展開） */
+  private static readonly SWIPE_MAX_DRAG_PX = 110;
+  /** 放開手指時，拖曳進度需超過此比例才視為「確定進入／確定展開」，否則彈回 */
+  private static readonly SWIPE_COMMIT_RATIO = 0.6;
+  private gestureTriggered = false;
+  private gestureStartX = 0;
+  private gestureStartY = 0;
+  /** 移動超過容忍值後鎖定的手勢軸向；僅觸控手勢才會判斷左右滑（滑鼠用 hover，不吃這條路徑） */
   private swipeAxis: 'x' | 'y' | null = null;
+  /** 軸向鎖定為 'x' 時，這次手勢的方向：'right' = 右滑露出左側行程剪貼簿；'left' = 左滑露出右側刪除鈕 */
+  private swipeDirection: 'left' | 'right' | null = null;
 
   form = this.fb.group({
     title: ['', [Validators.required, Validators.maxLength(100)]],
@@ -1630,16 +1647,16 @@ export class TripsListComponent implements OnInit {
     await this.loadTrips();
   }
 
-  // ── 卡片互動：長按進入刪除確認態／觸控左滑即時跟手拖曳出行程剪貼簿膠捲 ──
+  // ── 卡片互動：右滑進入行程剪貼簿（左側露出）／左滑露出刪除鈕（右側露出，再次左滑＝確認刪除） ──
   onCardClick(trip: Trip): void {
-    // 長按或拖曳剛觸發後，手指放開瀏覽器仍會補一個 click，這裡吃掉避免誤觸導覽
-    if (this.longPressTriggered) {
-      this.longPressTriggered = false;
+    // 手勢剛觸發後，手指放開瀏覽器仍會補一個 click，這裡吃掉避免誤觸導覽
+    if (this.gestureTriggered) {
+      this.gestureTriggered = false;
       return;
     }
-    if (this.longPressedTripId()) {
-      // 有卡片正處於刪除確認態時，點其他地方先取消，不直接導覽
-      this.longPressedTripId.set(null);
+    if (this.pinnedDeleteTripId() === trip.id) {
+      // 刪除鈕正釘住展開中，點其他地方先收合，不直接導覽
+      this.closeDeleteReveal(trip);
       return;
     }
     if (this.dragTripId() === trip.id) return; // 拖曳/收斂動畫進行中，不觸發導覽
@@ -1652,74 +1669,105 @@ export class TripsListComponent implements OnInit {
   cardDragStyle(trip: Trip): Record<string, string> | null {
     if (this.dragTripId() !== trip.id) return null;
     const p = this.dragProgress();
-    return { transform: `translateX(${-p * TripsListComponent.SCRAPBOOK_MAX_DRAG_PX}px)` };
+    const sign = this.swipeDirection === 'right' ? 1 : -1;
+    return { transform: `translateX(${sign * p * TripsListComponent.SWIPE_MAX_DRAG_PX}px)` };
   }
 
   /** 膠捲在拖曳中才需要蓋過 opacity:0 的預設隱藏樣式；實際「越拖越長」的效果是卡片位移自然露出的 */
   reelDragStyle(trip: Trip): Record<string, string> | null {
-    if (this.dragTripId() !== trip.id) return null;
+    if (this.dragTripId() !== trip.id || this.swipeDirection !== 'right') return null;
+    return { opacity: '1', 'pointer-events': this.dragProgress() > 0.05 ? 'auto' : 'none' };
+  }
+
+  /** 刪除鈕的顯示樣式：拖曳中跟著露出；已經「釘住展開」時（不管是否還在拖曳）維持全開 */
+  deleteRevealStyle(trip: Trip): Record<string, string> | null {
+    if (this.pinnedDeleteTripId() === trip.id) return { opacity: '1', 'pointer-events': 'auto' };
+    if (this.dragTripId() !== trip.id || this.swipeDirection !== 'left') return null;
     return { opacity: '1', 'pointer-events': this.dragProgress() > 0.05 ? 'auto' : 'none' };
   }
 
   onCardPointerDown(e: PointerEvent, trip: Trip): void {
-    if (this.longPressedTripId() || this.dragTripId()) return;
-    this.longPressTriggered = false;
-    this.longPressStartX = e.clientX;
-    this.longPressStartY = e.clientY;
+    const otherCardBusy =
+      (this.pinnedDeleteTripId() && this.pinnedDeleteTripId() !== trip.id) ||
+      (this.dragTripId() && this.dragTripId() !== trip.id);
+    if (otherCardBusy) return;
+    this.gestureTriggered = false;
+    this.gestureStartX = e.clientX;
+    this.gestureStartY = e.clientY;
     this.swipeAxis = null;
-    this.clearLongPressTimer();
-    this.longPressTimer = setTimeout(() => {
-      this.longPressTriggered = true;
-      this.longPressedTripId.set(trip.id);
-    }, TripsListComponent.LONG_PRESS_MS);
   }
 
   onCardPointerMove(e: PointerEvent, trip: Trip): void {
-    const dx = e.clientX - this.longPressStartX;
-    const dy = e.clientY - this.longPressStartY;
+    const dx = e.clientX - this.gestureStartX;
+    const dy = e.clientY - this.gestureStartY;
 
     if (!this.swipeAxis) {
       if (
-        Math.abs(dx) < TripsListComponent.LONG_PRESS_MOVE_TOLERANCE_PX &&
-        Math.abs(dy) < TripsListComponent.LONG_PRESS_MOVE_TOLERANCE_PX
+        Math.abs(dx) < TripsListComponent.SWIPE_MOVE_TOLERANCE_PX &&
+        Math.abs(dy) < TripsListComponent.SWIPE_MOVE_TOLERANCE_PX
       ) {
-        return; // 意圖閥值：微幅抖動不判斷方向，也不打斷長按計時
+        return; // 意圖閥值：微幅抖動不判斷方向
       }
-      // 已產生明確移動：不再是「按住不動」，取消長按計時，改判斷滑動軸向
-      this.clearLongPressTimer();
-      // 只有觸控手勢才進入左滑拖曳膠捲的邏輯，滑鼠用 hover 走 CSS，避免互相干擾
+      // 只有觸控手勢才進入左右滑拖曳的邏輯，滑鼠用 hover 走 CSS，避免互相干擾
       this.swipeAxis = e.pointerType === 'touch' && Math.abs(dx) > Math.abs(dy) ? 'x' : 'y';
       if (this.swipeAxis === 'x') {
+        this.swipeDirection = dx < 0 ? 'left' : 'right';
         this.isLiveDragging.set(true);
         this.dragTripId.set(trip.id);
       }
     }
 
     if (this.swipeAxis !== 'x') return; // 垂直手勢：完全放手，讓瀏覽器原生捲動接手
-    // 即時跟手：只吃左滑（dx 為負），依拖曳距離換算成 0~1 的進度，往右滑會自然回到 0
-    const px = Math.min(Math.max(-dx, 0), TripsListComponent.SCRAPBOOK_MAX_DRAG_PX);
-    this.dragProgress.set(px / TripsListComponent.SCRAPBOOK_MAX_DRAG_PX);
+    // 已經是刪除鈕釘住展開狀態：不需要即時跟手視覺（已經是全開），交給放開時判斷方向即可
+    if (this.pinnedDeleteTripId() === trip.id) return;
+
+    // 即時跟手：只吃該手勢方向的位移量，依拖曳距離換算成 0~1 的進度，往回滑會自然回到 0
+    const towardDirection = this.swipeDirection === 'left' ? -dx : dx;
+    const px = Math.min(Math.max(towardDirection, 0), TripsListComponent.SWIPE_MAX_DRAG_PX);
+    this.dragProgress.set(px / TripsListComponent.SWIPE_MAX_DRAG_PX);
   }
 
   onCardPointerUp(e: PointerEvent, trip: Trip): void {
-    this.clearLongPressTimer();
     if (this.swipeAxis === 'x' && this.dragTripId() === trip.id) {
       this.isLiveDragging.set(false); // 放開後改走 CSS transition，收斂動畫才會平滑
-      if (this.dragProgress() >= TripsListComponent.SCRAPBOOK_COMMIT_RATIO) {
-        this.longPressTriggered = true; // 吃掉緊接而來的補發 click
-        this.commitScrapbookDrag(trip, e.target as HTMLElement);
-      } else {
-        this.cancelScrapbookDrag();
+      const wasPinned = this.pinnedDeleteTripId() === trip.id;
+
+      if (wasPinned) {
+        // 刪除鈕已經全開：再次左滑＝確認刪除（跳出確認視窗）；右滑（或其他方向）＝收合關閉
+        this.gestureTriggered = true; // 吃掉緊接而來的補發 click
+        if (this.swipeDirection === 'left') {
+          void this.confirmDeleteTrip(trip);
+        } else {
+          this.closeDeleteReveal(trip);
+        }
+      } else if (this.swipeDirection === 'right') {
+        // 右滑進入行程剪貼簿（跟原本左滑的機制完全一樣，只是方向相反）
+        if (this.dragProgress() >= TripsListComponent.SWIPE_COMMIT_RATIO) {
+          this.gestureTriggered = true;
+          this.commitScrapbookDrag(trip, e.target as HTMLElement);
+        } else {
+          this.cancelSwipeDrag();
+        }
+      } else if (this.swipeDirection === 'left') {
+        // 左滑露出刪除鈕：滑過門檻只「釘住展開」，還不會直接刪除，
+        // 需要再點按鈕或再滑一次才會跳出確認視窗
+        if (this.dragProgress() >= TripsListComponent.SWIPE_COMMIT_RATIO) {
+          this.gestureTriggered = true;
+          this.openDeleteReveal(trip);
+        } else {
+          this.cancelSwipeDrag();
+        }
       }
     }
     this.swipeAxis = null;
   }
 
   onCardPointerCancel(): void {
-    this.clearLongPressTimer();
     if (this.swipeAxis === 'x') {
       this.isLiveDragging.set(false);
-      this.cancelScrapbookDrag();
+      if (!this.pinnedDeleteTripId()) {
+        this.cancelSwipeDrag();
+      }
     }
     this.swipeAxis = null;
   }
@@ -1737,8 +1785,8 @@ export class TripsListComponent implements OnInit {
     }, 220); // 對應卡片 transform 的 CSS transition 時長，讓收斂動畫播完再接續過場
   }
 
-  /** 拖曳未達門檻放開：卡片彈回原位、膠捲被登機證重新蓋過去 */
-  private cancelScrapbookDrag(): void {
+  /** 拖曳未達門檻放開：卡片彈回原位、膠捲/刪除鈕被登機證重新蓋過去 */
+  private cancelSwipeDrag(): void {
     this.dragProgress.set(0);
     setTimeout(() => {
       // 等彈回動畫播完才清掉 dragTripId，避免中途瞬間跳回無拖曳樣式造成閃爍
@@ -1746,18 +1794,20 @@ export class TripsListComponent implements OnInit {
     }, 220);
   }
 
-  private clearLongPressTimer(): void {
-    if (this.longPressTimer) {
-      clearTimeout(this.longPressTimer);
-      this.longPressTimer = null;
-    }
+  /** 左滑超過門檻放開：釘住展開（維持全開顯示刪除鈕，動畫跟行程剪貼簿共用同一套 transition，
+   *  不像剪貼簿會接著導頁——這裡單純停在「全開」等使用者點按鈕或再滑一次確認刪除）。 */
+  private openDeleteReveal(trip: Trip): void {
+    this.dragProgress.set(1);
+    this.pinnedDeleteTripId.set(trip.id);
   }
 
-  cancelLongPress(): void {
-    this.longPressedTripId.set(null);
+  /** 收合已釘住展開的刪除鈕：卡片滑回原位（跟取消拖曳同一套收斂動畫） */
+  private closeDeleteReveal(trip: Trip): void {
+    this.pinnedDeleteTripId.set(null);
+    this.cancelSwipeDrag();
   }
 
-  onDeleteBtnClick(trip: Trip, e: MouseEvent): void {
+  onDeleteRevealClick(trip: Trip, e: MouseEvent): void {
     e.stopPropagation();
     void this.confirmDeleteTrip(trip);
   }
@@ -1863,12 +1913,14 @@ export class TripsListComponent implements OnInit {
 
   async confirmDeleteTrip(trip: Trip): Promise<void> {
     if (!confirm(this.transloco.translate('trips.deleteConfirm'))) {
-      // 取消刪除：該行程卡片恢復原樣式（反黑消失）
-      this.longPressedTripId.set(null);
+      // 取消刪除：該行程卡片收合刪除鈕、恢復原樣式
+      if (this.pinnedDeleteTripId() === trip.id) this.closeDeleteReveal(trip);
       return;
     }
     await this.tripService.delete(trip.id);
-    this.longPressedTripId.set(null);
+    this.pinnedDeleteTripId.set(null);
+    this.dragTripId.set(null);
+    this.dragProgress.set(0);
     this.editingTrip.set(null);
     await this.loadTrips();
   }
