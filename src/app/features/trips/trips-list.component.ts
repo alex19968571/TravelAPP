@@ -238,7 +238,7 @@ const CURRENCY_OPTIONS = [
 
         <div class="trips-grid">
           @for (trip of filteredTrips(); track trip.id) {
-            <div class="trip-card-slot">
+            <div class="trip-card-slot" [attr.data-trip-id]="trip.id">
               <div class="trip-card-wrap">
                 <div
                   class="trip-card card"
@@ -1546,6 +1546,12 @@ export class TripsListComponent implements OnInit {
     if (!document.querySelector('.filter-country')?.contains(target)) {
       this.showCountryPicker.set(false);
     }
+    const pinnedId = this.pinnedDeleteTripId();
+    if (pinnedId) {
+      const slot = document.querySelector(`.trip-card-slot[data-trip-id="${pinnedId}"]`);
+      // 點在這張卡片（含刪除鈕）以外的任何地方：收合刪除鈕、卡片回到原位
+      if (!slot?.contains(target)) this.closeDeleteReveal();
+    }
   }
 
   toggleAddMenu(): void {
@@ -1644,7 +1650,7 @@ export class TripsListComponent implements OnInit {
     }
     if (this.pinnedDeleteTripId() === trip.id) {
       // 刪除鈕正釘住展開中，點其他地方先收合，不直接導覽
-      this.closeDeleteReveal(trip);
+      this.closeDeleteReveal();
       return;
     }
     if (this.dragTripId() === trip.id) return; // 拖曳/收斂動畫進行中，不觸發導覽
@@ -1696,8 +1702,9 @@ export class TripsListComponent implements OnInit {
       ) {
         return; // 意圖閥值：微幅抖動不判斷方向
       }
-      // 只有觸控手勢才進入左右滑拖曳的邏輯，滑鼠用 hover 走 CSS，避免互相干擾
-      this.swipeAxis = e.pointerType === 'touch' && Math.abs(dx) > Math.abs(dy) ? 'x' : 'y';
+      // 觸控與滑鼠都吃這條拖曳邏輯——刪除鈕在桌面版沒有 hover 提示，
+      // 必須靠滑鼠拖曳才能觸發，跟行程剪貼簿的桌面版 hover 機制並存、互不影響。
+      this.swipeAxis = Math.abs(dx) > Math.abs(dy) ? 'x' : 'y';
       if (this.swipeAxis === 'x') {
         this.swipeDirection = dx < 0 ? 'left' : 'right';
         this.isLiveDragging.set(true);
@@ -1726,7 +1733,7 @@ export class TripsListComponent implements OnInit {
         if (this.swipeDirection === 'left') {
           void this.confirmDeleteTrip(trip);
         } else {
-          this.closeDeleteReveal(trip);
+          this.closeDeleteReveal();
         }
       } else if (this.swipeDirection === 'right') {
         // 右滑進入行程剪貼簿（跟原本左滑的機制完全一樣，只是方向相反）
@@ -1790,7 +1797,7 @@ export class TripsListComponent implements OnInit {
   }
 
   /** 收合已釘住展開的刪除鈕：卡片滑回原位（跟取消拖曳同一套收斂動畫） */
-  private closeDeleteReveal(trip: Trip): void {
+  private closeDeleteReveal(): void {
     this.pinnedDeleteTripId.set(null);
     this.cancelSwipeDrag();
   }
@@ -1902,7 +1909,7 @@ export class TripsListComponent implements OnInit {
   async confirmDeleteTrip(trip: Trip): Promise<void> {
     if (!confirm(this.transloco.translate('trips.deleteConfirm'))) {
       // 取消刪除：該行程卡片收合刪除鈕、恢復原樣式
-      if (this.pinnedDeleteTripId() === trip.id) this.closeDeleteReveal(trip);
+      if (this.pinnedDeleteTripId() === trip.id) this.closeDeleteReveal();
       return;
     }
     await this.tripService.delete(trip.id);
