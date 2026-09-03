@@ -188,13 +188,13 @@ const CURRENCY_CODES = [
   ],
   template: `
     <div class="page-shell">
-    <div class="page-container">
-      <header class="page-header">
-        <div class="header-mid">
-          <h1>✈️ {{ 'flightWatch.title' | transloco }}</h1>
-        </div>
-        <button class="btn-icon add-trigger" type="button" (click)="openAddModal()">＋</button>
-      </header>
+      <div class="page-container">
+        <header class="page-header">
+          <div class="header-mid">
+            <h1>✈️ {{ 'flightWatch.title' | transloco }}</h1>
+          </div>
+          <button class="btn-icon add-trigger" type="button" (click)="openAddModal()">＋</button>
+        </header>
       </div>
 
       @if (showAddModal()) {
@@ -322,125 +322,125 @@ const CURRENCY_CODES = [
       }
 
       <div class="page-scroll">
-      <div class="page-container">
-        @if (watches().length === 0) {
-          <div class="empty-state">
-            <p>{{ 'flightWatch.noWatches' | transloco }}</p>
-          </div>
-        }
-        <div class="items-list">
-          @for (watch of watches(); track watch.id) {
-            <div class="item-slot" [attr.data-watch-id]="watch.id">
-              <div class="item-card-wrap">
-                <div
-                  class="boarding-pass item-card"
-                  [class.dragging]="isLiveDragging() && dragWatchId() === watch.id"
-                  [ngStyle]="cardDragStyle(watch)"
-                  (pointerdown)="onCardPointerDown($event, watch)"
-                  (pointermove)="onCardPointerMove($event, watch)"
-                  (pointerup)="onCardPointerUp($event, watch)"
-                  (pointerleave)="onCardPointerCancel()"
-                  (pointercancel)="onCardPointerCancel()"
-                  (contextmenu)="$event.preventDefault()"
-                  (click)="onCardClick(watch)"
-                >
-                  <div class="boarding-pass-header">
-                    <div class="bp-route">
-                      <span class="bp-route-name">{{ airportName(watch.origin) }}</span>
-                      <span class="bp-route-arrow">→</span>
-                      <span class="bp-route-name">{{ airportName(watch.destination) }}</span>
-                    </div>
-                    <div class="bp-route-codes">{{ watch.origin }} → {{ watch.destination }}</div>
-                    @if (watchAirlineLabel(watch.id); as airline) {
-                      <div class="bp-airline">{{ airline }}</div>
-                    }
-                    <div class="bp-dates">
-                      {{ watch.depart_date }}
-                      @if (watch.return_date) {
-                        ～ {{ watch.return_date }}
+        <div class="page-container">
+          @if (watches().length === 0) {
+            <div class="empty-state">
+              <p>{{ 'flightWatch.noWatches' | transloco }}</p>
+            </div>
+          }
+          <div class="items-list">
+            @for (watch of watches(); track watch.id) {
+              <div class="item-slot" [attr.data-watch-id]="watch.id">
+                <div class="item-card-wrap">
+                  <div
+                    class="boarding-pass item-card"
+                    [class.dragging]="isLiveDragging() && dragWatchId() === watch.id"
+                    [ngStyle]="cardDragStyle(watch)"
+                    (pointerdown)="onCardPointerDown($event, watch)"
+                    (pointermove)="onCardPointerMove($event, watch)"
+                    (pointerup)="onCardPointerUp($event, watch)"
+                    (pointerleave)="onCardPointerCancel()"
+                    (pointercancel)="onCardPointerCancel()"
+                    (contextmenu)="$event.preventDefault()"
+                    (click)="onCardClick(watch)"
+                  >
+                    <div class="boarding-pass-header">
+                      <div class="bp-route">
+                        <span class="bp-route-name">{{ airportName(watch.origin) }}</span>
+                        <span class="bp-route-arrow">→</span>
+                        <span class="bp-route-name">{{ airportName(watch.destination) }}</span>
+                      </div>
+                      <div class="bp-route-codes">{{ watch.origin }} → {{ watch.destination }}</div>
+                      @if (watchAirlineLabel(watch.id); as airline) {
+                        <div class="bp-airline">{{ airline }}</div>
+                      }
+                      <div class="bp-dates">
+                        {{ watch.depart_date }}
+                        @if (watch.return_date) {
+                          ～ {{ watch.return_date }}
+                        }
+                      </div>
+                      @if (watch.target_price) {
+                        <div class="bp-target">
+                          {{ 'flightWatch.targetPrice' | transloco }}：{{
+                            watch.target_price | number: '1.0-0'
+                          }}
+                          {{ watch.currency }}
+                        </div>
                       }
                     </div>
-                    @if (watch.target_price) {
-                      <div class="bp-target">
-                        {{ 'flightWatch.targetPrice' | transloco }}：{{
-                          watch.target_price | number: '1.0-0'
-                        }}
-                        {{ watch.currency }}
-                      </div>
-                    }
-                  </div>
-                  <div class="boarding-pass-divider"></div>
-                  <div class="boarding-pass-stub">
-                    <div class="bp-price">
-                      @if (checking() === watch.id) {
-                        <div class="amount">{{ 'flightWatch.checking' | transloco }}</div>
-                      } @else if (priceRange(watch.id); as range) {
-                        <div class="price-range-row">
-                          <span class="amount" [class]="priceColorClass(watch, range.min.price)">
-                            {{ range.min.price | number: '1.0-0' }} {{ watch.currency }}
-                          </span>
-                        </div>
-                        @if (range.max.price !== range.min.price) {
+                    <div class="boarding-pass-divider"></div>
+                    <div class="boarding-pass-stub">
+                      <div class="bp-price">
+                        @if (checking() === watch.id) {
+                          <div class="amount">{{ 'flightWatch.checking' | transloco }}</div>
+                        } @else if (priceRange(watch.id); as range) {
                           <div class="price-range-row">
-                            <span
-                              class="amount-secondary"
-                              [class]="priceColorClass(watch, range.max.price)"
-                            >
-                              {{ range.max.price | number: '1.0-0' }} {{ watch.currency }}
+                            <span class="amount" [class]="priceColorClass(watch, range.min.price)">
+                              {{ range.min.price | number: '1.0-0' }} {{ watch.currency }}
                             </span>
                           </div>
+                          @if (range.max.price !== range.min.price) {
+                            <div class="price-range-row">
+                              <span
+                                class="amount-secondary"
+                                [class]="priceColorClass(watch, range.max.price)"
+                              >
+                                {{ range.max.price | number: '1.0-0' }} {{ watch.currency }}
+                              </span>
+                            </div>
+                          }
+                          <div class="amount-checked">
+                            {{ formatCheckedAt(watch.last_checked_at) }}
+                          </div>
+                        } @else if (watch.last_price !== null) {
+                          <div class="amount" [class]="priceColorClass(watch, watch.last_price)">
+                            {{ watch.last_price | number: '1.0-0' }} {{ watch.currency }}
+                          </div>
+                          <div class="amount-checked">
+                            {{ formatCheckedAt(watch.last_checked_at) }}
+                          </div>
+                        } @else {
+                          <div class="amount-unavailable">
+                            {{ 'flightWatch.priceUnavailable' | transloco }}
+                          </div>
                         }
-                        <div class="amount-checked">
-                          {{ formatCheckedAt(watch.last_checked_at) }}
-                        </div>
-                      } @else if (watch.last_price !== null) {
-                        <div class="amount" [class]="priceColorClass(watch, watch.last_price)">
-                          {{ watch.last_price | number: '1.0-0' }} {{ watch.currency }}
-                        </div>
-                        <div class="amount-checked">
-                          {{ formatCheckedAt(watch.last_checked_at) }}
-                        </div>
-                      } @else {
-                        <div class="amount-unavailable">
-                          {{ 'flightWatch.priceUnavailable' | transloco }}
-                        </div>
-                      }
-                    </div>
-                    <div class="bp-actions">
-                      <button
-                        class="detail-btn"
-                        type="button"
-                        (click)="openDetailModal(watch); $event.stopPropagation()"
-                      >
-                        {{ 'flightWatch.viewDetails' | transloco }}
-                      </button>
-                      <button
-                        class="refresh-btn"
-                        type="button"
-                        (click)="recheck(watch); $event.stopPropagation()"
-                        [disabled]="checking() === watch.id"
-                      >
-                        🔄 {{ 'flightWatch.recheck' | transloco }}
-                      </button>
+                      </div>
+                      <div class="bp-actions">
+                        <button
+                          class="detail-btn"
+                          type="button"
+                          (click)="openDetailModal(watch); $event.stopPropagation()"
+                        >
+                          {{ 'flightWatch.viewDetails' | transloco }}
+                        </button>
+                        <button
+                          class="refresh-btn"
+                          type="button"
+                          (click)="recheck(watch); $event.stopPropagation()"
+                          [disabled]="checking() === watch.id"
+                        >
+                          🔄 {{ 'flightWatch.recheck' | transloco }}
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
 
-              <button
-                type="button"
-                class="delete-reveal-btn"
-                [class.dragging]="isLiveDragging() && dragWatchId() === watch.id"
-                [ngStyle]="deleteRevealStyle(watch)"
-                [attr.aria-label]="'flightWatch.delete' | transloco"
-                (click)="onDeleteRevealClick(watch, $event)"
-              >
-                🗑
-              </button>
-            </div>
-          }
+                <button
+                  type="button"
+                  class="delete-reveal-btn"
+                  [class.dragging]="isLiveDragging() && dragWatchId() === watch.id"
+                  [ngStyle]="deleteRevealStyle(watch)"
+                  [attr.aria-label]="'flightWatch.delete' | transloco"
+                  (click)="onDeleteRevealClick(watch, $event)"
+                >
+                  🗑
+                </button>
+              </div>
+            }
+          </div>
         </div>
-      </div>
       </div>
 
       @if (detailWatch(); as dw) {

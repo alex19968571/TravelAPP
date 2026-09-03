@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { FlightWatch } from '../models';
+import { FlightMaxStops, FlightWatch } from '../models';
 import { FlightWatchService } from './flight-watch.service';
 import { SupabaseService } from './supabase.service';
 
@@ -29,6 +29,32 @@ export interface FlightItinerary {
   carriers: string[];
   bucket: string;
   legs: FlightItineraryLeg[];
+}
+
+/** 單一航段的轉機次數是否符合追蹤路線設定的篩選條件（跟 flight-watch.component.ts
+ *  明細彈窗的 filteredItineraries 用的是同一套規則，兩邊篩選結果才會一致） */
+function stopsMatchesFilter(stops: number, filter: FlightMaxStops): boolean {
+  switch (filter) {
+    case 'direct':
+      return stops === 0;
+    case 'one':
+      return stops === 1;
+    case 'twoPlus':
+      return stops >= 2;
+    default:
+      return true;
+  }
+}
+
+/** 依追蹤路線的「轉機次數」篩選明細清單——查價 API 沒有篩選參數，回傳的一律是
+ *  「不限轉機」的完整清單，所有由這份清單推算價格的地方（列表卡片最低/最高價、
+ *  持久化的 last_price）都要先套用這個篩選，才會跟「查看明細」彈窗算出一致的結果。 */
+export function filterItinerariesByMaxStops(
+  itineraries: FlightItinerary[],
+  maxStops: FlightMaxStops,
+): FlightItinerary[] {
+  if (maxStops === 'any') return itineraries;
+  return itineraries.filter((it) => it.legs.every((leg) => stopsMatchesFilter(leg.stops, maxStops)));
 }
 
 @Injectable({ providedIn: 'root' })
@@ -74,10 +100,12 @@ export class FlightPriceService {
         },
       });
       if (error) throw error;
-      return {
-        price: typeof data?.price === 'number' ? data.price : null,
-        itineraries: Array.isArray(data?.itineraries) ? data.itineraries : [],
-      };
+      const raw: FlightItinerary[] = Array.isArray(data?.itineraries) ? data.itineraries : [];
+      // API 回傳的 data.price 是「不限轉機」清單裡的最低價，沒有套用追蹤路線的
+      // max_stops 篩選；改成用篩選後的清單自己算最低價，才會跟明細彈窗一致。
+      const itineraries = filterItinerariesByMaxStops(raw, watch.max_stops);
+      const price = itineraries.length ? Math.min(...itineraries.map((it) => it.price)) : null;
+      return { price, itineraries };
     } catch (err) {
       console.warn('[FlightPrice] checkItinerariesWithPrice failed', err);
       return { price: null, itineraries: [] };
