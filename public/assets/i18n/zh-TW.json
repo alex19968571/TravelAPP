@@ -304,6 +304,7 @@
     "checking": "查詢中...",
     "recheck": "重新檢查",
     "delete": "刪除",
+    "deleteConfirm": "確定刪除這筆盯價追蹤？",
     "priceUnavailable": "暫時無法取得報價",
     "originPlaceholder": "輸入城市或機場，例如：台北",
     "destinationPlaceholder": "輸入城市或機場，例如：東京",

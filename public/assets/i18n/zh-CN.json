@@ -304,6 +304,7 @@
     "checking": "查询中...",
     "recheck": "重新检查",
     "delete": "删除",
+    "deleteConfirm": "确定删除这笔盯价追踪？",
     "priceUnavailable": "暂时无法获取报价",
     "originPlaceholder": "输入城市或机场，例如：台北",
     "destinationPlaceholder": "输入城市或机场，例如：东京",

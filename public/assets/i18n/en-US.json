@@ -269,6 +269,7 @@
     "checking": "Checking...",
     "recheck": "Recheck",
     "delete": "Delete",
+    "deleteConfirm": "Delete this price watch?",
     "priceUnavailable": "Price temporarily unavailable",
     "originPlaceholder": "Enter city or airport, e.g. Taipei",
     "destinationPlaceholder": "Enter city or airport, e.g. Tokyo",

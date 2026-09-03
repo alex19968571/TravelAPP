@@ -269,6 +269,7 @@
     "checking": "検索中...",
     "recheck": "再検索",
     "delete": "削除",
+    "deleteConfirm": "この価格追跡を削除しますか？",
     "priceUnavailable": "現在価格を取得できません",
     "originPlaceholder": "都市または空港を入力（例：台北）",
     "destinationPlaceholder": "都市または空港を入力（例：東京）",

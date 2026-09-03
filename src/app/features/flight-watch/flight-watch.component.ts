@@ -24,6 +24,11 @@ import { PreferenceService } from '../../core/services/preference.service';
 import { TripService } from '../../core/services/trip.service';
 import { DropdownSelectComponent } from '../../shared/components/dropdown-select/dropdown-select.component';
 import { AIRPORT_DIRECTORY } from '../../core/utils/airport-directory.util';
+import {
+  FlightDisplayLang,
+  airportDisplayName,
+  airlineDisplayLabel,
+} from '../../core/utils/flight-name-i18n.util';
 
 interface Airport {
   code: string;
@@ -325,90 +330,113 @@ const CURRENCY_CODES = [
         }
         <div class="items-list">
           @for (watch of watches(); track watch.id) {
-            <div class="item-card card" (click)="openEditModal(watch)">
-              <div class="item-main">
-                <div class="item-info">
-                  <div class="item-title">{{ watch.origin }} → {{ watch.destination }}</div>
-                  <div class="item-desc">
-                    {{ watch.depart_date }}
-                    @if (watch.return_date) {
-                      ～ {{ watch.return_date }}
+            <div class="item-slot" [attr.data-watch-id]="watch.id">
+              <div class="item-card-wrap">
+                <div
+                  class="boarding-pass item-card"
+                  [class.dragging]="isLiveDragging() && dragWatchId() === watch.id"
+                  [ngStyle]="cardDragStyle(watch)"
+                  (pointerdown)="onCardPointerDown($event, watch)"
+                  (pointermove)="onCardPointerMove($event, watch)"
+                  (pointerup)="onCardPointerUp($event, watch)"
+                  (pointerleave)="onCardPointerCancel()"
+                  (pointercancel)="onCardPointerCancel()"
+                  (contextmenu)="$event.preventDefault()"
+                  (click)="onCardClick(watch)"
+                >
+                  <div class="boarding-pass-header">
+                    <div class="bp-route">
+                      <span class="bp-route-name">{{ airportName(watch.origin) }}</span>
+                      <span class="bp-route-arrow">→</span>
+                      <span class="bp-route-name">{{ airportName(watch.destination) }}</span>
+                    </div>
+                    <div class="bp-route-codes">{{ watch.origin }} → {{ watch.destination }}</div>
+                    @if (watchAirlineLabel(watch.id); as airline) {
+                      <div class="bp-airline">{{ airline }}</div>
                     }
-                  </div>
-                  @if (watch.target_price) {
-                    <div class="item-desc">
-                      {{ 'flightWatch.targetPrice' | transloco }}：{{
-                        watch.target_price | number: '1.0-0'
-                      }}
-                      {{ watch.currency }}
+                    <div class="bp-dates">
+                      {{ watch.depart_date }}
+                      @if (watch.return_date) {
+                        ～ {{ watch.return_date }}
+                      }
                     </div>
-                  }
-                </div>
-                <div class="item-price">
-                  @if (checking() === watch.id) {
-                    <div class="amount">{{ 'flightWatch.checking' | transloco }}</div>
-                  } @else if (priceRange(watch.id); as range) {
-                    <div class="price-range-row">
-                      <span
-                        class="amount"
-                        [class.below-target]="
-                          watch.target_price != null && range.min.price <= watch.target_price
-                        "
-                      >
-                        {{ range.min.price | number: '1.0-0' }} {{ watch.currency }}
-                      </span>
-                      <span class="price-range-carrier">{{ range.min.carriers.join('、') }}</span>
-                    </div>
-                    @if (range.max.price !== range.min.price) {
-                      <div class="price-range-row">
-                        <span class="amount-secondary">
-                          {{ range.max.price | number: '1.0-0' }} {{ watch.currency }}
-                        </span>
-                        <span class="price-range-carrier">{{ range.max.carriers.join('、') }}</span>
+                    @if (watch.target_price) {
+                      <div class="bp-target">
+                        {{ 'flightWatch.targetPrice' | transloco }}：{{
+                          watch.target_price | number: '1.0-0'
+                        }}
+                        {{ watch.currency }}
                       </div>
                     }
-                    <div class="amount-checked">{{ formatCheckedAt(watch.last_checked_at) }}</div>
-                  } @else if (watch.last_price !== null) {
-                    <div
-                      class="amount"
-                      [class.below-target]="
-                        watch.target_price != null && watch.last_price <= watch.target_price
-                      "
-                    >
-                      {{ watch.last_price | number: '1.0-0' }} {{ watch.currency }}
+                  </div>
+                  <div class="boarding-pass-divider"></div>
+                  <div class="boarding-pass-stub">
+                    <div class="bp-price">
+                      @if (checking() === watch.id) {
+                        <div class="amount">{{ 'flightWatch.checking' | transloco }}</div>
+                      } @else if (priceRange(watch.id); as range) {
+                        <div class="price-range-row">
+                          <span class="amount" [class]="priceColorClass(watch, range.min.price)">
+                            {{ range.min.price | number: '1.0-0' }} {{ watch.currency }}
+                          </span>
+                        </div>
+                        @if (range.max.price !== range.min.price) {
+                          <div class="price-range-row">
+                            <span
+                              class="amount-secondary"
+                              [class]="priceColorClass(watch, range.max.price)"
+                            >
+                              {{ range.max.price | number: '1.0-0' }} {{ watch.currency }}
+                            </span>
+                          </div>
+                        }
+                        <div class="amount-checked">
+                          {{ formatCheckedAt(watch.last_checked_at) }}
+                        </div>
+                      } @else if (watch.last_price !== null) {
+                        <div class="amount" [class]="priceColorClass(watch, watch.last_price)">
+                          {{ watch.last_price | number: '1.0-0' }} {{ watch.currency }}
+                        </div>
+                        <div class="amount-checked">
+                          {{ formatCheckedAt(watch.last_checked_at) }}
+                        </div>
+                      } @else {
+                        <div class="amount-unavailable">
+                          {{ 'flightWatch.priceUnavailable' | transloco }}
+                        </div>
+                      }
                     </div>
-                    <div class="amount-checked">{{ formatCheckedAt(watch.last_checked_at) }}</div>
-                  } @else {
-                    <div class="amount-unavailable">
-                      {{ 'flightWatch.priceUnavailable' | transloco }}
+                    <div class="bp-actions">
+                      <button
+                        class="detail-btn"
+                        type="button"
+                        (click)="openDetailModal(watch); $event.stopPropagation()"
+                      >
+                        {{ 'flightWatch.viewDetails' | transloco }}
+                      </button>
+                      <button
+                        class="refresh-btn"
+                        type="button"
+                        (click)="recheck(watch); $event.stopPropagation()"
+                        [disabled]="checking() === watch.id"
+                      >
+                        🔄 {{ 'flightWatch.recheck' | transloco }}
+                      </button>
                     </div>
-                  }
+                  </div>
                 </div>
               </div>
-              <div class="item-actions">
-                <button
-                  class="detail-btn"
-                  type="button"
-                  (click)="openDetailModal(watch); $event.stopPropagation()"
-                >
-                  {{ 'flightWatch.viewDetails' | transloco }}
-                </button>
-                <button
-                  class="refresh-btn"
-                  type="button"
-                  (click)="recheck(watch); $event.stopPropagation()"
-                  [disabled]="checking() === watch.id"
-                >
-                  🔄 {{ 'flightWatch.recheck' | transloco }}
-                </button>
-                <button
-                  class="remove-btn"
-                  type="button"
-                  (click)="deleteWatch(watch.id); $event.stopPropagation()"
-                >
-                  {{ 'flightWatch.delete' | transloco }}
-                </button>
-              </div>
+
+              <button
+                type="button"
+                class="delete-reveal-btn"
+                [class.dragging]="isLiveDragging() && dragWatchId() === watch.id"
+                [ngStyle]="deleteRevealStyle(watch)"
+                [attr.aria-label]="'flightWatch.delete' | transloco"
+                (click)="onDeleteRevealClick(watch, $event)"
+              >
+                🗑
+              </button>
             </div>
           }
         </div>
@@ -796,7 +824,7 @@ const CURRENCY_CODES = [
       .items-list {
         display: flex;
         flex-direction: column;
-        gap: 0.75rem;
+        gap: 1rem;
         /* 網頁版：跟「行程」頁面右側預留寬度一致，手機版在 @media (max-width: 600px) 內重設為 0 */
         margin-right: 100px;
       }
@@ -806,35 +834,99 @@ const CURRENCY_CODES = [
           margin-right: 0;
         }
       }
-      .item-card.card {
-        padding: 1rem 1.25rem;
-        cursor: pointer;
-      }
       .modal-title {
         margin: 0 0 1rem;
         font-size: 1.1rem;
         font-weight: 700;
         color: var(--text-primary);
       }
-      .item-main {
-        display: flex;
-        align-items: flex-start;
-        justify-content: space-between;
-        gap: 1rem;
-        margin-bottom: 0.75rem;
+
+      /* ── 主列表卡片：登機證造型 + 左滑刪除，結構跟「行程」列表卡片
+         （trips-list.component.ts .trip-card-slot）同一套，只取左滑刪除這一半 ── */
+      .item-slot {
+        position: relative;
       }
-      .item-title {
+      .item-card-wrap {
+        position: relative;
+        z-index: 1;
+        overflow: hidden;
+        border-radius: 14px;
+        -webkit-tap-highlight-color: transparent;
+        /* 卡片左滑時 transform 只套用在內層卡片上，這層本身版位盒不縮小，
+           不然會蓋住露出來的刪除鈕，點擊穿不進去 */
+        pointer-events: none;
+      }
+      .boarding-pass.item-card {
+        pointer-events: auto;
+        margin: 0;
+        position: relative;
+        z-index: 1;
+        transition:
+          transform 0.2s ease,
+          border-color 0.15s,
+          box-shadow 0.15s;
+        -webkit-user-select: none;
+        user-select: none;
+        -webkit-touch-callout: none;
+        touch-action: pan-y;
+        /* 主列表卡片改用 mask 真的挖一個透空的洞（而不是明細彈窗那種固定顏色的假缺口），
+           左滑露出紅色刪除鈕時，缺口才能正確透出鈕的顏色 */
+        -webkit-mask-image: radial-gradient(circle 15px at 100% 50%, transparent 15px, #000 15.5px);
+        mask-image: radial-gradient(circle 15px at 100% 50%, transparent 15px, #000 15.5px);
+      }
+      .boarding-pass.item-card::after {
+        content: none;
+      }
+      .boarding-pass.item-card.dragging {
+        transition: none;
+      }
+      .bp-route {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-wrap: wrap;
+        gap: 0.35rem;
         font-weight: 700;
-        font-size: 1.1rem;
+        font-size: 1rem;
         color: var(--text-primary);
       }
-      .item-desc {
-        font-size: 0.85rem;
+      .bp-route-arrow {
         color: var(--text-secondary);
-        margin-top: 0.2rem;
+        font-weight: 400;
       }
-      .item-price {
-        text-align: right;
+      .bp-route-codes {
+        font-family: var(--font-mono);
+        font-size: 0.75rem;
+        color: var(--text-secondary);
+        letter-spacing: 0.03em;
+      }
+      .bp-airline {
+        font-size: 0.8rem;
+        color: var(--accent);
+        font-weight: 600;
+      }
+      .bp-dates {
+        font-size: 0.8rem;
+        color: var(--text-secondary);
+      }
+      .bp-target {
+        font-size: 0.78rem;
+        color: var(--text-secondary);
+      }
+      .boarding-pass-stub {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        padding: 0.7rem 1rem 0.9rem;
+      }
+      .bp-price {
+        text-align: left;
+      }
+      .bp-actions {
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
         flex-shrink: 0;
       }
       .amount {
@@ -844,8 +936,18 @@ const CURRENCY_CODES = [
         color: var(--text-primary);
         font-size: 1.15rem;
       }
-      .amount.below-target {
+      /* 價格三色：< 目標價綠色／= 目標價黃色／> 目標價紅色 */
+      .amount.price-under,
+      .amount-secondary.price-under {
         color: #48bb78;
+      }
+      .amount.price-equal,
+      .amount-secondary.price-equal {
+        color: #d69e2e;
+      }
+      .amount.price-over,
+      .amount-secondary.price-over {
+        color: #e53e3e;
       }
       .amount-secondary {
         font-family: var(--font-mono);
@@ -857,18 +959,10 @@ const CURRENCY_CODES = [
       .price-range-row {
         display: flex;
         flex-direction: column;
-        align-items: flex-end;
+        align-items: flex-start;
       }
       .price-range-row + .price-range-row {
         margin-top: 0.3rem;
-      }
-      .price-range-carrier {
-        font-size: 0.72rem;
-        color: var(--text-secondary);
-        margin-top: 0.1rem;
-        max-width: 180px;
-        text-align: right;
-        overflow-wrap: break-word;
       }
       .amount-checked {
         font-size: 0.72rem;
@@ -879,40 +973,73 @@ const CURRENCY_CODES = [
         font-size: 0.85rem;
         color: var(--text-secondary);
       }
-      .item-actions {
-        display: flex;
-        align-items: center;
-        gap: 1rem;
-      }
       .refresh-btn {
         cursor: pointer;
         color: var(--accent);
-        font-size: 0.875rem;
-        padding: 0.375rem 0.875rem;
+        font-size: 0.8rem;
+        padding: 0.375rem 0.75rem;
         border: 1.5px solid var(--accent);
         border-radius: 8px;
         background: transparent;
+        white-space: nowrap;
       }
       .refresh-btn:disabled {
         opacity: 0.5;
         cursor: not-allowed;
       }
-      .remove-btn {
-        background: none;
-        border: none;
-        color: #e53e3e;
-        cursor: pointer;
-        font-size: 0.875rem;
-        margin-left: auto;
-      }
       .detail-btn {
         cursor: pointer;
         color: var(--text-secondary);
-        font-size: 0.875rem;
-        padding: 0.375rem 0.875rem;
+        font-size: 0.8rem;
+        padding: 0.375rem 0.75rem;
         border: 1.5px solid var(--border);
         border-radius: 8px;
         background: transparent;
+        white-space: nowrap;
+      }
+      /* ── 左滑刪除鈕：露出到卡片右側外面，做法跟「行程」列表卡片完全一樣
+         （網頁分兩階段 hover／手機左滑，再次左滑或點按鈕＝確認刪除） ── */
+      .delete-reveal-btn {
+        position: absolute;
+        top: 6px;
+        bottom: 6px;
+        right: -18px;
+        width: 143px;
+        z-index: 0;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        background: #e53e3e;
+        color: #fff;
+        font-size: 1.4rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+        opacity: 0;
+        pointer-events: none;
+        transition:
+          opacity 0.2s ease,
+          right 0.25s ease,
+          transform 0.25s ease;
+      }
+      .delete-reveal-btn.dragging {
+        transition: none;
+      }
+      @media (hover: hover) and (pointer: fine) {
+        /* 網頁版：滑鼠移入卡片先露出一小截，移到露出的那一截才整個滑出來 */
+        .item-slot:hover .delete-reveal-btn {
+          opacity: 1;
+          pointer-events: auto;
+        }
+        .item-slot:has(.delete-reveal-btn:hover) .delete-reveal-btn {
+          right: -84px;
+          transform: translateX(-38px);
+        }
+        .item-slot:has(.delete-reveal-btn:hover) .boarding-pass.item-card {
+          transform: translateX(-38px);
+          box-shadow: 0 18px 36px var(--shadow);
+        }
       }
       .detail-modal {
         max-width: 480px;
@@ -1184,6 +1311,24 @@ export class FlightWatchComponent implements OnInit {
   importing = signal(false);
   importSuccess = signal(false);
 
+  // ── 卡片互動：左滑露出刪除鈕（再次左滑或點按鈕＝確認刪除），
+  //    邏輯搬自「行程」列表卡片（trips-list.component.ts），只取左滑刪除這一半，
+  //    不含右滑剪貼簿/膠捲的部分 ──
+  pinnedDeleteWatchId = signal<string | null>(null);
+  dragWatchId = signal<string | null>(null);
+  dragProgress = signal(0);
+  isLiveDragging = signal(false);
+
+  private static readonly SWIPE_MOVE_TOLERANCE_PX = 10;
+  /** 滑動最大拖曳距離（px），對應 dragProgress = 1（完全展開） */
+  private static readonly SWIPE_MAX_DRAG_PX = 110;
+  private static readonly SWIPE_COMMIT_RATIO = 0.6;
+  private gestureTriggered = false;
+  private gestureStartX = 0;
+  private gestureStartY = 0;
+  private swipeAxis: 'x' | 'y' | null = null;
+  private pointerActive = false;
+
   tripDropdownOptions(): { value: string; label: string }[] {
     return [
       ...this.myTrips().map((t) => ({ value: t.id, label: t.title })),
@@ -1261,6 +1406,185 @@ export class FlightWatchComponent implements OnInit {
     return this.priceRanges().get(watchId);
   }
 
+  /** App 目前作用中的語系（由「帳戶」頁的所在國家決定），機場全名／航空公司名稱
+   *  的顯示語言跟著這個走，跟 App 其他文案的語系邏輯一致。 */
+  currentLang(): FlightDisplayLang {
+    const active = this.transloco.getActiveLang();
+    return active === 'zh-TW' || active === 'zh-CN' || active === 'ja-JP' || active === 'en-US'
+      ? active
+      : 'en-US';
+  }
+
+  airportName(code: string): string {
+    return airportDisplayName(code, this.currentLang());
+  }
+
+  /** 該追蹤路線目前查到的航空公司（僅這次瀏覽期間查過價才有資料），
+   *  無資料時回傳 null，卡片上該欄位就整個隱藏。 */
+  watchAirlineLabel(watchId: string): string | null {
+    const range = this.priceRange(watchId);
+    if (!range) return null;
+    const lang = this.currentLang();
+    const names = [...new Set(range.min.carriers)].map((c) => airlineDisplayLabel(c, lang));
+    return names.length ? names.join('、') : null;
+  }
+
+  /** 價格三色：< 目標價綠色／= 目標價黃色／> 目標價紅色；沒設目標價則不上色 */
+  priceColorClass(watch: FlightWatch, price: number): string {
+    if (watch.target_price == null) return '';
+    if (price < watch.target_price) return 'price-under';
+    if (price === watch.target_price) return 'price-equal';
+    return 'price-over';
+  }
+
+  // ── 卡片互動：左滑露出刪除鈕，再次左滑或點按鈕＝確認刪除 ──
+  onCardClick(watch: FlightWatch): void {
+    // 手勢剛觸發後，手指放開瀏覽器仍會補一個 click，這裡吃掉避免誤觸開啟編輯彈窗
+    if (this.gestureTriggered) {
+      this.gestureTriggered = false;
+      return;
+    }
+    if (this.pinnedDeleteWatchId() === watch.id) {
+      // 刪除鈕正釘住展開中，點其他地方先收合，不直接開啟編輯彈窗
+      this.closeDeleteReveal();
+      return;
+    }
+    if (this.dragWatchId() === watch.id) return; // 拖曳/收斂動畫進行中，不觸發開啟
+    this.openEditModal(watch);
+  }
+
+  /** 卡片即時跟手位移樣式；非拖曳中的卡片回傳 null 交由 CSS 預設樣式處理 */
+  cardDragStyle(watch: FlightWatch): Record<string, string> | null {
+    if (this.dragWatchId() !== watch.id) return null;
+    const px = this.dragProgress() * FlightWatchComponent.SWIPE_MAX_DRAG_PX;
+    return { transform: `translateX(${-px}px)` };
+  }
+
+  /** 刪除鈕的顯示樣式：拖曳中跟著露出；已經「釘住展開」時（不管是否還在拖曳）維持全開 */
+  deleteRevealStyle(watch: FlightWatch): Record<string, string> | null {
+    if (this.pinnedDeleteWatchId() === watch.id) return { opacity: '1', 'pointer-events': 'auto' };
+    if (this.dragWatchId() !== watch.id) return null;
+    return { opacity: '1', 'pointer-events': this.dragProgress() > 0.05 ? 'auto' : 'none' };
+  }
+
+  onCardPointerDown(e: PointerEvent, watch: FlightWatch): void {
+    const otherCardBusy =
+      (this.pinnedDeleteWatchId() && this.pinnedDeleteWatchId() !== watch.id) ||
+      (this.dragWatchId() && this.dragWatchId() !== watch.id);
+    if (otherCardBusy) return;
+    this.gestureTriggered = false;
+    this.gestureStartX = e.clientX;
+    this.gestureStartY = e.clientY;
+    this.swipeAxis = null;
+    this.pointerActive = true;
+  }
+
+  onCardPointerMove(e: PointerEvent, watch: FlightWatch): void {
+    // 滑鼠移動就算沒按下也會一直觸發 pointermove（跟觸控不同），
+    // 沒有這個判斷，滑鼠只是移入卡片就會拿舊的 gestureStartX/Y 算出一段位移，
+    // 誤判成手勢直接跳到展開/收合。
+    if (!this.pointerActive) return;
+    const dx = e.clientX - this.gestureStartX;
+    const dy = e.clientY - this.gestureStartY;
+
+    if (!this.swipeAxis) {
+      if (
+        Math.abs(dx) < FlightWatchComponent.SWIPE_MOVE_TOLERANCE_PX &&
+        Math.abs(dy) < FlightWatchComponent.SWIPE_MOVE_TOLERANCE_PX
+      ) {
+        return; // 意圖閥值：微幅抖動不判斷方向
+      }
+      // 觸控與滑鼠都吃這條拖曳邏輯——刪除鈕在桌面版沒有 hover 提示，必須靠滑鼠拖曳才能觸發
+      this.swipeAxis = Math.abs(dx) > Math.abs(dy) ? 'x' : 'y';
+      if (this.swipeAxis === 'x') {
+        this.isLiveDragging.set(true);
+        this.dragWatchId.set(watch.id);
+      }
+    }
+
+    if (this.swipeAxis !== 'x') return; // 垂直手勢：完全放手，讓瀏覽器原生捲動接手
+    if (this.pinnedDeleteWatchId() === watch.id) return; // 已經全開，交給放開時判斷方向即可
+
+    // 只吃向左的位移量（這裡沒有右滑對應的動作），往回滑會自然回到 0
+    const px = Math.min(Math.max(-dx, 0), FlightWatchComponent.SWIPE_MAX_DRAG_PX);
+    this.dragProgress.set(px / FlightWatchComponent.SWIPE_MAX_DRAG_PX);
+  }
+
+  onCardPointerUp(e: PointerEvent, watch: FlightWatch): void {
+    if (this.swipeAxis === 'x' && this.dragWatchId() === watch.id) {
+      this.isLiveDragging.set(false); // 放開後改走 CSS transition，收斂動畫才會平滑
+      const wasPinned = this.pinnedDeleteWatchId() === watch.id;
+      const dx = e.clientX - this.gestureStartX;
+
+      if (wasPinned) {
+        // 刪除鈕已經全開：再次左滑＝確認刪除（跳出確認視窗）；右滑（或其他方向）＝收合關閉
+        this.gestureTriggered = true; // 吃掉緊接而來的補發 click
+        if (dx < 0) {
+          void this.confirmDeleteWatch(watch);
+        } else {
+          this.closeDeleteReveal();
+        }
+      } else if (this.dragProgress() >= FlightWatchComponent.SWIPE_COMMIT_RATIO) {
+        // 左滑露出刪除鈕：滑過門檻只「釘住展開」，還不會直接刪除，
+        // 需要再點按鈕或再滑一次才會跳出確認視窗
+        this.gestureTriggered = true;
+        this.openDeleteReveal(watch);
+      } else {
+        this.cancelSwipeDrag();
+      }
+    }
+    this.swipeAxis = null;
+    this.pointerActive = false;
+  }
+
+  onCardPointerCancel(): void {
+    if (this.swipeAxis === 'x') {
+      this.isLiveDragging.set(false);
+      if (!this.pinnedDeleteWatchId()) {
+        this.cancelSwipeDrag();
+      }
+    }
+    this.swipeAxis = null;
+    this.pointerActive = false;
+  }
+
+  /** 拖曳未達門檻放開：卡片彈回原位 */
+  private cancelSwipeDrag(): void {
+    this.dragProgress.set(0);
+    setTimeout(() => {
+      // 等彈回動畫播完才清掉 dragWatchId，避免中途瞬間跳回無拖曳樣式造成閃爍
+      this.dragWatchId.set(null);
+    }, 220);
+  }
+
+  /** 左滑超過門檻放開：釘住展開（維持全開顯示刪除鈕，等使用者點按鈕或再滑一次確認刪除） */
+  private openDeleteReveal(watch: FlightWatch): void {
+    this.dragProgress.set(1);
+    this.pinnedDeleteWatchId.set(watch.id);
+  }
+
+  /** 收合已釘住展開的刪除鈕：卡片滑回原位（跟取消拖曳同一套收斂動畫） */
+  private closeDeleteReveal(): void {
+    this.pinnedDeleteWatchId.set(null);
+    this.cancelSwipeDrag();
+  }
+
+  onDeleteRevealClick(watch: FlightWatch, e: MouseEvent): void {
+    e.stopPropagation();
+    void this.confirmDeleteWatch(watch);
+  }
+
+  async confirmDeleteWatch(watch: FlightWatch): Promise<void> {
+    if (!confirm(this.transloco.translate('flightWatch.deleteConfirm'))) {
+      if (this.pinnedDeleteWatchId() === watch.id) this.closeDeleteReveal();
+      return;
+    }
+    await this.deleteWatch(watch.id);
+    this.pinnedDeleteWatchId.set(null);
+    this.dragWatchId.set(null);
+    this.dragProgress.set(0);
+  }
+
   private get ownerId(): string {
     return this.auth.user()!.id;
   }
@@ -1297,6 +1621,16 @@ export class FlightWatchComponent implements OnInit {
   private airportLabel(code: string): string {
     const a = AIRPORTS.find((x) => x.code === code);
     return a ? `${a.city} (${a.code})` : code;
+  }
+
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(e: MouseEvent): void {
+    const pinnedId = this.pinnedDeleteWatchId();
+    if (!pinnedId) return;
+    const target = e.target as Node;
+    const slot = document.querySelector(`.item-slot[data-watch-id="${pinnedId}"]`);
+    // 點在這張卡片（含刪除鈕）以外的任何地方：收合刪除鈕、卡片回到原位
+    if (!slot?.contains(target)) this.closeDeleteReveal();
   }
 
   @HostListener('window:resize')
