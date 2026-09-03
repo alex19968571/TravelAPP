@@ -1,0 +1,166 @@
+{
+  "configVersion": 1,
+  "timestamp": 1788412426999,
+  "index": "/TravelAPP/index.html",
+  "assetGroups": [
+    {
+      "name": "app",
+      "installMode": "prefetch",
+      "updateMode": "prefetch",
+      "cacheQueryOptions": {
+        "ignoreVary": true
+      },
+      "urls": [
+        "/TravelAPP/chunk-3n31X9fr.js",
+        "/TravelAPP/chunk-7JKDopQk.js",
+        "/TravelAPP/chunk-7Q9pApll.js",
+        "/TravelAPP/chunk-B-AmCv4v.js",
+        "/TravelAPP/chunk-B4M9PPyq.js",
+        "/TravelAPP/chunk-BQhyiG-e.js",
+        "/TravelAPP/chunk-BW-yehxg.js",
+        "/TravelAPP/chunk-BZ1t56PU.js",
+        "/TravelAPP/chunk-BvIKI8cr.js",
+        "/TravelAPP/chunk-C6l5JBr3.js",
+        "/TravelAPP/chunk-CIDRvNmD.js",
+        "/TravelAPP/chunk-CJlGX6Bx.js",
+        "/TravelAPP/chunk-CY-lZHZq.js",
+        "/TravelAPP/chunk-CYX4yD7R.js",
+        "/TravelAPP/chunk-CleZBUA1.js",
+        "/TravelAPP/chunk-D38juR_A.js",
+        "/TravelAPP/chunk-D7DlHxFh.js",
+        "/TravelAPP/chunk-DA0NttX0.js",
+        "/TravelAPP/chunk-DoUqPfJ-.js",
+        "/TravelAPP/chunk-DsixSuDV.js",
+        "/TravelAPP/chunk-d9iMH0LI.js",
+        "/TravelAPP/chunk-ih2e2YIP.js",
+        "/TravelAPP/chunk-q7ZvE192.js",
+        "/TravelAPP/chunk-uYnj1Ozt.js",
+        "/TravelAPP/chunk-zhE6EFBc.js",
+        "/TravelAPP/favicon.ico",
+        "/TravelAPP/index.html",
+        "/TravelAPP/main-EHNMIWMX.js",
+        "/TravelAPP/manifest.webmanifest",
+        "/TravelAPP/styles-MY5TOR3O.css"
+      ],
+      "patterns": []
+    },
+    {
+      "name": "assets",
+      "installMode": "lazy",
+      "updateMode": "prefetch",
+      "cacheQueryOptions": {
+        "ignoreVary": true
+      },
+      "urls": [
+        "/TravelAPP/assets/i18n/en-US.json",
+        "/TravelAPP/assets/i18n/ja-JP.json",
+        "/TravelAPP/assets/i18n/zh-CN.json",
+        "/TravelAPP/assets/i18n/zh-TW.json",
+        "/TravelAPP/icons/icon-128x128.png",
+        "/TravelAPP/icons/icon-144x144.png",
+        "/TravelAPP/icons/icon-152x152.png",
+        "/TravelAPP/icons/icon-192x192.png",
+        "/TravelAPP/icons/icon-384x384.png",
+        "/TravelAPP/icons/icon-512x512.png",
+        "/TravelAPP/icons/icon-72x72.png",
+        "/TravelAPP/icons/icon-96x96.png"
+      ],
+      "patterns": []
+    }
+  ],
+  "dataGroups": [
+    {
+      "name": "tesseract-wasm",
+      "patterns": [
+        "https:\\/\\/cdn\\.jsdelivr\\.net\\/npm\\/tesseract\\.js@7\\/.*",
+        "https:\\/\\/cdn\\.jsdelivr\\.net\\/npm\\/tesseract\\.js-core@6\\/.*",
+        "https:\\/\\/tessdata\\.projectnaptha\\.com\\/.*"
+      ],
+      "strategy": "freshness",
+      "maxSize": 50,
+      "maxAge": 604800000,
+      "timeoutMs": 10000,
+      "cacheQueryOptions": {
+        "ignoreVary": true
+      },
+      "version": 1
+    },
+    {
+      "name": "frankfurter-rates",
+      "patterns": [
+        "https:\\/\\/api\\.frankfurter\\.app\\/.*"
+      ],
+      "strategy": "freshness",
+      "maxSize": 10,
+      "maxAge": 86400000,
+      "timeoutMs": 5000,
+      "cacheQueryOptions": {
+        "ignoreVary": true
+      },
+      "version": 1
+    }
+  ],
+  "hashTable": {
+    "/TravelAPP/assets/i18n/en-US.json": "45368e2158a98a2406896a67709845588666efe3",
+    "/TravelAPP/assets/i18n/ja-JP.json": "1f566cdf3cd794701fad6157e4e415ad0749153f",
+    "/TravelAPP/assets/i18n/zh-CN.json": "1ba74fbeaf4c2b8167fe85b003cf7027f6216211",
+    "/TravelAPP/assets/i18n/zh-TW.json": "fc6edc0930693353b2178bf7d9a975fc56d13553",
+    "/TravelAPP/chunk-3n31X9fr.js": "361da3d64e499e0984d20f68a39ab00468b7890f",
+    "/TravelAPP/chunk-7JKDopQk.js": "b97acdfd64517aa52c8f144e151fa4c504f5c735",
+    "/TravelAPP/chunk-7Q9pApll.js": "59411a569889fd7fa8d7ff5207fb6e50a92fe6c6",
+    "/TravelAPP/chunk-B-AmCv4v.js": "cbf19bd9849e4d1363169a49e0b72d17532966f5",
+    "/TravelAPP/chunk-B4M9PPyq.js": "2fc3a4000fea7f5d4ede156c39d78cc9d8881a6d",
+    "/TravelAPP/chunk-BQhyiG-e.js": "9eb083856dac433559dd5e3eeb696d4bd8a19776",
+    "/TravelAPP/chunk-BW-yehxg.js": "855a8cb146111cb69448306ed713a5d3d590ccb8",
+    "/TravelAPP/chunk-BZ1t56PU.js": "45b5acdc1b276b349d20f1d6334f3450a30cc7aa",
+    "/TravelAPP/chunk-BvIKI8cr.js": "7d72e6ab55eba0a36067dc6ea5642e9f8c8fdf2e",
+    "/TravelAPP/chunk-C6l5JBr3.js": "2a49cc214ad0dd59dbc9604af267a0cf0bf36c35",
+    "/TravelAPP/chunk-CIDRvNmD.js": "cc538526b3714486d0d3119f7773be15ab764f71",
+    "/TravelAPP/chunk-CJlGX6Bx.js": "0398b1d1aa4b016534c30bc94100743506de3b38",
+    "/TravelAPP/chunk-CY-lZHZq.js": "2064628d730e0069085c2137384cc27282760779",
+    "/TravelAPP/chunk-CYX4yD7R.js": "59413fdf04f72ea05f98a9ec6ba66c5bb9ffcfc7",
+    "/TravelAPP/chunk-CleZBUA1.js": "b4f19268ec8a71b7b784a189590563a76e33852e",
+    "/TravelAPP/chunk-D38juR_A.js": "d80b45ccf482a31e88573e89ab355a093be004c8",
+    "/TravelAPP/chunk-D7DlHxFh.js": "279dc84681f2e365e93ce855be53cac8ec3693e2",
+    "/TravelAPP/chunk-DA0NttX0.js": "5d9c8be22321ee09fec1c9dd1c5f7c5d303597d0",
+    "/TravelAPP/chunk-DoUqPfJ-.js": "18bab5b6229b765a0294837ab9d43d1738953f30",
+    "/TravelAPP/chunk-DsixSuDV.js": "26f06a7f70023146df6a044edea80c60e17b9fb1",
+    "/TravelAPP/chunk-d9iMH0LI.js": "34084046d596c18bcec938d2927bd3b6370cd10e",
+    "/TravelAPP/chunk-ih2e2YIP.js": "cc954702de7c1f5b3c5dd17c33f7b125c03effd7",
+    "/TravelAPP/chunk-q7ZvE192.js": "93b0cd35178e518404e26981701b124bda962fc4",
+    "/TravelAPP/chunk-uYnj1Ozt.js": "ab0c842439b84d68082c369bd0be5c7a23db6183",
+    "/TravelAPP/chunk-zhE6EFBc.js": "4c1b987d036c1d2e886f8db864865dfb650b313b",
+    "/TravelAPP/favicon.ico": "9c39f434fe1261f68c5e3eefdf734630d99c5670",
+    "/TravelAPP/icons/icon-128x128.png": "f912963bdc6d5a38d8f1dd0afbaab2ce8d657acb",
+    "/TravelAPP/icons/icon-144x144.png": "b155fd5f2fd5d2ea7760721063003c4cd95fd783",
+    "/TravelAPP/icons/icon-152x152.png": "eae6e0f0c8afb8aaae339e2a569b43e9238e5e6c",
+    "/TravelAPP/icons/icon-192x192.png": "15c4180454633880d98674aa7394656196c91584",
+    "/TravelAPP/icons/icon-384x384.png": "94a915751ef6c9282df9aea405ad679230631814",
+    "/TravelAPP/icons/icon-512x512.png": "1de182f76f7329dfa8f9fcdd1fdcdd695bea6a99",
+    "/TravelAPP/icons/icon-72x72.png": "aa88a6096bd973be7f6d7a5489bfa6bc2463f8c4",
+    "/TravelAPP/icons/icon-96x96.png": "7fb8f59c30ce2ff12c700321a0b39e14b3dc8f95",
+    "/TravelAPP/index.html": "a6060c672e2a8321b79291f9337989ac7564eacb",
+    "/TravelAPP/main-EHNMIWMX.js": "bc6a19d724ff7ce3965103669ef1ad6ca6849cee",
+    "/TravelAPP/manifest.webmanifest": "f4f9dc5fadaadb68f914d082c1a4a03ac016afa0",
+    "/TravelAPP/styles-MY5TOR3O.css": "522a8f089a857b8612485627255fbc68904ba25c"
+  },
+  "navigationUrls": [
+    {
+      "positive": true,
+      "regex": "^\\/.*$"
+    },
+    {
+      "positive": false,
+      "regex": "^\\/(?:.+\\/)?[^/]*\\.[^/]*$"
+    },
+    {
+      "positive": false,
+      "regex": "^\\/(?:.+\\/)?[^/]*__[^/]*$"
+    },
+    {
+      "positive": false,
+      "regex": "^\\/(?:.+\\/)?[^/]*__[^/]*\\/.*$"
+    }
+  ],
+  "navigationRequestStrategy": "performance"
+}
