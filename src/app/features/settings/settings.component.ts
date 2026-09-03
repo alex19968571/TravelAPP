@@ -9,6 +9,7 @@ import { PreferenceService, COLOR_OPTIONS } from '../../core/services/preference
   standalone: true,
   imports: [CommonModule, RouterModule, TranslocoModule],
   template: `
+    <div class="page-scroll">
     <div class="page-container">
       <!-- 主題 -->
       <div class="card">
@@ -130,9 +131,24 @@ import { PreferenceService, COLOR_OPTIONS } from '../../core/services/preference
         <p class="font-preview">{{ 'settings.previewText' | transloco }}</p>
       </div>
     </div>
+    </div>
   `,
   styles: [
     `
+      /* 外層滿版捲動 + 內層置中欄寬拆兩層：原本 .page-container 身兼撐滿高度、
+         置中欄寬、捲動範圍三個角色，捲動熱區被限制在置中欄寬內，滑鼠停在
+         兩側空白處滾輪摸不到捲動範圍。現在 .page-scroll 滿版負責捲動，
+         .page-container 純粹置中，不影響視覺。 */
+      .page-scroll {
+        flex: 1;
+        min-height: 0;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+      }
+      .page-scroll::-webkit-scrollbar {
+        display: none;
+      }
       .page-container {
         max-width: 600px;
         width: 100%;
@@ -140,14 +156,6 @@ import { PreferenceService, COLOR_OPTIONS } from '../../core/services/preference
         padding: 1.5rem;
         background: var(--bg);
         box-sizing: border-box;
-        flex: 1;
-        min-height: 0;
-        overflow-y: auto;
-        -webkit-overflow-scrolling: touch;
-        scrollbar-width: none;
-      }
-      .page-container::-webkit-scrollbar {
-        display: none;
       }
       .page-title {
         font-size: 1.6rem;

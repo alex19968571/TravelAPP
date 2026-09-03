@@ -72,6 +72,7 @@ const CURRENCY_OPTIONS = [
     PlaceAutocompleteInputComponent,
   ],
   template: `
+    <div class="page-shell">
     <div class="page-container">
       <!-- 篩選列（左）+ '+' 選單（右） -->
       <div class="list-toolbar">
@@ -137,8 +138,10 @@ const CURRENCY_OPTIONS = [
           </div>
         </div>
       </div>
+      </div>
 
       <div class="page-scroll">
+      <div class="page-container">
         @if (showJoin()) {
           <form class="card join-form" (ngSubmit)="submitJoin()">
             <h3>{{ 'trips.enterInviteCode' | transloco }}</h3>
@@ -347,6 +350,7 @@ const CURRENCY_OPTIONS = [
           }
         </div>
       </div>
+      </div>
 
       @if (editingTrip(); as et) {
         <div class="modal-backdrop" (click)="closeEditTrip()">
@@ -494,17 +498,25 @@ const CURRENCY_OPTIONS = [
   `,
   styles: [
     `
-      .page-container {
-        max-width: 900px;
-        width: 100%;
-        margin: 0 auto;
-        padding: 1.5rem;
-        background: var(--bg);
+      /* 外層滿版容器：實際負責「撐滿 shell-content 全部寬度」，捲動範圍
+         （.page-scroll）才能貼齊視窗左右邊緣，滑鼠停在置中欄位兩側空白處
+         滾輪也能捲動——原本 .page-container 身兼「置中欄寬」與「撐滿高度」
+         兩個角色，捲動容器被限制在 900px 寬欄位內，兩側空白處摸不到捲動
+         範圍就是這樣來的。現在拆成 .page-shell（滿版、不置中）外層
+         + .page-container（900px 置中欄寬，純視覺置中用）內層兩層。 */
+      .page-shell {
         flex: 1;
         min-height: 0;
         display: flex;
         flex-direction: column;
         overflow: hidden;
+        background: var(--bg);
+      }
+      .page-container {
+        max-width: 900px;
+        width: 100%;
+        margin: 0 auto;
+        padding: 1.5rem;
         box-sizing: border-box;
       }
       .page-scroll {

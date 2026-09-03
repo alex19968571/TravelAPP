@@ -182,6 +182,7 @@ const CURRENCY_CODES = [
     DropdownSelectComponent,
   ],
   template: `
+    <div class="page-shell">
     <div class="page-container">
       <header class="page-header">
         <div class="header-mid">
@@ -189,6 +190,7 @@ const CURRENCY_CODES = [
         </div>
         <button class="btn-icon add-trigger" type="button" (click)="openAddModal()">＋</button>
       </header>
+      </div>
 
       @if (showAddModal()) {
         <div class="modal-backdrop" (click)="closeAddModal()">
@@ -315,6 +317,7 @@ const CURRENCY_CODES = [
       }
 
       <div class="page-scroll">
+      <div class="page-container">
         @if (watches().length === 0) {
           <div class="empty-state">
             <p>{{ 'flightWatch.noWatches' | transloco }}</p>
@@ -409,6 +412,7 @@ const CURRENCY_CODES = [
             </div>
           }
         </div>
+      </div>
       </div>
 
       @if (detailWatch(); as dw) {
@@ -535,17 +539,23 @@ const CURRENCY_CODES = [
   `,
   styles: [
     `
-      .page-container {
-        max-width: 900px;
-        width: 100%;
-        margin: 0 auto;
-        padding: 1.5rem;
-        background: var(--bg);
+      /* 外層滿版 + 內層置中欄寬拆兩層：捲動範圍（.page-scroll）才能貼齊
+         視窗邊緣，滑鼠在置中欄位兩側空白處滾輪也能捲動（原本 .page-container
+         身兼撐滿高度跟置中兩個角色，捲動被限制在 900px 欄寬內，兩側空白處
+         摸不到捲動範圍）。 */
+      .page-shell {
         flex: 1;
         min-height: 0;
         display: flex;
         flex-direction: column;
         overflow: hidden;
+        background: var(--bg);
+      }
+      .page-container {
+        max-width: 900px;
+        width: 100%;
+        margin: 0 auto;
+        padding: 1.5rem;
         box-sizing: border-box;
       }
       .page-scroll {

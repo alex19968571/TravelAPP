@@ -33,165 +33,179 @@ interface SearchResult {
   standalone: true,
   imports: [CommonModule, RouterModule, FormsModule, TranslocoModule, DropdownSelectComponent],
   template: `
-    <div class="page-container">
-      <header class="page-header">
-        <a
-          [routerLink]="['/trips', tripId]"
-          class="back-btn"
-          [attr.aria-label]="'itinerary.backToTrip' | transloco"
-        >
-          <svg
-            width="18"
-            height="18"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2.5"
-            stroke-linecap="round"
-            stroke-linejoin="round"
+    <div class="page-scroll">
+      <div class="page-container">
+        <header class="page-header">
+          <a
+            [routerLink]="['/trips', tripId]"
+            class="back-btn"
+            [attr.aria-label]="'itinerary.backToTrip' | transloco"
           >
-            <polyline points="15 18 9 12 15 6"></polyline>
-          </svg>
-        </a>
-        <h1>{{ 'itinerary.title' | transloco }}</h1>
-      </header>
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <polyline points="15 18 9 12 15 6"></polyline>
+            </svg>
+          </a>
+          <h1>{{ 'itinerary.title' | transloco }}</h1>
+        </header>
 
-      <!-- 搜尋列 -->
-      <form class="search-row" (ngSubmit)="search()">
-        <input
-          [(ngModel)]="searchQuery"
-          name="searchQuery"
-          [placeholder]="'itinerary.searchPlaceholder' | transloco"
-        />
-        <button type="submit" class="btn-primary" [disabled]="!searchQuery.trim() || searching()">
-          {{ (searching() ? 'itinerary.searching' : 'itinerary.searchButton') | transloco }}
-        </button>
-      </form>
+        <!-- 搜尋列 -->
+        <form class="search-row" (ngSubmit)="search()">
+          <input
+            [(ngModel)]="searchQuery"
+            name="searchQuery"
+            [placeholder]="'itinerary.searchPlaceholder' | transloco"
+          />
+          <button type="submit" class="btn-primary" [disabled]="!searchQuery.trim() || searching()">
+            {{ (searching() ? 'itinerary.searching' : 'itinerary.searchButton') | transloco }}
+          </button>
+        </form>
 
-      @if (searchNotFound()) {
-        <p class="not-found">{{ 'itinerary.notFound' | transloco }}</p>
-      }
+        @if (searchNotFound()) {
+          <p class="not-found">{{ 'itinerary.notFound' | transloco }}</p>
+        }
 
-      <!-- 地圖 -->
-      <div #mapEl class="map-container"></div>
+        <!-- 地圖 -->
+        <div #mapEl class="map-container"></div>
 
-      <!-- 功能區塊：新增 / 編輯景點（垂直排列） -->
-      @if (panelVisible()) {
-        <div class="card staging-card">
-          <!-- 標題列 -->
-          <div class="panel-title">
-            {{ (editingItemId() ? 'itinerary.editTitle' : 'itinerary.addTitle') | transloco }}
-          </div>
-
-          <!-- 圖片（label 原生關聯 input，確保首次點擊即觸發） -->
-          <label class="photo-block">
-            @if (stagingPhotoUrl()) {
-              <img [src]="stagingPhotoUrl()!" class="photo-img" alt="" />
-              <div class="photo-overlay">{{ 'itinerary.changePhoto' | transloco }}</div>
-            } @else if (uploadingPhoto()) {
-              <div class="photo-placeholder">
-                <span class="upload-spin">⏳</span>
-                <span class="photo-hint">{{ 'itinerary.uploading' | transloco }}</span>
-              </div>
-            } @else {
-              <div class="photo-placeholder">
-                <span class="photo-plus">＋</span>
-                <span class="photo-hint">{{ 'itinerary.uploadPhotoHint' | transloco }}</span>
-              </div>
-            }
-            <input type="file" accept="image/*" hidden (change)="onPhotoSelected($event)" />
-          </label>
-
-          <!-- 景點名稱 -->
-          <div class="field-group">
-            <label class="field-label">{{ 'itinerary.nameLabel' | transloco }}</label>
-            <input
-              class="field-input"
-              [(ngModel)]="stagingName"
-              name="stagingName"
-              [placeholder]="'itinerary.namePlaceholder' | transloco"
-            />
-          </div>
-
-          <!-- 加入日期（僅新增模式） -->
-          @if (!editingItemId()) {
-            <div class="field-group">
-              <label class="field-label">{{ 'itinerary.addDateLabel' | transloco }}</label>
-              <app-dropdown-select
-                [options]="dateOptions()"
-                [ngModel]="selectedDate()?.dayNumber ?? null"
-                (ngModelChange)="chooseDateByDay($event)"
-                name="stagingDate"
-              ></app-dropdown-select>
+        <!-- 功能區塊：新增 / 編輯景點（垂直排列） -->
+        @if (panelVisible()) {
+          <div class="card staging-card">
+            <!-- 標題列 -->
+            <div class="panel-title">
+              {{ (editingItemId() ? 'itinerary.editTitle' : 'itinerary.addTitle') | transloco }}
             </div>
-          }
 
-          <!-- 筆記 -->
-          <div class="field-group">
-            <label class="field-label">{{ 'itinerary.noteLabel' | transloco }}</label>
-            <textarea
-              class="field-input field-notes"
-              [(ngModel)]="stagingNotes"
-              name="stagingNotes"
-              [placeholder]="'itinerary.noteInputPlaceholder' | transloco"
-              rows="3"
-            ></textarea>
-          </div>
+            <!-- 圖片（label 原生關聯 input，確保首次點擊即觸發） -->
+            <label class="photo-block">
+              @if (stagingPhotoUrl()) {
+                <img [src]="stagingPhotoUrl()!" class="photo-img" alt="" />
+                <div class="photo-overlay">{{ 'itinerary.changePhoto' | transloco }}</div>
+              } @else if (uploadingPhoto()) {
+                <div class="photo-placeholder">
+                  <span class="upload-spin">⏳</span>
+                  <span class="photo-hint">{{ 'itinerary.uploading' | transloco }}</span>
+                </div>
+              } @else {
+                <div class="photo-placeholder">
+                  <span class="photo-plus">＋</span>
+                  <span class="photo-hint">{{ 'itinerary.uploadPhotoHint' | transloco }}</span>
+                </div>
+              }
+              <input type="file" accept="image/*" hidden (change)="onPhotoSelected($event)" />
+            </label>
 
-          <!-- 按鈕列 -->
-          <div class="panel-actions">
-            <button class="btn-secondary" type="button" (click)="closePanel()">
-              {{ 'common.cancel' | transloco }}
-            </button>
-            @if (editingItemId()) {
-              <button
-                class="btn-primary"
-                type="button"
-                [disabled]="!stagingName.trim()"
-                (click)="confirmSave()"
-              >
-                {{ 'itinerary.save' | transloco }}
-              </button>
-            } @else {
-              <button
-                class="btn-primary"
-                type="button"
-                [disabled]="!stagingName.trim()"
-                (click)="onStagingConfirm()"
-              >
-                {{ 'itinerary.confirmBtn' | transloco }}
-              </button>
+            <!-- 景點名稱 -->
+            <div class="field-group">
+              <label class="field-label">{{ 'itinerary.nameLabel' | transloco }}</label>
+              <input
+                class="field-input"
+                [(ngModel)]="stagingName"
+                name="stagingName"
+                [placeholder]="'itinerary.namePlaceholder' | transloco"
+              />
+            </div>
+
+            <!-- 加入日期（僅新增模式） -->
+            @if (!editingItemId()) {
+              <div class="field-group">
+                <label class="field-label">{{ 'itinerary.addDateLabel' | transloco }}</label>
+                <app-dropdown-select
+                  [options]="dateOptions()"
+                  [ngModel]="selectedDate()?.dayNumber ?? null"
+                  (ngModelChange)="chooseDateByDay($event)"
+                  name="stagingDate"
+                ></app-dropdown-select>
+              </div>
             }
-          </div>
-        </div>
-      }
 
-      <!-- 順序選擇 Modal -->
-      @if (showPositionPicker()) {
-        <div class="modal-backdrop" (click)="showPositionPicker.set(false)">
-          <div class="modal-card modal-card-compact" (click)="$event.stopPropagation()">
-            <h3>{{ 'itinerary.choosePosition' | transloco }}</h3>
-            <div class="picker-list">
-              @for (p of positionOptions(); track p) {
+            <!-- 筆記 -->
+            <div class="field-group">
+              <label class="field-label">{{ 'itinerary.noteLabel' | transloco }}</label>
+              <textarea
+                class="field-input field-notes"
+                [(ngModel)]="stagingNotes"
+                name="stagingNotes"
+                [placeholder]="'itinerary.noteInputPlaceholder' | transloco"
+                rows="3"
+              ></textarea>
+            </div>
+
+            <!-- 按鈕列 -->
+            <div class="panel-actions">
+              <button class="btn-secondary" type="button" (click)="closePanel()">
+                {{ 'common.cancel' | transloco }}
+              </button>
+              @if (editingItemId()) {
                 <button
-                  class="picker-option"
-                  [class.selected]="p === selectedPosition()"
-                  (click)="selectedPosition.set(p)"
+                  class="btn-primary"
+                  type="button"
+                  [disabled]="!stagingName.trim()"
+                  (click)="confirmSave()"
                 >
-                  {{ positionLabel(p) }}
+                  {{ 'itinerary.save' | transloco }}
+                </button>
+              } @else {
+                <button
+                  class="btn-primary"
+                  type="button"
+                  [disabled]="!stagingName.trim()"
+                  (click)="onStagingConfirm()"
+                >
+                  {{ 'itinerary.confirmBtn' | transloco }}
                 </button>
               }
             </div>
-            <button class="btn-primary full-width" (click)="confirmAdd()">
-              {{ 'common.confirm' | transloco }}
-            </button>
           </div>
-        </div>
-      }
+        }
+
+        <!-- 順序選擇 Modal -->
+        @if (showPositionPicker()) {
+          <div class="modal-backdrop" (click)="showPositionPicker.set(false)">
+            <div class="modal-card modal-card-compact" (click)="$event.stopPropagation()">
+              <h3>{{ 'itinerary.choosePosition' | transloco }}</h3>
+              <div class="picker-list">
+                @for (p of positionOptions(); track p) {
+                  <button
+                    class="picker-option"
+                    [class.selected]="p === selectedPosition()"
+                    (click)="selectedPosition.set(p)"
+                  >
+                    {{ positionLabel(p) }}
+                  </button>
+                }
+              </div>
+              <button class="btn-primary full-width" (click)="confirmAdd()">
+                {{ 'common.confirm' | transloco }}
+              </button>
+            </div>
+          </div>
+        }
+      </div>
     </div>
   `,
   styles: [
     `
+      /* 外層滿版捲動 + 內層置中欄寬拆兩層：捲動範圍（.page-scroll）才能貼齊
+         視窗邊緣，滑鼠在置中欄位兩側空白處滾輪也能捲動。 */
+      .page-scroll {
+        flex: 1;
+        min-height: 0;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+      }
+      .page-scroll::-webkit-scrollbar {
+        display: none;
+      }
       .page-container {
         max-width: 900px;
         width: 100%;
@@ -199,14 +213,6 @@ interface SearchResult {
         padding: 1.5rem;
         background: var(--bg);
         box-sizing: border-box;
-        flex: 1;
-        min-height: 0;
-        overflow-y: auto;
-        -webkit-overflow-scrolling: touch;
-        scrollbar-width: none;
-      }
-      .page-container::-webkit-scrollbar {
-        display: none;
       }
       .page-header {
         display: flex;

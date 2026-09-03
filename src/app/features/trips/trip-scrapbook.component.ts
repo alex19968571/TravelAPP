@@ -8,37 +8,51 @@ import { TranslocoModule } from '@jsverse/transloco';
   standalone: true,
   imports: [RouterModule, TranslocoModule],
   template: `
-    <div class="page-container">
-      <header class="page-header">
-        <a
-          routerLink="/trips"
-          class="icon-circle back-btn"
-          [attr.aria-label]="'common.back' | transloco"
-        >
-          <svg
-            width="18"
-            height="18"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2.5"
-            stroke-linecap="round"
-            stroke-linejoin="round"
+    <div class="page-scroll">
+      <div class="page-container">
+        <header class="page-header">
+          <a
+            routerLink="/trips"
+            class="icon-circle back-btn"
+            [attr.aria-label]="'common.back' | transloco"
           >
-            <polyline points="15 18 9 12 15 6"></polyline>
-          </svg>
-        </a>
-        <h1>{{ 'scrapbook.title' | transloco }}</h1>
-      </header>
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <polyline points="15 18 9 12 15 6"></polyline>
+            </svg>
+          </a>
+          <h1>{{ 'scrapbook.title' | transloco }}</h1>
+        </header>
 
-      <div class="empty-state">
-        <span class="empty-icon">🎞️</span>
-        <p>{{ 'scrapbook.comingSoon' | transloco }}</p>
+        <div class="empty-state">
+          <span class="empty-icon">🎞️</span>
+          <p>{{ 'scrapbook.comingSoon' | transloco }}</p>
+        </div>
       </div>
     </div>
   `,
   styles: [
     `
+      /* 外層滿版捲動 + 內層置中欄寬拆兩層：捲動範圍（.page-scroll）才能貼齊
+         視窗邊緣，滑鼠在置中欄位兩側空白處滾輪也能捲動。 */
+      .page-scroll {
+        flex: 1;
+        min-height: 0;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+      }
+      .page-scroll::-webkit-scrollbar {
+        display: none;
+      }
       .page-container {
         max-width: 900px;
         width: 100%;
@@ -46,10 +60,6 @@ import { TranslocoModule } from '@jsverse/transloco';
         padding: 1.5rem;
         background: var(--bg);
         box-sizing: border-box;
-        flex: 1;
-        min-height: 0;
-        overflow-y: auto;
-        -webkit-overflow-scrolling: touch;
       }
       .page-header {
         display: flex;

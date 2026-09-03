@@ -38,36 +38,17 @@ const TRANSPORT_OPTIONS: { mode: TransportMode; icon: string }[] = [
   standalone: true,
   imports: [CommonModule, RouterModule, FormsModule, TranslocoModule, DropdownSelectComponent],
   template: `
-    <div class="page-container">
-      <header class="page-header">
-        <a
-          routerLink="/trips"
-          class="icon-circle back-btn"
-          [attr.aria-label]="'common.back' | transloco"
-        >
-          <svg
-            width="18"
-            height="18"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2.5"
-            stroke-linecap="round"
-            stroke-linejoin="round"
+    <div class="page-scroll">
+      <div class="page-container">
+        <header class="page-header">
+          <a
+            routerLink="/trips"
+            class="icon-circle back-btn"
+            [attr.aria-label]="'common.back' | transloco"
           >
-            <polyline points="15 18 9 12 15 6"></polyline>
-          </svg>
-        </a>
-        <h1>{{ trip()?.title ?? ('tripDetail.loading' | transloco) }}</h1>
-      </header>
-
-      @if (trip(); as t) {
-        <!-- 日期分頁 -->
-        <div class="date-tabs-wrap">
-          <button class="icon-circle date-arrow desktop-only" (click)="scrollDates(-1)">
             <svg
-              width="16"
-              height="16"
+              width="18"
+              height="18"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
@@ -77,105 +58,126 @@ const TRANSPORT_OPTIONS: { mode: TransportMode; icon: string }[] = [
             >
               <polyline points="15 18 9 12 15 6"></polyline>
             </svg>
-          </button>
-          <div class="date-tabs" [class.date-tabs-few]="dateTabs().length <= 4" #dateTabsEl>
-            @for (d of dateTabs(); track $index) {
-              <button
-                class="date-tab"
-                [class.active]="selectedDayIndex() === $index"
-                (click)="selectedDayIndex.set($index)"
+          </a>
+          <h1>{{ trip()?.title ?? ('tripDetail.loading' | transloco) }}</h1>
+        </header>
+
+        @if (trip(); as t) {
+          <!-- 日期分頁 -->
+          <div class="date-tabs-wrap">
+            <button class="icon-circle date-arrow desktop-only" (click)="scrollDates(-1)">
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
               >
-                {{ formatTabDate(d) }}
-              </button>
-            }
-          </div>
-          <button class="icon-circle date-arrow desktop-only" (click)="scrollDates(1)">
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2.5"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            >
-              <polyline points="9 18 15 12 9 6"></polyline>
-            </svg>
-          </button>
-        </div>
-
-        <div class="card day-content">
-          @if (itemsForSelectedDay().length === 0) {
-            <p class="empty-day">{{ 'tripDetail.notScheduled' | transloco }}</p>
-          } @else {
-            <div class="item-list">
-              @for (item of displayList(); track item.id; let i = $index; let last = $last) {
-                <!-- 景點卡片 -->
-                <div
-                  class="itinerary-item"
-                  [class.dragging]="draggingId() === item.id"
-                  [attr.data-item-id]="item.id"
-                  (click)="openEdit(item)"
+                <polyline points="15 18 9 12 15 6"></polyline>
+              </svg>
+            </button>
+            <div class="date-tabs" [class.date-tabs-few]="dateTabs().length <= 4" #dateTabsEl>
+              @for (d of dateTabs(); track $index) {
+                <button
+                  class="date-tab"
+                  [class.active]="selectedDayIndex() === $index"
+                  (click)="selectedDayIndex.set($index)"
                 >
-                  <button
-                    class="drag-handle"
-                    type="button"
-                    (pointerdown)="onDragStart($event, item)"
-                    (click)="$event.stopPropagation()"
-                    [attr.aria-label]="'tripDetail.reorder' | transloco"
-                  >
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                      <circle cx="8" cy="6" r="1.5"></circle>
-                      <circle cx="16" cy="6" r="1.5"></circle>
-                      <circle cx="8" cy="12" r="1.5"></circle>
-                      <circle cx="16" cy="12" r="1.5"></circle>
-                      <circle cx="8" cy="18" r="1.5"></circle>
-                      <circle cx="16" cy="18" r="1.5"></circle>
-                    </svg>
-                  </button>
-                  <span class="order-badge">{{ i + 1 }}</span>
-                  @if (item.image_url) {
-                    <img [src]="item.image_url" class="item-thumb" alt="" />
-                  } @else {
-                    <div class="item-thumb-empty">📍</div>
-                  }
-                  <div class="item-info">
-                    <strong>{{ item.place_name }}</strong>
-                    @if (item.notes) {
-                      <span class="item-notes">{{ item.notes }}</span>
-                    }
-                    <span class="coords"
-                      >{{ item.latitude.toFixed(4) }}, {{ item.longitude.toFixed(4) }}</span
-                    >
-                  </div>
-                  <button class="remove-btn" (click)="removeItem(item.id, $event)">×</button>
-                </div>
-
-                <!-- 景點間交通列（最後一個景點後不顯示） -->
-                @if (!last) {
-                  <div class="transport-row">
-                    <button
-                      class="transport-label"
-                      (click)="openTransportModal(item, displayList()[i + 1], $event)"
-                    >
-                      {{ getTransportText(item) }}
-                    </button>
-                  </div>
-                }
+                  {{ formatTabDate(d) }}
+                </button>
               }
             </div>
-          }
-        </div>
+            <button class="icon-circle date-arrow desktop-only" (click)="scrollDates(1)">
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <polyline points="9 18 15 12 9 6"></polyline>
+              </svg>
+            </button>
+          </div>
 
-        <a
-          class="icon-circle fab"
-          [routerLink]="['/trips', t.id, 'itinerary']"
-          [queryParams]="{ day: dateTabs()[selectedDayIndex()]?.dayNumber ?? 1 }"
-          [attr.aria-label]="'tripDetail.openMap' | transloco"
-          >＋</a
-        >
-      }
+          <div class="card day-content">
+            @if (itemsForSelectedDay().length === 0) {
+              <p class="empty-day">{{ 'tripDetail.notScheduled' | transloco }}</p>
+            } @else {
+              <div class="item-list">
+                @for (item of displayList(); track item.id; let i = $index; let last = $last) {
+                  <!-- 景點卡片 -->
+                  <div
+                    class="itinerary-item"
+                    [class.dragging]="draggingId() === item.id"
+                    [attr.data-item-id]="item.id"
+                    (click)="openEdit(item)"
+                  >
+                    <button
+                      class="drag-handle"
+                      type="button"
+                      (pointerdown)="onDragStart($event, item)"
+                      (click)="$event.stopPropagation()"
+                      [attr.aria-label]="'tripDetail.reorder' | transloco"
+                    >
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                        <circle cx="8" cy="6" r="1.5"></circle>
+                        <circle cx="16" cy="6" r="1.5"></circle>
+                        <circle cx="8" cy="12" r="1.5"></circle>
+                        <circle cx="16" cy="12" r="1.5"></circle>
+                        <circle cx="8" cy="18" r="1.5"></circle>
+                        <circle cx="16" cy="18" r="1.5"></circle>
+                      </svg>
+                    </button>
+                    <span class="order-badge">{{ i + 1 }}</span>
+                    @if (item.image_url) {
+                      <img [src]="item.image_url" class="item-thumb" alt="" />
+                    } @else {
+                      <div class="item-thumb-empty">📍</div>
+                    }
+                    <div class="item-info">
+                      <strong>{{ item.place_name }}</strong>
+                      @if (item.notes) {
+                        <span class="item-notes">{{ item.notes }}</span>
+                      }
+                      <span class="coords"
+                        >{{ item.latitude.toFixed(4) }}, {{ item.longitude.toFixed(4) }}</span
+                      >
+                    </div>
+                    <button class="remove-btn" (click)="removeItem(item.id, $event)">×</button>
+                  </div>
+
+                  <!-- 景點間交通列（最後一個景點後不顯示） -->
+                  @if (!last) {
+                    <div class="transport-row">
+                      <button
+                        class="transport-label"
+                        (click)="openTransportModal(item, displayList()[i + 1], $event)"
+                      >
+                        {{ getTransportText(item) }}
+                      </button>
+                    </div>
+                  }
+                }
+              </div>
+            }
+          </div>
+
+          <a
+            class="icon-circle fab"
+            [routerLink]="['/trips', t.id, 'itinerary']"
+            [queryParams]="{ day: dateTabs()[selectedDayIndex()]?.dayNumber ?? 1 }"
+            [attr.aria-label]="'tripDetail.openMap' | transloco"
+            >＋</a
+          >
+        }
+      </div>
     </div>
 
     <!-- ── 編輯景點 Modal ── -->
@@ -446,6 +448,18 @@ const TRANSPORT_OPTIONS: { mode: TransportMode; icon: string }[] = [
   `,
   styles: [
     `
+      /* 外層滿版捲動 + 內層置中欄寬拆兩層：捲動範圍（.page-scroll）才能貼齊
+         視窗邊緣，滑鼠在置中欄位兩側空白處滾輪也能捲動。 */
+      .page-scroll {
+        flex: 1;
+        min-height: 0;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+      }
+      .page-scroll::-webkit-scrollbar {
+        display: none;
+      }
       .page-container {
         max-width: 900px;
         width: 100%;
@@ -453,14 +467,6 @@ const TRANSPORT_OPTIONS: { mode: TransportMode; icon: string }[] = [
         padding: 1.5rem;
         background: var(--bg);
         box-sizing: border-box;
-        flex: 1;
-        min-height: 0;
-        overflow-y: auto;
-        -webkit-overflow-scrolling: touch;
-        scrollbar-width: none;
-      }
-      .page-container::-webkit-scrollbar {
-        display: none;
       }
       .page-header {
         display: flex;

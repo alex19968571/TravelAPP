@@ -37,6 +37,7 @@ const CURRENCY_CODES = [
     DropdownSelectComponent,
   ],
   template: `
+    <div class="page-shell">
     <div class="page-container">
       <header class="page-header">
         <a
@@ -64,6 +65,7 @@ const CURRENCY_CODES = [
           ＋
         </button>
       </header>
+      </div>
 
       <!-- 新增彈窗 -->
       @if (showAddModal()) {
@@ -194,6 +196,7 @@ const CURRENCY_CODES = [
 
       <!-- 清單 -->
       <div class="page-scroll">
+      <div class="page-container">
         <div class="list-toolbar">
           <div class="summary">
             <div class="summary-main">
@@ -282,21 +285,26 @@ const CURRENCY_CODES = [
           }
         </div>
       </div>
+      </div>
     </div>
   `,
   styles: [
     `
-      .page-container {
-        max-width: 900px;
-        width: 100%;
-        margin: 0 auto;
-        padding: 1.5rem;
-        background: var(--bg);
+      /* 外層滿版 + 內層置中欄寬拆兩層：捲動範圍（.page-scroll）才能貼齊
+         視窗邊緣，滑鼠在置中欄位兩側空白處滾輪也能捲動。 */
+      .page-shell {
         flex: 1;
         min-height: 0;
         display: flex;
         flex-direction: column;
         overflow: hidden;
+        background: var(--bg);
+      }
+      .page-container {
+        max-width: 900px;
+        width: 100%;
+        margin: 0 auto;
+        padding: 1.5rem;
         box-sizing: border-box;
       }
       .page-scroll {

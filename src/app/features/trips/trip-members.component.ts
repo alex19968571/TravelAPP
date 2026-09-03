@@ -16,6 +16,7 @@ import {
   standalone: true,
   imports: [CommonModule, RouterModule, TranslocoModule],
   template: `
+    <div class="page-scroll">
     <div class="page-container">
       <header class="page-header">
         <a
@@ -154,20 +155,29 @@ import {
         </div>
       }
     </div>
+    </div>
   `,
   styles: [
     `
+      /* 外層滿版捲動 + 內層置中欄寬拆兩層：捲動範圍（.page-scroll）才能貼齊
+         視窗邊緣，滑鼠在置中欄位兩側空白處滾輪也能捲動。成員清單改為跟著
+         整頁一起捲動，不再自己內部捲動。 */
+      .page-scroll {
+        flex: 1;
+        min-height: 0;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+      }
+      .page-scroll::-webkit-scrollbar {
+        display: none;
+      }
       .page-container {
         max-width: 900px;
         width: 100%;
         margin: 0 auto;
         padding: 1.5rem;
         background: var(--bg);
-        flex: 1;
-        min-height: 0;
-        display: flex;
-        flex-direction: column;
-        overflow: hidden;
         box-sizing: border-box;
       }
       .page-header {
@@ -207,11 +217,8 @@ import {
         border-radius: 16px;
         padding: 1.5rem;
         box-shadow: 0 4px 20px var(--shadow);
-        flex: 1;
-        min-height: 0;
         display: flex;
         flex-direction: column;
-        overflow: hidden;
       }
       .card h3 {
         margin: 0;
@@ -285,14 +292,6 @@ import {
         display: flex;
         flex-direction: column;
         gap: 0.75rem;
-        flex: 1;
-        min-height: 0;
-        overflow-y: auto;
-        -webkit-overflow-scrolling: touch;
-        scrollbar-width: none;
-      }
-      .member-list::-webkit-scrollbar {
-        display: none;
       }
       .member-row-wrap {
         position: relative;
